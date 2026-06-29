@@ -7,30 +7,24 @@ export interface RingGeometryParams {
 	tubularSegments?: number
 }
 
-export function buildRingBandGeometry(
-	params: RingGeometryParams = {},
-): THREE.BufferGeometry {
-	const { ringRadius = 1, tubeRadius = 0.07, tubularSegments = 128 } = params
-	return new THREE.TorusGeometry(ringRadius, tubeRadius, 64, tubularSegments)
-}
-
-export function buildTerrainInsertGeometry(
-	heightMap: number[][],
+export function buildTerrainRingGeometry(
+	heightMap: number[][] | null,
 	params: RingGeometryParams = {},
 ): THREE.BufferGeometry {
 	const {
 		ringRadius = 1,
 		tubeRadius = 0.07,
-		reliefHeight = 0.05,
+		reliefHeight = 0.04,
 		tubularSegments = 256,
 	} = params
 
-	const hmHeight = heightMap.length
-	const hmWidth = heightMap[0]?.length ?? 1
+	const radialSegments = 64
+	const hmHeight = heightMap?.length ?? 0
+	const hmWidth = heightMap ? (heightMap[0]?.length ?? 1) : 1
+	const hasRelief = heightMap !== null && hmHeight > 0
 
-	const insertHalfAngle = Math.PI / 6
-	const radialSegments = 32
-	const epsilon = 0.008
+	const reliefZone = Math.PI / 3
+	const blendWidth = Math.PI / 6
 
 	const vertCount = (tubularSegments + 1) * (radialSegments + 1)
 	const positions = new Float32Array(vertCount * 3)
@@ -46,16 +40,33 @@ export function buildTerrainInsertGeometry(
 
 		for (let j = 0; j <= radialSegments; j++) {
 			const v = j / radialSegments
-			const phi = -insertHalfAngle + v * 2 * insertHalfAngle
+			const phi = v * Math.PI * 2
 			const cosF = Math.cos(phi)
 			const sinF = Math.sin(phi)
 
-			const hmX = Math.min(Math.floor(u * hmWidth), hmWidth - 1)
-			const hmRow = Math.min(Math.floor(v * (hmHeight - 1)), hmHeight - 1)
-			const elevation = heightMap[hmRow][hmX]
+			const phiNorm = phi > Math.PI ? phi - Math.PI * 2 : phi
+			const absPhi = Math.abs(phiNorm)
 
-			const displacement = elevation * reliefHeight
-			const r = tubeRadius + epsilon + displacement
+			let weight = 0
+			if (hasRelief) {
+				if (absPhi < reliefZone) {
+					weight = 1.0
+				} else if (absPhi < reliefZone + blendWidth) {
+					weight = 1.0 - (absPhi - reliefZone) / blendWidth
+					weight = weight * weight * (3 - 2 * weight)
+				}
+			}
+
+			let displacement = 0
+			if (weight > 0 && heightMap) {
+				const hmX = Math.min(Math.floor(u * hmWidth), hmWidth - 1)
+				const vNorm = absPhi / reliefZone
+				const hmRow = Math.min(Math.floor(vNorm * (hmHeight - 1)), hmHeight - 1)
+				const elevation = heightMap[hmRow][hmX]
+				displacement = elevation * reliefHeight * weight
+			}
+
+			const r = tubeRadius + displacement
 
 			const x = (ringRadius + r * cosF) * cosT
 			const y = r * sinF
