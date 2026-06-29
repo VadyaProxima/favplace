@@ -22,7 +22,7 @@ export function PreviewStep() {
 		setError(null)
 
 		fetch(
-			`http://localhost:3001/api/terrain/heightmap?lat=${location.coordinates.lat}&lng=${location.coordinates.lng}&radius=${radius}&resolution=128`,
+			`/api/terrain/heightmap?lat=${location.coordinates.lat}&lng=${location.coordinates.lng}&radius=${radius}&resolution=128`,
 		)
 			.then(r => {
 				if (!r.ok) throw new Error(`API error: ${r.status}`)
