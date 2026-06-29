@@ -10,6 +10,25 @@ interface MapProps {
 	onMarkerMove?: (lng: number, lat: number) => void
 }
 
+const RASTER_STYLE = {
+	version: 8 as const,
+	sources: {
+		osm: {
+			type: 'raster' as const,
+			tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+			tileSize: 256,
+			attribution: '© OpenStreetMap contributors',
+		},
+	},
+	layers: [
+		{
+			id: 'osm',
+			type: 'raster' as const,
+			source: 'osm',
+		},
+	],
+}
+
 export function Map({ center, zoom = 12, onMarkerMove }: MapProps) {
 	const containerRef = useRef<HTMLDivElement>(null)
 	const mapRef = useRef<maplibregl.Map | null>(null)
@@ -18,11 +37,9 @@ export function Map({ center, zoom = 12, onMarkerMove }: MapProps) {
 	useEffect(() => {
 		if (!containerRef.current || mapRef.current) return
 
-		const container = containerRef.current
-
 		const map = new maplibregl.Map({
-			container,
-			style: 'https://tiles.openfreemap.org/styles/liberty',
+			container: containerRef.current,
+			style: RASTER_STYLE,
 			center,
 			zoom,
 		})

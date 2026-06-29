@@ -1,15 +1,22 @@
 'use client'
 
-import { buildFlatTorus, buildTerrainRingGeometry } from '@/lib/ringGeometry'
+import {
+	buildRingBandGeometry,
+	buildTerrainInsertGeometry,
+} from '@/lib/ringGeometry'
 import { useAppStore } from '@/store/useAppStore'
 import { MATERIALS } from '@favplace/shared'
 import { ContactShadows, Environment, OrbitControls } from '@react-three/drei'
 import { Canvas, useFrame } from '@react-three/fiber'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 
-function AnimatedRingMesh() {
-	const meshRef = useRef<THREE.Mesh>(null)
+function easeOutCubic(t: number): number {
+	return 1 - Math.pow(1 - t, 3)
+}
+
+function RingGroup() {
+	const groupRef = useRef<THREE.Group>(null)
 	const heightMap = useAppStore(s => s.heightMap)
 	const material = useAppStore(s => s.material)
 	const surfaceFinish = useAppStore(s => s.surfaceFinish)
@@ -19,58 +26,75 @@ function AnimatedRingMesh() {
 	const [animProgress, setAnimProgress] = useState(0)
 	const animRef = useRef(0)
 
-	const tubeRadius = ringWidth / 10
-	const targetRelief = reliefHeight / 20
-
 	useEffect(() => {
 		animRef.current = 0
 		setAnimProgress(0)
 	}, [heightMap])
 
-	const geometry = (() => {
-		if (!heightMap || heightMap.length === 0) {
-			return buildFlatTorus(1, tubeRadius)
-		}
+	const tubeRadius = ringWidth / 10
+	const mat = MATERIALS[material]
+	const roughness = surfaceFinish === 'matte' ? 0.6 : mat.roughness
+	const targetRelief = reliefHeight / 20
+
+	const bandGeometry = useMemo(
+		() =>
+			buildRingBandGeometry({
+				ringRadius: 1,
+				tubeRadius,
+				tubularSegments: 128,
+			}),
+		[tubeRadius],
+	)
+
+	const insertGeometry = useMemo(() => {
+		if (!heightMap || heightMap.length === 0) return null
 		const eased = easeOutCubic(animProgress)
 		const currentRelief = eased * targetRelief
-		return buildTerrainRingGeometry(heightMap, {
+		return buildTerrainInsertGeometry(heightMap, {
 			ringRadius: 1,
 			tubeRadius,
 			reliefHeight: currentRelief,
 			tubularSegments: Math.min(heightMap.length * 2, 512),
-			radialSegments: 64,
 		})
-	})()
+	}, [heightMap, animProgress, tubeRadius, targetRelief])
 
 	useFrame((_, delta) => {
 		if (animRef.current < 1) {
 			animRef.current = Math.min(animRef.current + delta * 0.7, 1)
 			setAnimProgress(animRef.current)
 		}
-		if (meshRef.current) {
-			meshRef.current.rotation.y += delta * 0.15
+		if (groupRef.current) {
+			groupRef.current.rotation.y += delta * 0.15
 		}
 	})
 
-	const mat = MATERIALS[material]
-	const roughness = surfaceFinish === 'matte' ? 0.6 : mat.roughness
-
 	return (
-		<mesh ref={meshRef} geometry={geometry} castShadow receiveShadow>
-			<meshPhysicalMaterial
-				color={mat.color}
-				metalness={mat.metalness}
-				roughness={roughness}
-				envMapIntensity={1.5}
-				clearcoat={surfaceFinish === 'polished' ? 0.3 : 0}
-				clearcoatRoughness={0.1}
-			/>
-		</mesh>
-	)
-}
+		<group ref={groupRef} rotation={[Math.PI / 2, 0, 0]}>
+			<mesh geometry={bandGeometry} castShadow receiveShadow>
+				<meshPhysicalMaterial
+					color={mat.color}
+					metalness={mat.metalness}
+					roughness={roughness}
+					envMapIntensity={1.5}
+					clearcoat={surfaceFinish === 'polished' ? 0.3 : 0}
+					clearcoatRoughness={0.1}
+				/>
+			</mesh>
 
-function easeOutCubic(t: number): number {
-	return 1 - Math.pow(1 - t, 3)
+			{insertGeometry && (
+				<mesh geometry={insertGeometry} castShadow receiveShadow>
+					<meshPhysicalMaterial
+						color={mat.color}
+						metalness={mat.metalness * 0.85}
+						roughness={Math.min(roughness + 0.15, 0.8)}
+						envMapIntensity={1.2}
+						clearcoat={surfaceFinish === 'polished' ? 0.1 : 0}
+						clearcoatRoughness={0.2}
+					/>
+				</mesh>
+			)}
+		</group>
+	)
 }
 
 function Scene() {
@@ -86,7 +110,7 @@ function Scene() {
 			/>
 			<pointLight position={[-5, 3, -5]} intensity={0.5} color="#fff5e0" />
 
-			<AnimatedRingMesh />
+			<RingGroup />
 
 			<ContactShadows
 				position={[0, -1.2, 0]}
