@@ -1,6 +1,6 @@
 'use client'
 
-import { buildTerrainRingGeometry } from '@/lib/ringGeometry'
+import { buildRingBand, buildTerrainPlate } from '@/lib/ringGeometry'
 import { useAppStore } from '@/store/useAppStore'
 import { MATERIALS } from '@favplace/shared'
 import { ContactShadows, Environment, OrbitControls } from '@react-three/drei'
@@ -12,11 +12,11 @@ function easeOutCubic(t: number): number {
 	return 1 - Math.pow(1 - t, 3)
 }
 
-const TUBE_RADIUS = 0.07
 const RING_RADIUS = 1
+const TUBE_RADIUS = 0.07
 
-function RingMesh() {
-	const meshRef = useRef<THREE.Mesh>(null)
+function RingGroup() {
+	const groupRef = useRef<THREE.Group>(null)
 	const heightMap = useAppStore(s => s.heightMap)
 	const material = useAppStore(s => s.material)
 	const surfaceFinish = useAppStore(s => s.surfaceFinish)
@@ -34,15 +34,24 @@ function RingMesh() {
 	const roughness = surfaceFinish === 'matte' ? 0.6 : mat.roughness
 	const targetRelief = reliefHeight / 20
 
-	const geometry = useMemo(() => {
+	const bandGeometry = useMemo(
+		() => buildRingBand(RING_RADIUS, TUBE_RADIUS),
+		[],
+	)
+
+	const plateGeometry = useMemo(() => {
+		if (!heightMap || heightMap.length === 0) return null
 		const eased = easeOutCubic(animProgress)
 		const currentRelief = eased * targetRelief
-		const hm = heightMap && heightMap.length > 0 ? heightMap : null
-		return buildTerrainRingGeometry(hm, {
+		return buildTerrainPlate(heightMap, {
 			ringRadius: RING_RADIUS,
 			tubeRadius: TUBE_RADIUS,
+			plateWidth: 0.14,
+			plateLength: 0.45,
+			plateThickness: 0.012,
 			reliefHeight: currentRelief,
-			tubularSegments: hm ? Math.min(hm.length * 2, 512) : 128,
+			gridX: 64,
+			gridZ: 128,
 		})
 	}, [heightMap, animProgress, targetRelief])
 
@@ -51,22 +60,37 @@ function RingMesh() {
 			animRef.current = Math.min(animRef.current + delta * 0.7, 1)
 			setAnimProgress(animRef.current)
 		}
-		if (meshRef.current) {
-			meshRef.current.rotation.y += delta * 0.15
+		if (groupRef.current) {
+			groupRef.current.rotation.y += delta * 0.15
 		}
 	})
 
 	return (
-		<mesh ref={meshRef} geometry={geometry} castShadow receiveShadow>
-			<meshPhysicalMaterial
-				color={mat.color}
-				metalness={mat.metalness}
-				roughness={roughness}
-				envMapIntensity={1.5}
-				clearcoat={surfaceFinish === 'polished' ? 0.3 : 0}
-				clearcoatRoughness={0.1}
-			/>
-		</mesh>
+		<group ref={groupRef}>
+			<mesh geometry={bandGeometry} castShadow receiveShadow>
+				<meshPhysicalMaterial
+					color={mat.color}
+					metalness={mat.metalness}
+					roughness={roughness}
+					envMapIntensity={1.5}
+					clearcoat={surfaceFinish === 'polished' ? 0.3 : 0}
+					clearcoatRoughness={0.1}
+				/>
+			</mesh>
+
+			{plateGeometry && (
+				<mesh geometry={plateGeometry} castShadow receiveShadow>
+					<meshPhysicalMaterial
+						color={mat.color}
+						metalness={mat.metalness}
+						roughness={roughness}
+						envMapIntensity={1.5}
+						clearcoat={surfaceFinish === 'polished' ? 0.3 : 0}
+						clearcoatRoughness={0.1}
+					/>
+				</mesh>
+			)}
+		</group>
 	)
 }
 
@@ -84,12 +108,10 @@ function Scene() {
 			<pointLight position={[-5, 3, -5]} intensity={0.6} color="#fff5e0" />
 			<pointLight position={[3, -2, 4]} intensity={0.3} color="#e0f0ff" />
 
-			<group rotation={[Math.PI / 2, 0, 0]}>
-				<RingMesh />
-			</group>
+			<RingGroup />
 
 			<ContactShadows
-				position={[0, -1.5, 0]}
+				position={[0, -0.5, 0]}
 				opacity={0.4}
 				scale={5}
 				blur={2.5}
@@ -100,10 +122,10 @@ function Scene() {
 
 			<OrbitControls
 				enablePan={false}
-				minDistance={1.8}
-				maxDistance={6}
-				minPolarAngle={Math.PI / 8}
-				maxPolarAngle={Math.PI / 1.3}
+				minDistance={1.5}
+				maxDistance={5}
+				minPolarAngle={Math.PI / 6}
+				maxPolarAngle={Math.PI / 2.2}
 			/>
 		</>
 	)
@@ -114,7 +136,7 @@ export function RingViewer({ className = '' }: { className?: string }) {
 		<div className={`absolute inset-0 ${className}`}>
 			<Canvas
 				shadows
-				camera={{ position: [0, 1, 3.5], fov: 35 }}
+				camera={{ position: [1.5, 1.5, 2.5], fov: 35 }}
 				gl={{
 					antialias: true,
 					toneMapping: THREE.ACESFilmicToneMapping,
