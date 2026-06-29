@@ -10,8 +10,8 @@ export interface RingGeometryParams {
 export function buildRingBandGeometry(
 	params: RingGeometryParams = {},
 ): THREE.BufferGeometry {
-	const { ringRadius = 1, tubeRadius = 0.15, tubularSegments = 128 } = params
-	return new THREE.TorusGeometry(ringRadius, tubeRadius, 48, tubularSegments)
+	const { ringRadius = 1, tubeRadius = 0.07, tubularSegments = 128 } = params
+	return new THREE.TorusGeometry(ringRadius, tubeRadius, 64, tubularSegments)
 }
 
 export function buildTerrainInsertGeometry(
@@ -20,17 +20,17 @@ export function buildTerrainInsertGeometry(
 ): THREE.BufferGeometry {
 	const {
 		ringRadius = 1,
-		tubeRadius = 0.15,
-		reliefHeight = 0.06,
+		tubeRadius = 0.07,
+		reliefHeight = 0.05,
 		tubularSegments = 256,
 	} = params
 
 	const hmHeight = heightMap.length
 	const hmWidth = heightMap[0]?.length ?? 1
 
-	const insertHalfAngle = Math.PI / 3
-	const radialSegments = 48
-	const epsilon = 0.003
+	const insertHalfAngle = Math.PI / 6
+	const radialSegments = 32
+	const epsilon = 0.008
 
 	const vertCount = (tubularSegments + 1) * (radialSegments + 1)
 	const positions = new Float32Array(vertCount * 3)

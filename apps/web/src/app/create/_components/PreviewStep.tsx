@@ -43,7 +43,7 @@ export function PreviewStep() {
 		<div className="flex flex-1 flex-col items-center gap-8 px-6 py-10">
 			<h2 className="text-3xl font-bold">Предпросмотр рельефа</h2>
 
-			<div className="h-96 w-full max-w-2xl overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900">
+			<div className="relative h-[60vh] w-full overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900">
 				{loading && (
 					<div className="flex h-full items-center justify-center">
 						<div className="text-center">

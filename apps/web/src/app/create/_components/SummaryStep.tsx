@@ -56,7 +56,7 @@ export function SummaryStep() {
 				</p>
 			</div>
 
-			<div className="h-80 w-full max-w-xl overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900">
+			<div className="relative h-[50vh] w-full overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900">
 				<RingViewer className="h-full w-full" />
 			</div>
 
