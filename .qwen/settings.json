@@ -1,8 +1,18 @@
 {
-  "permissions": {
-    "allow": [
-      "Bash(pnpm install)"
-    ]
-  },
-  "$version": 4
+	"permissions": {
+		"allow": [
+			"Bash(*)",
+			"Read(*)",
+			"Write(*)",
+			"Edit(*)",
+			"Glob(*)",
+			"Grep(*)",
+			"Agent(*)",
+			"Skill(*)",
+			"WebFetch(*)",
+			"TodoWrite(*)",
+			"NotebookEdit(*)"
+		]
+	},
+	"$version": 4
 }
