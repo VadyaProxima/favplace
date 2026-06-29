@@ -27,7 +27,7 @@ export function MaterialStep() {
 		<div className="flex flex-1 flex-col items-center gap-8 px-6 py-10">
 			<h2 className="text-3xl font-bold">Настройте кольцо</h2>
 
-			<div className="h-72 w-full max-w-2xl overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900">
+			<div className="relative h-[50vh] w-full overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900">
 				<RingViewer className="h-full w-full" />
 			</div>
 
