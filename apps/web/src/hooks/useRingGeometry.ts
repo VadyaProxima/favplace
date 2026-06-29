@@ -1,27 +1,40 @@
-import { useMemo } from "react";
-import * as THREE from "three";
-import { buildTerrainRingGeometry, buildFlatTorus } from "@/lib/ringGeometry";
+import {
+	buildRingBandGeometry,
+	buildTerrainInsertGeometry,
+} from '@/lib/ringGeometry'
+import { useMemo } from 'react'
+import * as THREE from 'three'
 
 interface UseRingGeometryParams {
-  heightMap: number[][] | null;
-  reliefHeight: number;
-  ringWidth: number;
+	heightMap: number[][] | null
+	reliefHeight: number
+	ringWidth: number
 }
 
-export function useRingGeometry({ heightMap, reliefHeight, ringWidth }: UseRingGeometryParams) {
-  return useMemo(() => {
-    const tubeRadius = ringWidth / 10;
+export function useRingGeometries({
+	heightMap,
+	reliefHeight,
+	ringWidth,
+}: UseRingGeometryParams) {
+	const tubeRadius = ringWidth / 10
 
-    if (!heightMap || heightMap.length === 0) {
-      return buildFlatTorus(1, tubeRadius);
-    }
+	return useMemo(() => {
+		const band = buildRingBandGeometry({
+			ringRadius: 1,
+			tubeRadius,
+			tubularSegments: 128,
+		})
 
-    return buildTerrainRingGeometry(heightMap, {
-      ringRadius: 1,
-      tubeRadius,
-      reliefHeight: reliefHeight / 20,
-      tubularSegments: Math.min(heightMap.length * 2, 512),
-      radialSegments: 64,
-    });
-  }, [heightMap, reliefHeight, ringWidth]);
+		let insert: THREE.BufferGeometry | null = null
+		if (heightMap && heightMap.length > 0) {
+			insert = buildTerrainInsertGeometry(heightMap, {
+				ringRadius: 1,
+				tubeRadius,
+				reliefHeight: reliefHeight / 20,
+				tubularSegments: Math.min(heightMap.length * 2, 512),
+			})
+		}
+
+		return { band, insert }
+	}, [heightMap, reliefHeight, ringWidth, tubeRadius])
 }
