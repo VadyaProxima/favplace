@@ -1,104 +1,108 @@
 import * as THREE from 'three'
 
-export interface RingGeometryParams {
+export interface PlateParams {
 	ringRadius?: number
 	tubeRadius?: number
+	plateWidth?: number
+	plateLength?: number
+	plateThickness?: number
 	reliefHeight?: number
-	tubularSegments?: number
+	gridX?: number
+	gridZ?: number
 }
 
-export function buildTerrainRingGeometry(
-	heightMap: number[][] | null,
-	params: RingGeometryParams = {},
+export function buildRingBand(
+	ringRadius = 1,
+	tubeRadius = 0.07,
+): THREE.BufferGeometry {
+	return new THREE.TorusGeometry(ringRadius, tubeRadius, 64, 128)
+}
+
+export function buildTerrainPlate(
+	heightMap: number[][],
+	params: PlateParams = {},
 ): THREE.BufferGeometry {
 	const {
 		ringRadius = 1,
 		tubeRadius = 0.07,
+		plateWidth = 0.14,
+		plateLength = 0.45,
+		plateThickness = 0.015,
 		reliefHeight = 0.04,
-		tubularSegments = 256,
+		gridX = 64,
+		gridZ = 128,
 	} = params
 
-	const radialSegments = 64
-	const hmHeight = heightMap?.length ?? 0
-	const hmWidth = heightMap ? (heightMap[0]?.length ?? 1) : 1
-	const hasRelief = heightMap !== null && hmHeight > 0
+	const hmH = heightMap.length
+	const hmW = heightMap[0]?.length ?? 1
 
-	const reliefZone = Math.PI / 3
-	const blendWidth = Math.PI / 6
+	const topY = tubeRadius + plateThickness
+	const baseY = tubeRadius
+	const centerX = ringRadius
 
-	const vertCount = (tubularSegments + 1) * (radialSegments + 1)
+	const vertCount = (gridX + 1) * (gridZ + 1) * 2
 	const positions = new Float32Array(vertCount * 3)
 	const normals = new Float32Array(vertCount * 3)
 	const uvs = new Float32Array(vertCount * 2)
 
 	let idx = 0
-	for (let i = 0; i <= tubularSegments; i++) {
-		const u = i / tubularSegments
-		const theta = u * Math.PI * 2
-		const cosT = Math.cos(theta)
-		const sinT = Math.sin(theta)
 
-		for (let j = 0; j <= radialSegments; j++) {
-			const v = j / radialSegments
-			const phi = v * Math.PI * 2
-			const cosF = Math.cos(phi)
-			const sinF = Math.sin(phi)
+	for (let iz = 0; iz <= gridZ; iz++) {
+		for (let ix = 0; ix <= gridX; ix++) {
+			const u = ix / gridX
+			const v = iz / gridZ
 
-			const phiNorm = phi > Math.PI ? phi - Math.PI * 2 : phi
-			const absPhi = Math.abs(phiNorm)
+			const x = centerX - plateWidth / 2 + u * plateWidth
+			const z = -plateLength / 2 + v * plateLength
 
-			let weight = 0
-			if (hasRelief) {
-				if (absPhi < reliefZone) {
-					weight = 1.0
-				} else if (absPhi < reliefZone + blendWidth) {
-					weight = 1.0 - (absPhi - reliefZone) / blendWidth
-					weight = weight * weight * (3 - 2 * weight)
-				}
-			}
+			const hmCol = Math.min(Math.floor(u * hmW), hmW - 1)
+			const hmRow = Math.min(Math.floor(v * hmH), hmH - 1)
+			const elevation = heightMap[hmRow][hmCol]
 
-			let displacement = 0
-			if (weight > 0 && heightMap) {
-				const hmX = Math.min(Math.floor(u * hmWidth), hmWidth - 1)
-				const vNorm = absPhi / reliefZone
-				const hmRow = Math.min(Math.floor(vNorm * (hmHeight - 1)), hmHeight - 1)
-				const elevation = heightMap[hmRow][hmX]
-				displacement = elevation * reliefHeight * weight
-			}
-
-			const r = tubeRadius + displacement
-
-			const x = (ringRadius + r * cosF) * cosT
-			const y = r * sinF
-			const z = (ringRadius + r * cosF) * sinT
+			const y = topY + elevation * reliefHeight
 
 			positions[idx * 3] = x
 			positions[idx * 3 + 1] = y
 			positions[idx * 3 + 2] = z
-
-			const nx = cosF * cosT
-			const ny = sinF
-			const nz = cosF * sinT
-			normals[idx * 3] = nx
-			normals[idx * 3 + 1] = ny
-			normals[idx * 3 + 2] = nz
-
+			normals[idx * 3] = 0
+			normals[idx * 3 + 1] = 1
+			normals[idx * 3 + 2] = 0
 			uvs[idx * 2] = u
 			uvs[idx * 2 + 1] = v
-
 			idx++
 		}
 	}
 
-	const indexCount = tubularSegments * radialSegments * 6
-	const indices = new Uint32Array(indexCount)
+	for (let iz = 0; iz <= gridZ; iz++) {
+		for (let ix = 0; ix <= gridX; ix++) {
+			const u = ix / gridX
+			const v = iz / gridZ
+
+			const x = centerX - plateWidth / 2 + u * plateWidth
+			const z = -plateLength / 2 + v * plateLength
+
+			positions[idx * 3] = x
+			positions[idx * 3 + 1] = baseY
+			positions[idx * 3 + 2] = z
+			normals[idx * 3] = 0
+			normals[idx * 3 + 1] = -1
+			normals[idx * 3 + 2] = 0
+			uvs[idx * 2] = u
+			uvs[idx * 2 + 1] = v
+			idx++
+		}
+	}
+
+	const faceCount = gridX * gridZ * 2 * 2
+	const indices = new Uint32Array(faceCount * 6)
 	let triIdx = 0
 
-	for (let i = 0; i < tubularSegments; i++) {
-		for (let j = 0; j < radialSegments; j++) {
-			const a = i * (radialSegments + 1) + j
+	const rowSize = gridX + 1
+	for (let iz = 0; iz < gridZ; iz++) {
+		for (let ix = 0; ix < gridX; ix++) {
+			const a = iz * rowSize + ix
 			const b = a + 1
-			const c = (i + 1) * (radialSegments + 1) + j
+			const c = (iz + 1) * rowSize + ix
 			const d = c + 1
 
 			indices[triIdx++] = a
@@ -109,6 +113,28 @@ export function buildTerrainRingGeometry(
 			indices[triIdx++] = d
 		}
 	}
+
+	const bottomOffset = (gridX + 1) * (gridZ + 1)
+	for (let iz = 0; iz < gridZ; iz++) {
+		for (let ix = 0; ix < gridX; ix++) {
+			const a = bottomOffset + iz * rowSize + ix
+			const b = a + 1
+			const c = bottomOffset + (iz + 1) * rowSize + ix
+			const d = c + 1
+
+			indices[triIdx++] = a
+			indices[triIdx++] = b
+			indices[triIdx++] = c
+			indices[triIdx++] = b
+			indices[triIdx++] = d
+			indices[triIdx++] = c
+		}
+	}
+
+	const sides = [
+		{ start: 0, end: gridX, row: 0, dir: 1 },
+		{ start: 0, end: gridX, row: gridZ, dir: -1 },
+	]
 
 	const geometry = new THREE.BufferGeometry()
 	geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
