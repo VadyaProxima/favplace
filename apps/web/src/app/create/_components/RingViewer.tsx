@@ -1,9 +1,6 @@
 'use client'
 
-import {
-	buildRingBandGeometry,
-	buildTerrainInsertGeometry,
-} from '@/lib/ringGeometry'
+import { buildTerrainRingGeometry } from '@/lib/ringGeometry'
 import { useAppStore } from '@/store/useAppStore'
 import { MATERIALS } from '@favplace/shared'
 import { ContactShadows, Environment, OrbitControls } from '@react-three/drei'
@@ -18,8 +15,8 @@ function easeOutCubic(t: number): number {
 const TUBE_RADIUS = 0.07
 const RING_RADIUS = 1
 
-function RingGroup() {
-	const groupRef = useRef<THREE.Group>(null)
+function RingMesh() {
+	const meshRef = useRef<THREE.Mesh>(null)
 	const heightMap = useAppStore(s => s.heightMap)
 	const material = useAppStore(s => s.material)
 	const surfaceFinish = useAppStore(s => s.surfaceFinish)
@@ -37,25 +34,15 @@ function RingGroup() {
 	const roughness = surfaceFinish === 'matte' ? 0.6 : mat.roughness
 	const targetRelief = reliefHeight / 20
 
-	const bandGeometry = useMemo(
-		() =>
-			buildRingBandGeometry({
-				ringRadius: RING_RADIUS,
-				tubeRadius: TUBE_RADIUS,
-				tubularSegments: 128,
-			}),
-		[],
-	)
-
-	const insertGeometry = useMemo(() => {
-		if (!heightMap || heightMap.length === 0) return null
+	const geometry = useMemo(() => {
 		const eased = easeOutCubic(animProgress)
 		const currentRelief = eased * targetRelief
-		return buildTerrainInsertGeometry(heightMap, {
+		const hm = heightMap && heightMap.length > 0 ? heightMap : null
+		return buildTerrainRingGeometry(hm, {
 			ringRadius: RING_RADIUS,
 			tubeRadius: TUBE_RADIUS,
 			reliefHeight: currentRelief,
-			tubularSegments: Math.min(heightMap.length * 2, 512),
+			tubularSegments: hm ? Math.min(hm.length * 2, 512) : 128,
 		})
 	}, [heightMap, animProgress, targetRelief])
 
@@ -64,37 +51,22 @@ function RingGroup() {
 			animRef.current = Math.min(animRef.current + delta * 0.7, 1)
 			setAnimProgress(animRef.current)
 		}
-		if (groupRef.current) {
-			groupRef.current.rotation.y += delta * 0.15
+		if (meshRef.current) {
+			meshRef.current.rotation.y += delta * 0.15
 		}
 	})
 
 	return (
-		<group ref={groupRef} rotation={[Math.PI / 2, 0, 0]}>
-			<mesh geometry={bandGeometry} castShadow receiveShadow>
-				<meshPhysicalMaterial
-					color={mat.color}
-					metalness={mat.metalness}
-					roughness={roughness}
-					envMapIntensity={1.5}
-					clearcoat={surfaceFinish === 'polished' ? 0.3 : 0}
-					clearcoatRoughness={0.1}
-				/>
-			</mesh>
-
-			{insertGeometry && (
-				<mesh geometry={insertGeometry} castShadow receiveShadow>
-					<meshPhysicalMaterial
-						color={mat.color}
-						metalness={mat.metalness}
-						roughness={Math.min(roughness + 0.1, 0.7)}
-						envMapIntensity={1.3}
-						clearcoat={surfaceFinish === 'polished' ? 0.15 : 0}
-						clearcoatRoughness={0.15}
-					/>
-				</mesh>
-			)}
-		</group>
+		<mesh ref={meshRef} geometry={geometry} castShadow receiveShadow>
+			<meshPhysicalMaterial
+				color={mat.color}
+				metalness={mat.metalness}
+				roughness={roughness}
+				envMapIntensity={1.5}
+				clearcoat={surfaceFinish === 'polished' ? 0.3 : 0}
+				clearcoatRoughness={0.1}
+			/>
+		</mesh>
 	)
 }
 
@@ -112,7 +84,9 @@ function Scene() {
 			<pointLight position={[-5, 3, -5]} intensity={0.6} color="#fff5e0" />
 			<pointLight position={[3, -2, 4]} intensity={0.3} color="#e0f0ff" />
 
-			<RingGroup />
+			<group rotation={[Math.PI / 2, 0, 0]}>
+				<RingMesh />
+			</group>
 
 			<ContactShadows
 				position={[0, -1.5, 0]}
