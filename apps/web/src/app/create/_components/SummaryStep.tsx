@@ -2,6 +2,7 @@
 
 import { useAppStore } from '@/store/useAppStore'
 import { MATERIALS } from '@favplace/shared'
+import { useState } from 'react'
 import { RingViewer } from './RingViewer'
 
 export function SummaryStep() {
@@ -14,8 +15,37 @@ export function SummaryStep() {
 		reliefHeight,
 		engraving,
 		elevationMeta,
+		heightMap,
 		setStep,
 	} = useAppStore()
+	const [exporting, setExporting] = useState(false)
+
+	const exportSTL = async () => {
+		if (!heightMap) return
+		setExporting(true)
+		try {
+			const res = await fetch('http://localhost:3001/api/export/stl', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					heightMap,
+					ringRadius: 1,
+					tubeRadius: ringWidth / 10,
+					reliefHeight: reliefHeight / 20,
+					segments: 256,
+				}),
+			})
+			const blob = await res.blob()
+			const url = URL.createObjectURL(blob)
+			const a = document.createElement('a')
+			a.href = url
+			a.download = `favplace-${location?.name ?? 'ring'}.stl`
+			a.click()
+			URL.revokeObjectURL(url)
+		} finally {
+			setExporting(false)
+		}
+	}
 
 	return (
 		<div className="flex flex-1 flex-col items-center gap-8 px-6 py-10">
@@ -99,6 +129,14 @@ export function SummaryStep() {
 
 				<button className="w-full rounded-lg bg-amber-500 py-4 text-lg font-bold text-zinc-950 transition hover:bg-amber-400">
 					Оформить заказ
+				</button>
+
+				<button
+					onClick={exportSTL}
+					disabled={!heightMap || exporting}
+					className="w-full rounded-lg border border-zinc-700 py-3 font-semibold text-zinc-300 transition hover:bg-zinc-800 disabled:opacity-50"
+				>
+					{exporting ? 'Генерируем...' : '⬇ Скачать STL для 3D-печати'}
 				</button>
 
 				<button
