@@ -63,7 +63,7 @@ export function LocationStep() {
 		reader.onload = async () => {
 			const base64 = (reader.result as string).split(',')[1]
 			try {
-				const res = await fetch('http://localhost:3001/api/ai/identify-place', {
+				const res = await fetch('/api/ai/identify-place', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({ image: base64 }),

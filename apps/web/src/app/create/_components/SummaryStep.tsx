@@ -24,7 +24,7 @@ export function SummaryStep() {
 		if (!heightMap) return
 		setExporting(true)
 		try {
-			const res = await fetch('http://localhost:3001/api/export/stl', {
+			const res = await fetch('/api/export/stl', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
