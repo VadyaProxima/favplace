@@ -1,6 +1,6 @@
 'use client'
 
-import { buildRingBand, buildTerrainPlate } from '@/lib/ringGeometry'
+import { buildReliefPlate } from '@/lib/reliefGeometry'
 import { useAppStore } from '@/store/useAppStore'
 import { MATERIALS } from '@favplace/shared'
 import { ContactShadows, Environment, OrbitControls } from '@react-three/drei'
@@ -12,10 +12,7 @@ function easeOutCubic(t: number): number {
 	return 1 - Math.pow(1 - t, 3)
 }
 
-const RING_RADIUS = 1
-const TUBE_RADIUS = 0.07
-
-function RingGroup() {
+function ReliefPlate() {
 	const groupRef = useRef<THREE.Group>(null)
 	const heightMap = useAppStore(s => s.heightMap)
 	const material = useAppStore(s => s.material)
@@ -31,62 +28,45 @@ function RingGroup() {
 	}, [heightMap])
 
 	const mat = MATERIALS[material]
-	const roughness = surfaceFinish === 'matte' ? 0.6 : mat.roughness
-	const targetRelief = reliefHeight / 20
+	const roughness = surfaceFinish === 'matte' ? 0.55 : mat.roughness
+	// store reliefHeight is in mm-ish units (~1.5); scale to scene units
+	const targetRelief = 0.25 + reliefHeight * 0.18
 
-	const bandGeometry = useMemo(
-		() => buildRingBand(RING_RADIUS, TUBE_RADIUS),
-		[],
-	)
-
-	const plateGeometry = useMemo(() => {
+	const geometry = useMemo(() => {
 		if (!heightMap || heightMap.length === 0) return null
 		const eased = easeOutCubic(animProgress)
-		const currentRelief = eased * targetRelief
-		return buildTerrainPlate(heightMap, {
-			ringRadius: RING_RADIUS,
-			tubeRadius: TUBE_RADIUS,
-			plateWidth: 0.14,
-			plateLength: 0.45,
-			plateThickness: 0.012,
-			reliefHeight: currentRelief,
-			gridX: 64,
-			gridZ: 128,
+		return buildReliefPlate(heightMap, {
+			plateWidth: 2,
+			plateLength: 2,
+			plateThickness: 0.16,
+			reliefHeight: eased * targetRelief,
+			gridX: 180,
+			gridZ: 180,
 		})
 	}, [heightMap, animProgress, targetRelief])
 
 	useFrame((_, delta) => {
 		if (animRef.current < 1) {
-			animRef.current = Math.min(animRef.current + delta * 0.7, 1)
+			animRef.current = Math.min(animRef.current + delta * 0.8, 1)
 			setAnimProgress(animRef.current)
 		}
 		if (groupRef.current) {
-			groupRef.current.rotation.y += delta * 0.15
+			groupRef.current.rotation.y += delta * 0.12
 		}
 	})
 
 	return (
-		<group ref={groupRef}>
-			<mesh geometry={bandGeometry} castShadow receiveShadow>
-				<meshPhysicalMaterial
-					color={mat.color}
-					metalness={mat.metalness}
-					roughness={roughness}
-					envMapIntensity={1.5}
-					clearcoat={surfaceFinish === 'polished' ? 0.3 : 0}
-					clearcoatRoughness={0.1}
-				/>
-			</mesh>
-
-			{plateGeometry && (
-				<mesh geometry={plateGeometry} castShadow receiveShadow>
+		<group ref={groupRef} rotation={[-0.35, 0, 0]}>
+			{geometry && (
+				<mesh geometry={geometry} castShadow receiveShadow>
 					<meshPhysicalMaterial
 						color={mat.color}
 						metalness={mat.metalness}
 						roughness={roughness}
-						envMapIntensity={1.5}
-						clearcoat={surfaceFinish === 'polished' ? 0.3 : 0}
-						clearcoatRoughness={0.1}
+						envMapIntensity={1.4}
+						clearcoat={surfaceFinish === 'polished' ? 0.35 : 0}
+						clearcoatRoughness={0.12}
+						flatShading={false}
 					/>
 				</mesh>
 			)}
@@ -97,24 +77,24 @@ function RingGroup() {
 function Scene() {
 	return (
 		<>
-			<ambientLight intensity={0.4} />
+			<ambientLight intensity={0.45} />
 			<directionalLight
-				position={[5, 8, 5]}
-				intensity={1.5}
+				position={[4, 8, 5]}
+				intensity={1.8}
 				castShadow
 				shadow-mapSize-width={1024}
 				shadow-mapSize-height={1024}
 			/>
-			<pointLight position={[-5, 3, -5]} intensity={0.6} color="#fff5e0" />
-			<pointLight position={[3, -2, 4]} intensity={0.3} color="#e0f0ff" />
+			<pointLight position={[-5, 3, -4]} intensity={0.5} color="#fff5e0" />
+			<pointLight position={[3, -1, 4]} intensity={0.25} color="#e0f0ff" />
 
-			<RingGroup />
+			<ReliefPlate />
 
 			<ContactShadows
-				position={[0, -0.5, 0]}
-				opacity={0.4}
-				scale={5}
-				blur={2.5}
+				position={[0, -0.02, 0]}
+				opacity={0.45}
+				scale={6}
+				blur={2.4}
 				far={4}
 			/>
 
@@ -122,10 +102,10 @@ function Scene() {
 
 			<OrbitControls
 				enablePan={false}
-				minDistance={1.5}
-				maxDistance={5}
+				minDistance={2}
+				maxDistance={7}
 				minPolarAngle={Math.PI / 6}
-				maxPolarAngle={Math.PI / 2.2}
+				maxPolarAngle={Math.PI / 2.05}
 			/>
 		</>
 	)
@@ -136,11 +116,11 @@ export function RingViewer({ className = '' }: { className?: string }) {
 		<div className={`absolute inset-0 ${className}`}>
 			<Canvas
 				shadows
-				camera={{ position: [1.5, 1.5, 2.5], fov: 35 }}
+				camera={{ position: [0, 2.2, 3.4], fov: 32 }}
 				gl={{
 					antialias: true,
 					toneMapping: THREE.ACESFilmicToneMapping,
-					toneMappingExposure: 1.2,
+					toneMappingExposure: 1.15,
 				}}
 			>
 				<Scene />
