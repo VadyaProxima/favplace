@@ -6,13 +6,29 @@ export interface TileCoord {
   z: number;
 }
 
+export type DemProvider = "mapbox" | "terrarium";
+
 const TERRARIUM_BASE = "https://s3.amazonaws.com/elevation-tiles-prod/terrarium";
+const MAPBOX_DEM_TILESET = "mapbox.mapbox-terrain-dem-v1";
+
+/** Logical tile size in Mapbox Terrain-DEM (@2x PNG is 1024 px). */
+export const MAPBOX_DEM_LOGICAL_SIZE = 512;
+
+/** Web Mercator world-fraction X ([0..1], 0 = -180°, 1 = +180°) for a longitude. */
+export function lngToWorldX(lng: number): number {
+  return (lng + 180) / 360;
+}
+
+/** Web Mercator world-fraction Y ([0..1], 0 = north pole, 1 = south pole) for a latitude. */
+export function latToWorldY(lat: number): number {
+  const latRad = (lat * Math.PI) / 180;
+  return (1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2;
+}
 
 export function latLngToTile(lat: number, lng: number, zoom: number): { x: number; y: number } {
   const n = Math.pow(2, zoom);
-  const x = Math.floor(((lng + 180) / 360) * n);
-  const latRad = (lat * Math.PI) / 180;
-  const y = Math.floor(((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2) * n);
+  const x = Math.floor(lngToWorldX(lng) * n);
+  const y = Math.floor(latToWorldY(lat) * n);
   return { x, y };
 }
 
@@ -52,21 +68,102 @@ export function getTilesForBounds(
   return tiles;
 }
 
-export function getZoomForRadius(radiusMeters: number): number {
-  if (radiusMeters <= 200) return 14;
-  if (radiusMeters <= 500) return 13;
-  if (radiusMeters <= 1000) return 12;
-  if (radiusMeters <= 2000) return 11;
-  if (radiusMeters <= 5000) return 10;
-  if (radiusMeters <= 10000) return 9;
-  return 8;
+export function getDemProvider(): DemProvider {
+	const raw = process.env.MAPBOX_ACCESS_TOKEN?.trim()
+	const token = raw?.split(/\s+/)[0]
+	if (!token) {
+		throw new Error('MAPBOX_ACCESS_TOKEN is not set')
+	}
+	return 'mapbox'
 }
 
-export async function fetchTile(tile: TileCoord): Promise<Buffer> {
-  const url = `${TERRARIUM_BASE}/${tile.z}/${tile.x}/${tile.y}.png`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Failed to fetch tile ${tile.z}/${tile.x}/${tile.y}: ${res.status}`);
-  return Buffer.from(await res.arrayBuffer());
+export function getMapboxAccessToken(): string {
+	const raw = process.env.MAPBOX_ACCESS_TOKEN?.trim()
+	const token = raw?.split(/\s+/)[0]
+	if (!token) {
+		throw new Error('MAPBOX_ACCESS_TOKEN is not set')
+	}
+	return token
+}
+
+export function getZoomForRadius(
+  radiusMeters: number,
+  centerLat: number,
+  provider: DemProvider = getDemProvider(),
+): number {
+  const maxZ = provider === "mapbox" ? 15 : 14;
+  const latDeg = (radiusMeters / 111_320) * 2;
+  const lngDeg =
+    (radiusMeters / (111_320 * Math.cos((centerLat * Math.PI) / 180))) * 2;
+  const longestEdgeDeg = Math.max(latDeg, lngDeg);
+  const adaptive = Math.floor(Math.log2(1440 / Math.max(longestEdgeDeg, 1e-6)));
+
+  let z: number;
+  if (radiusMeters <= 100) z = 15;
+  else if (radiusMeters <= 200) z = 14;
+  else if (radiusMeters <= 500) z = 13;
+  else if (radiusMeters <= 1000) z = 12;
+  else if (radiusMeters <= 2000) z = 11;
+  else if (radiusMeters <= 5000) z = 10;
+  else if (radiusMeters <= 10000) z = 9;
+  else z = 8;
+
+  return Math.min(maxZ, Math.max(1, Math.min(z, adaptive)));
+}
+
+const tileCache = new Map<string, Buffer>();
+const TILE_CACHE_MAX = 256;
+
+function cacheKey(provider: DemProvider, tile: TileCoord) {
+  return `${provider}/${tile.z}/${tile.x}/${tile.y}`;
+}
+
+function mapboxTileUrl(tile: TileCoord, token: string) {
+  return `https://api.mapbox.com/v4/${MAPBOX_DEM_TILESET}/${tile.z}/${tile.x}/${tile.y}@2x.pngraw?access_token=${token}`;
+}
+
+export async function fetchTile(
+  tile: TileCoord,
+  provider: DemProvider = getDemProvider(),
+): Promise<Buffer> {
+  if (provider !== "mapbox") {
+    throw new Error("Only Mapbox Terrain-DEM is supported");
+  }
+
+  const key = cacheKey(provider, tile);
+  const cached = tileCache.get(key);
+  if (cached) return cached;
+
+  const token = getMapboxAccessToken();
+  const url = mapboxTileUrl(tile, token);
+
+  const maxAttempts = 3;
+  let lastErr: unknown;
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    try {
+      const res = await fetch(url, { signal: AbortSignal.timeout(20000) });
+      if (res.ok) {
+        const buf = Buffer.from(await res.arrayBuffer());
+        if (tileCache.size >= TILE_CACHE_MAX) {
+          const oldest = tileCache.keys().next().value;
+          if (oldest) tileCache.delete(oldest);
+        }
+        tileCache.set(key, buf);
+        return buf;
+      }
+      // Невалидный токен — ретраи бессмысленны
+      if (res.status === 401 || res.status === 403) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+      lastErr = new Error(`HTTP ${res.status}`);
+    } catch (err) {
+      lastErr = err;
+      if ((err as Error)?.message?.includes("HTTP 401") || (err as Error)?.message?.includes("HTTP 403")) {
+        break;
+      }
+    }
+  }
+  throw new Error(`Failed to fetch tile ${key}: ${(lastErr as Error)?.message}`);
 }
 
 export function decodeTerrarium(pngBuffer: Buffer): { data: Float32Array; width: number; height: number } {
@@ -82,4 +179,37 @@ export function decodeTerrarium(pngBuffer: Buffer): { data: Float32Array; width:
   }
 
   return { data: elevations, width, height };
+}
+
+/** Mapbox Terrain-DEM / Terrain-RGB decoding (0.1 m steps). */
+export function decodeMapboxDem(pngBuffer: Buffer): {
+  data: Float32Array;
+  width: number;
+  height: number;
+  logicalWidth: number;
+} {
+  const png = PNG.sync.read(pngBuffer);
+  const { width, height, data } = png;
+  const elevations = new Float32Array(width * height);
+
+  for (let i = 0; i < width * height; i++) {
+    const r = data[i * 4];
+    const g = data[i * 4 + 1];
+    const b = data[i * 4 + 2];
+    elevations[i] = -10000 + (65536 * r + 256 * g + b) * 0.1;
+  }
+
+  const logicalWidth = width >= MAPBOX_DEM_LOGICAL_SIZE * 1.5 ? MAPBOX_DEM_LOGICAL_SIZE : width;
+  return { data: elevations, width, height, logicalWidth };
+}
+
+export function decodeDemTile(
+  pngBuffer: Buffer,
+  provider: DemProvider,
+): { data: Float32Array; width: number; height: number; logicalWidth: number } {
+  if (provider === "mapbox") {
+    return decodeMapboxDem(pngBuffer);
+  }
+  const decoded = decodeTerrarium(pngBuffer);
+  return { ...decoded, logicalWidth: decoded.width };
 }

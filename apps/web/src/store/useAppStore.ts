@@ -1,7 +1,8 @@
 import { create } from "zustand";
 import type { MaterialType, SurfaceFinish, Coordinates, Location } from "@favplace/shared";
 
-export type Step = "location" | "scale" | "preview" | "material" | "engraving" | "summary";
+export type Step = "studio" | "material" | "engraving" | "summary";
+export type ReliefDetail = "low" | "medium" | "high";
 
 interface AppState {
   step: Step;
@@ -9,6 +10,7 @@ interface AppState {
 
   location: Location | null;
   setLocation: (location: Location) => void;
+  setCoordinates: (lat: number, lng: number) => void;
 
   radius: number;
   setRadius: (radius: number) => void;
@@ -28,6 +30,9 @@ interface AppState {
   reliefHeight: number;
   setReliefHeight: (height: number) => void;
 
+  reliefDetail: ReliefDetail;
+  setReliefDetail: (detail: ReliefDetail) => void;
+
   engraving: string;
   setEngraving: (text: string) => void;
 
@@ -39,16 +44,22 @@ interface AppState {
 }
 
 export const useAppStore = create<AppState>((set) => ({
-  step: "location",
+  step: "studio",
   setStep: (step) => set({ step }),
 
   location: null,
   setLocation: (location) => set({ location }),
+  setCoordinates: (lat, lng) =>
+    set((s) => ({
+      location: s.location
+        ? { ...s.location, coordinates: { lat, lng } }
+        : { id: crypto.randomUUID(), name: 'Выбранное место', country: '', coordinates: { lat, lng } },
+    })),
 
   radius: 500,
   setRadius: (radius) => set({ radius }),
 
-  material: "gold",
+  material: "silver",
   setMaterial: (material) => set({ material }),
 
   surfaceFinish: "polished",
@@ -60,8 +71,11 @@ export const useAppStore = create<AppState>((set) => ({
   ringWidth: 4,
   setRingWidth: (ringWidth) => set({ ringWidth }),
 
-  reliefHeight: 1.5,
+  reliefHeight: 2,
   setReliefHeight: (reliefHeight) => set({ reliefHeight }),
+
+  reliefDetail: "medium",
+  setReliefDetail: (reliefDetail) => set({ reliefDetail }),
 
   engraving: "",
   setEngraving: (engraving) => set({ engraving }),

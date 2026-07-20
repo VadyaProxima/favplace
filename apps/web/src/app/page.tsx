@@ -24,7 +24,7 @@ const steps = [
 	},
 	{
 		icon: '💍',
-		title: 'Создайте кольцо',
+		title: 'Создайте изделие',
 		desc: 'Золото, серебро или платина с реальным рельефом местности',
 	},
 ]
@@ -32,8 +32,6 @@ const steps = [
 export default function Home() {
 	return (
 		<main className="relative min-h-screen overflow-hidden">
-			<div className="absolute inset-0 bg-gradient-to-b from-amber-500/5 via-transparent to-transparent" />
-
 			<div className="relative mx-auto flex min-h-screen max-w-4xl flex-col items-center justify-center px-6">
 				<motion.div
 					className="mb-6 text-7xl"
@@ -45,25 +43,23 @@ export default function Home() {
 				</motion.div>
 
 				<motion.h1
-					className="mb-4 text-center text-6xl font-bold tracking-tight"
+					className="mb-4 text-center text-6xl font-semibold tracking-tight text-zinc-900"
 					custom={0}
 					variants={fadeUp}
 					initial="hidden"
 					animate="visible"
 				>
-					<span className="bg-gradient-to-r from-amber-300 via-amber-500 to-amber-300 bg-clip-text text-transparent">
-						Favplace
-					</span>
+					Favplace
 				</motion.h1>
 
 				<motion.p
-					className="mb-2 text-center text-xl text-zinc-300"
+					className="mb-2 text-center text-xl text-zinc-700"
 					custom={1}
 					variants={fadeUp}
 					initial="hidden"
 					animate="visible"
 				>
-					Кольцо с рельефом вашего любимого места
+					Рельеф вашего любимого места в металле
 				</motion.p>
 
 				<motion.p
@@ -73,21 +69,21 @@ export default function Home() {
 					initial="hidden"
 					animate="visible"
 				>
-					Настоящая топография, превращённая в ювелирное изделие. Каждая линия
-					рельефа — реальные данные спутников.
+					Настоящая топография, превращённая в изделие. Каждая линия рельефа —
+					реальные данные спутников.
 				</motion.p>
 
 				<motion.a
 					href="/create"
-					className="rounded-full bg-amber-500 px-10 py-4 text-lg font-semibold text-zinc-950 transition hover:bg-amber-400 hover:shadow-lg hover:shadow-amber-500/25"
+					className="rounded-100 bg-zinc-900 px-10 py-4 text-lg font-medium text-white transition hover:bg-zinc-700"
 					custom={3}
 					variants={fadeUp}
 					initial="hidden"
 					animate="visible"
-					whileHover={{ scale: 1.05 }}
-					whileTap={{ scale: 0.95 }}
+					whileHover={{ scale: 1.03 }}
+					whileTap={{ scale: 0.97 }}
 				>
-					Создать кольцо
+					Создать
 				</motion.a>
 
 				<motion.div
@@ -100,28 +96,26 @@ export default function Home() {
 					{steps.map(step => (
 						<motion.div
 							key={step.title}
-							className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 backdrop-blur"
-							whileHover={{ y: -4, borderColor: 'rgba(245, 158, 11, 0.3)' }}
+							className="rounded-xl border border-zinc-200 bg-white p-6"
+							whileHover={{ y: -4, borderColor: 'rgba(0,0,0,0.2)' }}
 							transition={{ duration: 0.2 }}
 						>
 							<div className="mb-3 text-3xl">{step.icon}</div>
-							<h3 className="mb-1 font-semibold">{step.title}</h3>
-							<p className="text-sm text-zinc-400">{step.desc}</p>
+							<h3 className="mb-1 font-semibold text-zinc-900">{step.title}</h3>
+							<p className="text-sm text-zinc-500">{step.desc}</p>
 						</motion.div>
 					))}
 				</motion.div>
 
-				<motion.div
-					className="mt-16 mb-8 text-center"
+				<motion.p
+					className="mt-16 mb-8 text-center text-sm text-zinc-400"
 					custom={5}
 					variants={fadeUp}
 					initial="hidden"
 					animate="visible"
 				>
-					<p className="text-sm text-zinc-600">
-						Данные из NASA SRTM • Three.js рендеринг • Ювелирное качество
-					</p>
-				</motion.div>
+					Данные рельефа • Three.js рендеринг • Ювелирное качество
+				</motion.p>
 			</div>
 		</main>
 	)
