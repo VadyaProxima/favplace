@@ -20,6 +20,8 @@ export class TerrainService {
 				minElevation: raw.minElevation,
 				maxElevation: raw.maxElevation,
 				elevationRange: raw.maxElevation - raw.minElevation,
+				demSource: raw.demSource ?? 'mapbox',
+				tileZoom: raw.tileZoom ?? 0,
 			},
 		}
 	}

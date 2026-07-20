@@ -1,1 +1,56 @@
 @import "tailwindcss";
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body {
+  background: #fafafa;
+  color: #18181b;
+}
+
+body {
+  font-feature-settings: "ss01", "cv01", "cv11";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: #18181b;
+  color: #fafafa;
+}
+
+/* slim scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.18) transparent;
+}
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+*::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.18);
+  border-radius: 9999px;
+}
+
+/* range slider — minimalist dark thumb on light track */
+input[type="range"] {
+  height: 2px;
+  background: rgba(0, 0, 0, 0.12);
+  border-radius: 9999px;
+  appearance: none;
+}
+input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+  background: #18181b;
+  cursor: pointer;
+}
+
+.maplibregl-ctrl-attrib {
+  display: none;
+}

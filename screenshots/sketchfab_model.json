@@ -1,0 +1,1008 @@
+{
+  "uid": "aca7259eedfa40bda7ec9899b54d0bb8",
+  "user": {
+    "account": "basic",
+    "avatars": {
+      "uid": "c0a85f9489f24a7e9b873ad048222d7d",
+      "images": [
+        {
+          "width": 32,
+          "height": 32,
+          "size": 1467,
+          "url": "https://media.sketchfab.com/avatars/c0a85f9489f24a7e9b873ad048222d7d/19a83a13a8fa4b73ae5ff3b6116a0311.png"
+        },
+        {
+          "width": 48,
+          "height": 48,
+          "size": 2643,
+          "url": "https://media.sketchfab.com/avatars/c0a85f9489f24a7e9b873ad048222d7d/ebf0cdbb175542fdb44d145bf524a2ec.png"
+        },
+        {
+          "width": 90,
+          "height": 90,
+          "size": 5803,
+          "url": "https://media.sketchfab.com/avatars/c0a85f9489f24a7e9b873ad048222d7d/21c52fbd456249ba9524ad41994810a5.png"
+        },
+        {
+          "width": 100,
+          "height": 100,
+          "size": 6575,
+          "url": "https://media.sketchfab.com/avatars/c0a85f9489f24a7e9b873ad048222d7d/09ba8bfc613a4469ab74f811416eb9ea.png"
+        }
+      ]
+    },
+    "displayName": "CYRUS_NATURAL_GOLD",
+    "isAiRestricted": false,
+    "traderSettings": {
+      "isTrader": null,
+      "isVerifiedTrader": false
+    },
+    "planDetail": null,
+    "profileUrl": "https://sketchfab.com/CYRUS_NATURAL_GOLD",
+    "uid": "74b1381a02fe47a8a68594baeb6d7f56",
+    "username": "CYRUS_NATURAL_GOLD"
+  },
+  "name": "classic signet ring",
+  "description": "",
+  "thumbnails": {
+    "uid": "d52a1733d57149fd891a7ee6ab33c8bf",
+    "images": [
+      {
+        "uid": "0f5fed3e58744ee2bc32d7c8961814b1",
+        "width": 1920,
+        "height": 1080,
+        "size": 289297,
+        "url": "https://media.sketchfab.com/models/aca7259eedfa40bda7ec9899b54d0bb8/thumbnails/d52a1733d57149fd891a7ee6ab33c8bf/46bd1bc055564fd7bd49f6b11be68043.jpeg"
+      },
+      {
+        "uid": "5595dfbef3894bdab43c32e84578b618",
+        "width": 1024,
+        "height": 576,
+        "size": 82343,
+        "url": "https://media.sketchfab.com/models/aca7259eedfa40bda7ec9899b54d0bb8/thumbnails/d52a1733d57149fd891a7ee6ab33c8bf/de879c986f73422f9d5c901c6eba0d09.jpeg"
+      },
+      {
+        "uid": "206c0f20a9ee4d4989e6d0c657c591e2",
+        "width": 720,
+        "height": 405,
+        "size": 39832,
+        "url": "https://media.sketchfab.com/models/aca7259eedfa40bda7ec9899b54d0bb8/thumbnails/d52a1733d57149fd891a7ee6ab33c8bf/9a6887cefe254be09dddf88e903af747.jpeg"
+      },
+      {
+        "uid": "2c272045e00f43c9bfbfe22a1dbff51c",
+        "width": 256,
+        "height": 144,
+        "size": 5937,
+        "url": "https://media.sketchfab.com/models/aca7259eedfa40bda7ec9899b54d0bb8/thumbnails/d52a1733d57149fd891a7ee6ab33c8bf/53492528835a4b1a8e01ba913d047dcb.jpeg"
+      },
+      {
+        "uid": "72404d1ecedf422a84db57fe62a9b07f",
+        "width": 64,
+        "height": 36,
+        "size": 1233,
+        "url": "https://media.sketchfab.com/models/aca7259eedfa40bda7ec9899b54d0bb8/thumbnails/d52a1733d57149fd891a7ee6ab33c8bf/60520c82b559405ba99695d7a59e1647.jpeg"
+      }
+    ]
+  },
+  "viewCount": 124,
+  "likeCount": 0,
+  "animationCount": 0,
+  "vertexCount": 2090794,
+  "faceCount": 4181476,
+  "staffpickedAt": null,
+  "publishedAt": "2022-10-03T14:40:26.135282",
+  "viewerUrl": "https://sketchfab.com/3d-models/classic-signet-ring-aca7259eedfa40bda7ec9899b54d0bb8",
+  "embedUrl": "https://sketchfab.com/models/aca7259eedfa40bda7ec9899b54d0bb8/embed",
+  "editorUrl": "https://sketchfab.com/models/aca7259eedfa40bda7ec9899b54d0bb8/edit",
+  "license": null,
+  "isPublished": true,
+  "downloadType": "no",
+  "isInspectable": true,
+  "isDeleted": false,
+  "processingStatus": 2,
+  "processedAt": "2022-10-03T14:32:35.112675",
+  "status": {
+    "processing": "SUCCEEDED"
+  },
+  "isRestricted": false,
+  "files": [
+    {
+      "uid": "dc81cac970964eedae7450fdf002996c",
+      "flag": 0,
+      "osgjsUrl": "https://media.sketchfab.com/models/aca7259eedfa40bda7ec9899b54d0bb8/189b60c7bd4746e5a24833ee0c9d64cb/files/dc81cac970964eedae7450fdf002996c/file.binz",
+      "modelSize": 28094518,
+      "osgjsSize": 22673,
+      "wireframeSize": 25202564,
+      "p": [
+        {
+          "v": 1,
+          "b": "kikUHYEY6/gZLroUVgnWws02/tVdjQ9axx+5u+WZj18mddKusSYQ46Jvi2EaWUJaSwhfgVQYQyGk\n1DFJwl/txNhJkOoszOt/xsjeUsoUNwA4ADwAXOKdO4LssU45dvz/zQnlT5poUO48GP+H+t/3J3fO\ncUTBcqDVgCbBwKE0gVUEg8aYHEgP0BWCDq9NpI/SQP3LN0eKqNoUWlRtnlYTHemGQrwP+8nneYam\nMJ7mI6BGt3SOuY517BjkUMoJ41mJQzgMYUrW4NEp2aejxSI9dItFAv2sEcPNOXZcLgG643oBmUr6\nX8j0J+WaEjq8yPQfaulP+//KqwWJANFrC1sU+gaaQNPV1+YVm+s/m5P8XEGYcXYVgKaqqwU8jU45\nerxTxTPr+MSc3aO0DfX7MXGBQ8dEBR8dHSjAoqGjG3CITY7GF3roGlgdmjMnNselSECuyQEfCxOz\n6RaYbdoYbqYS8CG1adE21H+QBo8YCJQpolEejTs6wNA8",
+          "d": true
+        }
+      ]
+    }
+  ],
+  "options": {
+    "scene": {
+      "postProcess": {
+        "dof": {
+          "enable": false,
+          "blurFar": 0.5,
+          "blurNear": 0.5,
+          "focusPoint": [
+            0,
+            0,
+            0
+          ]
+        },
+        "ssr": {
+          "enable": true,
+          "factor": 0.378
+        },
+        "taa": {
+          "enable": true,
+          "transparent": true
+        },
+        "ssao": {
+          "bias": 0.4,
+          "enable": true,
+          "radius": 4.647404847846302,
+          "intensity": 1
+        },
+        "bloom": {
+          "enable": true,
+          "factor": 0.556,
+          "radius": 0.033,
+          "threshold": 0.776
+        },
+        "grain": {
+          "enable": false,
+          "factor": 0.15,
+          "animated": false
+        },
+        "enable": true,
+        "sharpen": {
+          "enable": false,
+          "factor": 0.2
+        },
+        "vignette": {
+          "amount": 0.475,
+          "enable": false,
+          "hardness": 0.725
+        },
+        "toneMapping": {
+          "enable": true,
+          "method": "default",
+          "contrast": 0,
+          "exposure": 1.211,
+          "brightness": 0,
+          "saturation": 0.92
+        },
+        "colorBalance": {
+          "low": [
+            0,
+            0,
+            0
+          ],
+          "mid": [
+            0,
+            0,
+            0
+          ],
+          "high": [
+            0,
+            0,
+            0
+          ],
+          "enable": false
+        },
+        "chromaticAberration": {
+          "enable": true,
+          "factor": 0.0022
+        }
+      },
+      "sssProfiles": [
+        {
+          "falloff": [
+            1,
+            0.37,
+            0.3
+          ],
+          "strength": [
+            0.48,
+            0.41,
+            0.28
+          ]
+        },
+        {
+          "falloff": [
+            0.5,
+            0.67,
+            0.6
+          ],
+          "strength": [
+            0.38,
+            0.61,
+            0.68
+          ]
+        },
+        {
+          "falloff": [
+            0.7,
+            0.77,
+            0.3
+          ],
+          "strength": [
+            0.88,
+            0.61,
+            0.28
+          ]
+        }
+      ]
+    },
+    "lighting": {
+      "enable": false,
+      "lights": [
+        {
+          "type": "DIRECTION",
+          "angle": 45,
+          "color": [
+            0.7806122448979592,
+            0.7985214493960848,
+            1
+          ],
+          "enable": true,
+          "ground": [
+            0.3,
+            0.2,
+            0.2
+          ],
+          "matrix": [
+            -0.9815804500275482,
+            0.1909922167095499,
+            -0.004668327333101102,
+            0,
+            0.13548347102422797,
+            0.7131126062169096,
+            0.6878332937084056,
+            0,
+            0.13469984856318096,
+            0.6745312327912614,
+            -0.7258536813891331,
+            0,
+            19.964272611789546,
+            100.25183026366014,
+            16.663800559879647,
+            1
+          ],
+          "falloff": 0.00011303658768220369,
+          "hardness": 0.5,
+          "intensity": 0.96,
+          "shadowBias": 0.005,
+          "castShadows": false,
+          "intensityGround": 1,
+          "attachedToCamera": false
+        },
+        {
+          "type": "DIRECTION",
+          "angle": 45,
+          "color": [
+            1,
+            0.8783319450229073,
+            0.7091836734693877
+          ],
+          "enable": true,
+          "ground": [
+            0.3,
+            0.2,
+            0.2
+          ],
+          "matrix": [
+            0.7755211495104662,
+            -0.0666602860002539,
+            0.6277924441503967,
+            0,
+            0.2690483737361956,
+            0.9344846523281437,
+            -0.233133882464682,
+            0,
+            -0.5711216326246741,
+            0.3497067926613838,
+            0.7426474533145686,
+            0,
+            -85.0033489365783,
+            51.944928575386406,
+            235.0548179195526,
+            1
+          ],
+          "falloff": 0.00011303658768220369,
+          "hardness": 0.5,
+          "intensity": 1,
+          "shadowBias": 0.005,
+          "castShadows": false,
+          "intensityGround": 1,
+          "attachedToCamera": false
+        },
+        {
+          "type": "DIRECTION",
+          "angle": 45,
+          "color": [
+            0.423469387755102,
+            0.7352665556018328,
+            1
+          ],
+          "enable": true,
+          "ground": [
+            0.9642857142857143,
+            0.6484128636877489,
+            0.2607507288629738
+          ],
+          "matrix": [
+            0.6903299131022926,
+            -0.7076363669144057,
+            -0.15064986988498263,
+            0,
+            -0.011089698239978026,
+            0.19785137301620165,
+            -0.9801692980238416,
+            0,
+            0.7234097246160907,
+            0.6783108479272498,
+            0.12873524736872857,
+            0,
+            107.51541283397478,
+            100.81392311825168,
+            143.7556639334817,
+            1
+          ],
+          "falloff": 0.00011303658768220369,
+          "hardness": 0.5,
+          "intensity": 0.12,
+          "shadowBias": 0.005,
+          "castShadows": false,
+          "intensityGround": 0.06,
+          "attachedToCamera": false
+        }
+      ]
+    },
+    "shading": {
+      "type": "lit",
+      "renderer": "pbr",
+      "pointSize": 2,
+      "vertexColor": {
+        "enable": false,
+        "useAlpha": false,
+        "colorSpace": "srgb"
+      }
+    },
+    "orientation": {
+      "matrix": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    "camera": {
+      "up": 1.555089,
+      "fov": 1,
+      "down": -1.555089,
+      "left": -3.141593,
+      "right": 3.141593,
+      "target": [
+        -0.246762575894068,
+        19.086398894932906,
+        136.43777394416261
+      ],
+      "zoomIn": 0,
+      "zoomOut": 25095.986178370033,
+      "position": [
+        -115.26286655257206,
+        -10271.173974937601,
+        16427.337479358626
+      ],
+      "nearFarRatio": 0.005,
+      "usePanConstraints": true,
+      "useYawConstraints": false,
+      "useZoomConstraints": false,
+      "usePitchConstraints": false,
+      "useCameraConstraints": false
+    },
+    "wireframe": {
+      "color": "000000FF",
+      "enable": false
+    },
+    "materials": {
+      "updatedAt": 16648080249,
+      "93365d88-6bf0-43c5-b801-db555347a7ce": {
+        "id": "93365d88-6bf0-43c5-b801-db555347a7ce",
+        "name": "Yellow_gold_14K",
+        "version": 3,
+        "channels": {
+          "AOPBR": {
+            "enable": false,
+            "factor": 1,
+            "occludeSpecular": false
+          },
+          "Sheen": {
+            "enable": false,
+            "factor": 1,
+            "colorFactor": [
+              1,
+              1,
+              1
+            ]
+          },
+          "Matcap": {
+            "color": [
+              1,
+              1,
+              1
+            ],
+            "enable": true,
+            "factor": 1,
+            "texture": {
+              "uid": "35c4d334eded44d8a657f390954a32dd",
+              "wrapS": "REPEAT",
+              "wrapT": "REPEAT",
+              "magFilter": "LINEAR",
+              "minFilter": "LINEAR_MIPMAP_LINEAR",
+              "texCoordUnit": 0,
+              "textureTarget": "TEXTURE_2D",
+              "internalFormat": "RGB"
+            },
+            "curvature": 0,
+            "UVTransforms": {
+              "scale": [
+                1,
+                1
+              ],
+              "offset": [
+                0,
+                0
+              ],
+              "rotation": 0
+            }
+          },
+          "BumpMap": {
+            "enable": true,
+            "factor": 1,
+            "texture": {
+              "uid": "2a8be0f4ced84c78841830440ce37f31",
+              "wrapS": "REPEAT",
+              "wrapT": "REPEAT",
+              "magFilter": "LINEAR",
+              "minFilter": "LINEAR_MIPMAP_LINEAR",
+              "texCoordUnit": 0,
+              "textureTarget": "TEXTURE_2D",
+              "internalFormat": "LUMINANCE"
+            },
+            "UVTransforms": {
+              "scale": [
+                37.85000000000001,
+                8.56
+              ],
+              "offset": [
+                0,
+                0
+              ],
+              "rotation": 4.658283773572865
+            }
+          },
+          "Opacity": {
+            "ior": 1.05,
+            "type": "alphaBlend",
+            "enable": false,
+            "factor": 1,
+            "invert": false,
+            "thinLayer": false,
+            "useAlbedoTint": false,
+            "refractionColor": [
+              1,
+              1,
+              1
+            ],
+            "roughnessFactor": 0,
+            "useNormalOffset": false,
+            "useMicrosurfaceTexture": true
+          },
+          "AlbedoPBR": {
+            "color": [
+              1,
+              0.5028864580325685,
+              0.0202885630566524
+            ],
+            "enable": true,
+            "factor": 1
+          },
+          "AlphaMask": {
+            "enable": false,
+            "factor": 1,
+            "invert": false
+          },
+          "CavityPBR": {
+            "enable": false,
+            "factor": 1
+          },
+          "ClearCoat": {
+            "tint": [
+              0.9822505503331171,
+              0.4620769996544071,
+              0
+            ],
+            "enable": true,
+            "factor": 0.151,
+            "thickness": 19.65,
+            "reflectivity": 0
+          },
+          "EmitColor": {
+            "type": "additive",
+            "color": [
+              1,
+              1,
+              1
+            ],
+            "enable": false,
+            "factor": 0
+          },
+          "NormalMap": {
+            "flipY": true,
+            "enable": false,
+            "factor": 1
+          },
+          "Anisotropy": {
+            "enable": false,
+            "factor": 1,
+            "flipXY": true,
+            "direction": 0
+          },
+          "DiffusePBR": {
+            "color": [
+              1,
+              1,
+              1
+            ],
+            "enable": false,
+            "factor": 1
+          },
+          "SpecularF0": {
+            "enable": true,
+            "factor": 1
+          },
+          "SpecularPBR": {
+            "color": [
+              1,
+              1,
+              1
+            ],
+            "enable": false,
+            "factor": 0.05
+          },
+          "DiffuseColor": {
+            "color": [
+              1,
+              1,
+              1
+            ],
+            "enable": true,
+            "factor": 1
+          },
+          "Displacement": {
+            "enable": false,
+            "factor": 0
+          },
+          "MetalnessPBR": {
+            "enable": true,
+            "factor": 1,
+            "texture": {
+              "uid": "2a8be0f4ced84c78841830440ce37f31",
+              "wrapS": "REPEAT",
+              "wrapT": "REPEAT",
+              "magFilter": "LINEAR",
+              "minFilter": "LINEAR_MIPMAP_LINEAR",
+              "texCoordUnit": 0,
+              "textureTarget": "TEXTURE_2D",
+              "internalFormat": "LUMINANCE"
+            },
+            "UVTransforms": {
+              "scale": [
+                1,
+                1
+              ],
+              "offset": [
+                0,
+                0
+              ],
+              "rotation": 0
+            }
+          },
+          "RoughnessPBR": {
+            "enable": false,
+            "factor": 0.6
+          },
+          "GlossinessPBR": {
+            "enable": true,
+            "factor": 1
+          },
+          "SpecularColor": {
+            "color": [
+              0.5,
+              0.5,
+              0.5
+            ],
+            "enable": true,
+            "factor": 0
+          },
+          "SheenRoughness": {
+            "enable": false,
+            "factor": 0.29726439515411796
+          },
+          "DiffuseIntensity": {
+            "color": [
+              1,
+              1,
+              1
+            ],
+            "enable": true,
+            "factor": 1
+          },
+          "SpecularHardness": {
+            "enable": true,
+            "factor": 12.5
+          },
+          "ClearCoatNormalMap": {
+            "flipY": true,
+            "enable": true,
+            "factor": 1
+          },
+          "ClearCoatRoughness": {
+            "enable": true,
+            "factor": 0.279
+          },
+          "SubsurfaceScattering": {
+            "enable": false,
+            "factor": 9.294809695692605,
+            "profile": 1
+          },
+          "SubsurfaceTranslucency": {
+            "color": [
+              1,
+              0.36999999999999983,
+              0.2999999999999998
+            ],
+            "enable": false,
+            "factor": 1,
+            "thicknessFactor": 9.294809695692605
+          }
+        },
+        "cullFace": "DISABLE",
+        "shadeless": false,
+        "reflection": 0.1,
+        "stateSetID": 2
+      },
+      "cbbeba17-a767-4b67-b7e2-d66a13592fac": {
+        "id": "cbbeba17-a767-4b67-b7e2-d66a13592fac",
+        "name": "White_gold_14K",
+        "version": 3,
+        "channels": {
+          "AOPBR": {
+            "enable": false,
+            "factor": 1,
+            "occludeSpecular": false
+          },
+          "Sheen": {
+            "enable": false,
+            "factor": 1,
+            "colorFactor": [
+              1,
+              1,
+              1
+            ]
+          },
+          "Matcap": {
+            "color": [
+              1,
+              1,
+              1
+            ],
+            "enable": true,
+            "factor": 1,
+            "texture": {
+              "uid": "35c4d334eded44d8a657f390954a32dd",
+              "wrapS": "REPEAT",
+              "wrapT": "REPEAT",
+              "magFilter": "LINEAR",
+              "minFilter": "LINEAR_MIPMAP_LINEAR",
+              "texCoordUnit": 0,
+              "textureTarget": "TEXTURE_2D",
+              "internalFormat": "RGB"
+            },
+            "curvature": 0,
+            "UVTransforms": {
+              "scale": [
+                1,
+                1
+              ],
+              "offset": [
+                0,
+                0
+              ],
+              "rotation": 0
+            }
+          },
+          "BumpMap": {
+            "enable": false,
+            "factor": 1
+          },
+          "Opacity": {
+            "ior": 1.05,
+            "type": "alphaBlend",
+            "enable": false,
+            "factor": 1,
+            "invert": false,
+            "thinLayer": false,
+            "useAlbedoTint": false,
+            "refractionColor": [
+              1,
+              1,
+              1
+            ],
+            "roughnessFactor": 0,
+            "useNormalOffset": false,
+            "useMicrosurfaceTexture": true
+          },
+          "AlbedoPBR": {
+            "color": [
+              1,
+              1,
+              1
+            ],
+            "enable": true,
+            "factor": 1
+          },
+          "AlphaMask": {
+            "enable": false,
+            "factor": 1,
+            "invert": false
+          },
+          "CavityPBR": {
+            "enable": false,
+            "factor": 1
+          },
+          "ClearCoat": {
+            "tint": [
+              0.914,
+              0.914,
+              0.914
+            ],
+            "enable": false,
+            "factor": 1,
+            "thickness": 5,
+            "reflectivity": 0
+          },
+          "EmitColor": {
+            "type": "additive",
+            "color": [
+              1,
+              1,
+              1
+            ],
+            "enable": false,
+            "factor": 0
+          },
+          "NormalMap": {
+            "flipY": true,
+            "enable": false,
+            "factor": 1
+          },
+          "Anisotropy": {
+            "enable": false,
+            "factor": 1,
+            "flipXY": true,
+            "direction": 0
+          },
+          "DiffusePBR": {
+            "color": [
+              1,
+              1,
+              1
+            ],
+            "enable": false,
+            "factor": 1
+          },
+          "SpecularF0": {
+            "enable": true,
+            "factor": 1
+          },
+          "SpecularPBR": {
+            "color": [
+              1,
+              1,
+              1
+            ],
+            "enable": false,
+            "factor": 0.05
+          },
+          "DiffuseColor": {
+            "color": [
+              1,
+              1,
+              1
+            ],
+            "enable": true,
+            "factor": 1
+          },
+          "Displacement": {
+            "enable": false,
+            "factor": 0
+          },
+          "MetalnessPBR": {
+            "enable": true,
+            "factor": 1
+          },
+          "RoughnessPBR": {
+            "enable": false,
+            "factor": 0.6
+          },
+          "GlossinessPBR": {
+            "enable": true,
+            "factor": 0.931
+          },
+          "SpecularColor": {
+            "color": [
+              0.5,
+              0.5,
+              0.5
+            ],
+            "enable": true,
+            "factor": 0
+          },
+          "SheenRoughness": {
+            "enable": false,
+            "factor": 1
+          },
+          "DiffuseIntensity": {
+            "color": [
+              1,
+              1,
+              1
+            ],
+            "enable": true,
+            "factor": 1
+          },
+          "SpecularHardness": {
+            "enable": true,
+            "factor": 12.5
+          },
+          "ClearCoatNormalMap": {
+            "flipY": true,
+            "enable": true,
+            "factor": 1
+          },
+          "ClearCoatRoughness": {
+            "enable": true,
+            "factor": 0.04
+          },
+          "SubsurfaceScattering": {
+            "enable": false,
+            "factor": 9.294809695692605,
+            "profile": 1
+          },
+          "SubsurfaceTranslucency": {
+            "color": [
+              1,
+              0.36999999999999983,
+              0.2999999999999998
+            ],
+            "enable": false,
+            "factor": 1,
+            "thicknessFactor": 9.294809695692605
+          }
+        },
+        "cullFace": "DISABLE",
+        "shadeless": false,
+        "reflection": 0.1,
+        "stateSetID": 1
+      }
+    },
+    "environment": {
+      "uid": "d106177604ef44cf8cdc539e4d942423",
+      "blur": 0.1,
+      "enable": true,
+      "exposure": 1.3656,
+      "rotation": 6.283185307179586,
+      "shadowBias": 0.005,
+      "shadowEnable": true,
+      "lightIntensity": 3,
+      "backgroundExposure": 1
+    },
+    "background": {
+      "uid": "3ef1bd11d3eb4b57a0b353e8f2e5fc3e",
+      "color": [
+        0.86667,
+        0.86667,
+        0.86667
+      ],
+      "enable": "fixed"
+    },
+    "version": 9,
+    "animation": {
+      "order": [],
+      "speed": 1,
+      "cycleMode": "one",
+      "initializeWithRestPose": false
+    },
+    "hotspot": {
+      "visible": true,
+      "hotspots": []
+    },
+    "vr": {
+      "floorHeight": 0,
+      "worldFactor": 92.94809695692605,
+      "displayFloor": true,
+      "initialCamera": {
+        "position": [
+          -0.06787872314453125,
+          -223.13783351449362,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ]
+      }
+    },
+    "sound": [],
+    "ground": {
+      "fade": 0.25,
+      "scale": 278.84429087077814,
+      "enable": false,
+      "opacity": 1,
+      "position": [
+        -0.06787872314453125,
+        -0.06240081787109375,
+        0.024922109985351562
+      ],
+      "shadowMode": "ShadowCatcher",
+      "samplingRange": 0.6
+    },
+    "createdAt": "2022-10-03T14:30:46.243457",
+    "updatedAt": "2022-10-03T14:40:24.981350"
+  },
+  "preferOriginalNormalMap": false,
+  "inStore": false,
+  "isDisabled": false,
+  "displayStatus": "ok",
+  "visibility": "public",
+  "org": null,
+  "isArEnabled": false,
+  "version": {
+    "uid": "189b60c7bd4746e5a24833ee0c9d64cb",
+    "status": {
+      "processing": "SUCCEEDED"
+    },
+    "isCurrentVersion": true,
+    "isCandidateVersion": false,
+    "createdAt": "2022-10-03T14:30:46.243457",
+    "processedAt": "2022-10-03T14:32:35.070421",
+    "reason": "upload"
+  },
+  "soundCount": 0,
+  "useNewViewer": false,
+  "viewerType": "legacy",
+  "hasDoptions": false
+}

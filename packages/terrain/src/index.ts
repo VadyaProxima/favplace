@@ -2,8 +2,20 @@ export { fetchHeightMap, resampleHeightMap, computeRadiusInDegrees } from "./hei
 export type { HeightMap } from "./heightmap";
 export { buildRingGeometry, buildFlatRingGeometry } from "./mesh";
 export type { RingMeshParams } from "./mesh";
-export { getZoomForRadius, latLngToTile } from "./tiles";
-export type { TileCoord } from "./tiles";
+export {
+  getZoomForRadius,
+  latLngToTile,
+  getDemProvider,
+  decodeMapboxDem,
+  decodeTerrarium,
+} from "./tiles";
+export type { TileCoord, DemProvider } from "./tiles";
+export {
+  smoothHeightGrid,
+  smoothHeightGridByDetail,
+  DETAIL_SMOOTHING,
+} from "./smoothing";
+export type { ReliefDetail } from "./smoothing";
 
 import { fetchHeightMap, resampleHeightMap, HeightMap } from "./heightmap";
 import { buildRingGeometry, RingMeshParams } from "./mesh";

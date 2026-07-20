@@ -1,11 +1,7 @@
 'use client'
 
 import { useAppStore } from '@/store/useAppStore'
-import {
-	MATERIALS,
-	type MaterialType,
-	type SurfaceFinish,
-} from '@favplace/shared'
+import { MATERIALS, type MaterialType, type SurfaceFinish } from '@favplace/shared'
 import { RingViewer } from './RingViewer'
 
 const MATERIAL_KEYS: MaterialType[] = ['gold', 'silver', 'platinum']
@@ -20,38 +16,49 @@ export function MaterialStep() {
 		setRingWidth,
 		reliefHeight,
 		setReliefHeight,
+		reliefDetail,
+		setReliefDetail,
 		setStep,
 	} = useAppStore()
 
-	return (
-		<div className="flex flex-1 flex-col items-center gap-8 px-6 py-10">
-			<h2 className="text-3xl font-bold">Настройте кольцо</h2>
+	const DETAIL_OPTIONS = [
+		{ id: 'low' as const, label: 'Low' },
+		{ id: 'medium' as const, label: 'Medium' },
+		{ id: 'high' as const, label: 'High' },
+	]
 
-			<div className="relative h-[50vh] w-full overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900">
+	return (
+		<div className="flex h-full flex-col lg:flex-row">
+			<div className="relative flex-1 bg-zinc-100">
 				<RingViewer className="h-full w-full" />
 			</div>
 
-			<div className="w-full max-w-lg space-y-8">
+			<div className="flex shrink-0 flex-col gap-8 overflow-y-auto border-t border-zinc-200 bg-white p-6 lg:w-[38%] lg:border-l lg:border-t-0">
+				<div>
+					<h2 className="text-2xl font-semibold tracking-tight text-zinc-900">Материал и форма</h2>
+					<p className="mt-1 text-sm text-zinc-500">Как будет ощущаться ваше изделие</p>
+				</div>
+
 				<div className="space-y-3">
-					<h3 className="text-sm font-medium text-zinc-400">Материал</h3>
-					<div className="grid grid-cols-3 gap-3">
+					<span className="text-xs uppercase tracking-wider text-zinc-400">Металл</span>
+					<div className="grid grid-cols-3 gap-2">
 						{MATERIAL_KEYS.map(key => {
-							const mat = MATERIALS[key]
+							const m = MATERIALS[key]
 							return (
 								<button
 									key={key}
 									onClick={() => setMaterial(key)}
-									className={`flex flex-col items-center gap-2 rounded-lg border p-4 transition ${
+									className={`flex flex-col items-center gap-2 rounded-lg border p-3 transition ${
 										material === key
-											? 'border-amber-500 bg-amber-500/10'
-											: 'border-zinc-800 bg-zinc-900 hover:border-zinc-600'
+											? 'border-zinc-900 bg-zinc-50'
+											: 'border-zinc-200 hover:border-zinc-400'
 									}`}
 								>
-									<div
-										className="h-10 w-10 rounded-full shadow-lg"
-										style={{ background: mat.color }}
+									<span
+										className="h-9 w-9 rounded-full"
+										style={{ background: m.color, boxShadow: 'inset 0 -3px 6px rgba(0,0,0,0.2)' }}
 									/>
-									<span className="text-sm font-medium">{mat.label}</span>
+									<span className="text-xs font-medium text-zinc-800">{m.label}</span>
 								</button>
 							)
 						})}
@@ -59,16 +66,16 @@ export function MaterialStep() {
 				</div>
 
 				<div className="space-y-3">
-					<h3 className="text-sm font-medium text-zinc-400">Поверхность</h3>
-					<div className="grid grid-cols-2 gap-3">
+					<span className="text-xs uppercase tracking-wider text-zinc-400">Поверхность</span>
+					<div className="grid grid-cols-2 gap-2">
 						{(['polished', 'matte'] as SurfaceFinish[]).map(finish => (
 							<button
 								key={finish}
 								onClick={() => setSurfaceFinish(finish)}
-								className={`rounded-lg border p-3 text-sm font-medium transition ${
+								className={`rounded-lg border px-3 py-2.5 text-sm font-medium transition ${
 									surfaceFinish === finish
-										? 'border-amber-500 bg-amber-500/10'
-										: 'border-zinc-800 bg-zinc-900 hover:border-zinc-600'
+										? 'border-zinc-900 bg-zinc-50 text-zinc-900'
+										: 'border-zinc-200 text-zinc-500 hover:border-zinc-400'
 								}`}
 							>
 								{finish === 'polished' ? 'Полированная' : 'Матовая'}
@@ -77,54 +84,59 @@ export function MaterialStep() {
 					</div>
 				</div>
 
-				<div className="space-y-3">
-					<div className="flex justify-between">
-						<h3 className="text-sm font-medium text-zinc-400">Ширина кольца</h3>
-						<span className="text-sm text-zinc-300">{ringWidth} мм</span>
+				<div className="space-y-2">
+					<div className="flex items-center justify-between">
+						<span className="text-xs uppercase tracking-wider text-zinc-400">Высота рельефа</span>
+						<span className="text-sm tabular-nums text-zinc-700">{reliefHeight.toFixed(2)}</span>
 					</div>
 					<input
 						type="range"
-						min={2}
-						max={8}
-						step={0.5}
-						value={ringWidth}
-						onChange={e => setRingWidth(parseFloat(e.target.value))}
-						className="w-full accent-amber-500"
-					/>
-				</div>
-
-				<div className="space-y-3">
-					<div className="flex justify-between">
-						<h3 className="text-sm font-medium text-zinc-400">
-							Высота рельефа
-						</h3>
-						<span className="text-sm text-zinc-300">{reliefHeight} мм</span>
-					</div>
-					<input
-						type="range"
-						min={0.5}
+						min={0.1}
 						max={3}
-						step={0.25}
+						step={0.1}
 						value={reliefHeight}
 						onChange={e => setReliefHeight(parseFloat(e.target.value))}
-						className="w-full accent-amber-500"
+						className="w-full"
 					/>
 				</div>
-			</div>
 
-			<div className="flex gap-3">
-				<button
-					onClick={() => setStep('preview')}
-					className="rounded-lg border border-zinc-700 px-6 py-3 font-semibold text-zinc-300 transition hover:bg-zinc-800"
-				>
-					Назад
-				</button>
-				<button
-					onClick={() => setStep('engraving')}
-					className="rounded-lg bg-amber-500 px-8 py-3 font-semibold text-zinc-950 transition hover:bg-amber-400"
-				>
-					Гравировка
-				</button>
+				<div className="space-y-2">
+					<span className="text-xs uppercase tracking-wider text-zinc-400">Детализация</span>
+					<div className="grid grid-cols-3 gap-2">
+						{DETAIL_OPTIONS.map(opt => (
+							<button
+								key={opt.id}
+								type="button"
+								onClick={() => setReliefDetail(opt.id)}
+								className={`rounded-full border px-3 py-2 text-sm font-medium transition ${
+									reliefDetail === opt.id
+										? 'border-zinc-900 bg-zinc-900 text-white'
+										: 'border-zinc-200 text-zinc-600 hover:border-zinc-400'
+								}`}
+							>
+								{opt.label}
+							</button>
+						))}
+					</div>
+					<p className="text-xs text-zinc-400">
+						Low — мягче рельеф, High — больше мелких деталей
+					</p>
+				</div>
+
+				<div className="mt-auto flex gap-2 pt-4">
+					<button
+						onClick={() => setStep('studio')}
+						className="rounded-md border border-zinc-300 px-5 py-2.5 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-100"
+					>
+						Назад
+					</button>
+					<button
+						onClick={() => setStep('engraving')}
+						className="flex-1 rounded-md bg-zinc-900 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-zinc-700"
+					>
+						Гравировка →
+					</button>
+				</div>
 			</div>
 		</div>
 	)
