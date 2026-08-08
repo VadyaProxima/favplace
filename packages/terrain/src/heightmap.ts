@@ -1,11 +1,12 @@
 import {
 	decodeDemTile,
-	fetchTile,
+	fetchTilesLimited,
 	getDemProvider,
 	getTilesForBounds,
 	getZoomForRadius,
 	latToWorldY,
 	lngToWorldX,
+	resolveZoomForBounds,
 	type DemProvider,
 } from './tiles'
 
@@ -50,16 +51,25 @@ function sampleBilinear(data: Float32Array, w: number, h: number, px: number, py
 	return v00 * (1 - fx) * (1 - fy) + v10 * fx * (1 - fy) + v01 * (1 - fx) * fy + v11 * fx * fy
 }
 
-/** side of the intermediate cropped grid, before the caller's resampleHeightMap resize */
-const CROP_SIZE = 256
+/** Intermediate crop before client resample — higher = sharper ridges on the ring. */
+const CROP_SIZE = 512
 
-async function fetchHeightMap(
+const heightMapMemo = new Map<string, HeightMap>()
+const HEIGHTMAP_MEMO_MAX = 24
+const inflight = new Map<string, Promise<HeightMap>>()
+
+function memoKey(lat: number, lng: number, radiusMeters: number) {
+	// v2 = linear min/max DEM (no percentile / enhance)
+	return `v2:${lat.toFixed(5)},${lng.toFixed(5)},${Math.round(radiusMeters)}`
+}
+
+async function fetchHeightMapUncached(
 	centerLat: number,
 	centerLng: number,
 	radiusMeters: number,
 ): Promise<HeightMap> {
 	const provider = getDemProvider()
-	const zoom = getZoomForRadius(radiusMeters, centerLat, provider)
+	const preferredZoom = getZoomForRadius(radiusMeters, centerLat, provider)
 	const { latDeg, lngDeg } = metersToDegrees(centerLat, radiusMeters)
 
 	const swLat = centerLat - latDeg
@@ -67,19 +77,41 @@ async function fetchHeightMap(
 	const neLat = centerLat + latDeg
 	const neLng = centerLng + lngDeg
 
-	const tiles = getTilesForBounds(swLat, swLng, neLat, neLng, zoom)
-
+	let zoom = resolveZoomForBounds(swLat, swLng, neLat, neLng, preferredZoom)
+	let tiles = getTilesForBounds(swLat, swLng, neLat, neLng, zoom)
 	if (tiles.length === 0) {
 		throw new Error('No tiles found for the given coordinates')
 	}
 
-	const tileData = await Promise.all(
-		tiles.map(async tile => {
-			const buf = await fetchTile(tile, provider)
-			const decoded = decodeDemTile(buf, provider)
-			return { tile, ...decoded }
-		}),
-	)
+	// Some Mapbox DEM tiles 404 at z15 — step down until tiles load
+	let buffers: Buffer[] | null = null
+	let lastErr: unknown
+	for (let attempt = 0; attempt < 4; attempt++) {
+		tiles = getTilesForBounds(swLat, swLng, neLat, neLng, zoom)
+		if (tiles.length === 0) break
+		try {
+			buffers = await fetchTilesLimited(tiles, provider, 4)
+			break
+		} catch (err) {
+			lastErr = err
+			const msg = err instanceof Error ? err.message : String(err)
+			if (zoom > 1 && /HTTP 404|Failed to fetch tile/.test(msg)) {
+				zoom -= 1
+				continue
+			}
+			throw err
+		}
+	}
+	if (!buffers) {
+		throw lastErr instanceof Error
+			? lastErr
+			: new Error('Failed to fetch DEM tiles')
+	}
+
+	const tileData = buffers.map((buf, i) => {
+		const decoded = decodeDemTile(buf, provider)
+		return { tile: tiles[i], ...decoded }
+	})
 
 	const cols = new Set(tileData.map(t => t.tile.x))
 	const rows = new Set(tileData.map(t => t.tile.y))
@@ -134,20 +166,14 @@ async function fetchHeightMap(
 		}
 	}
 
-	// Robust local contrast — 5th–95th percentile instead of global min/max
-	const sorted = Float32Array.from(cropped).filter(Number.isFinite).sort((a, b) => a - b)
-	const lo = sorted[Math.floor(sorted.length * 0.05)] ?? globalMin
-	const hi = sorted[Math.floor(sorted.length * 0.95)] ?? globalMax
-	const range = hi - lo
-
+	// Linear min–max — preserve craters and real proportions (no percentile / unsharp)
+	const range = globalMax - globalMin
 	const data: number[][] = []
 	for (let row = 0; row < CROP_SIZE; row++) {
 		const rowData: number[] = []
 		for (let col = 0; col < CROP_SIZE; col++) {
 			const val = cropped[row * CROP_SIZE + col]
-			const normalized =
-				range > 1e-6 ? Math.min(1, Math.max(0, (val - lo) / range)) : 0
-			rowData.push(normalized)
+			rowData.push(range > 1e-6 ? (val - globalMin) / range : 0)
 		}
 		data.push(rowData)
 	}
@@ -163,13 +189,48 @@ async function fetchHeightMap(
 	}
 }
 
+async function fetchHeightMap(
+	centerLat: number,
+	centerLng: number,
+	radiusMeters: number,
+): Promise<HeightMap> {
+	const key = memoKey(centerLat, centerLng, radiusMeters)
+	const hit = heightMapMemo.get(key)
+	if (hit) return hit
+
+	const pending = inflight.get(key)
+	if (pending) return pending
+
+	const promise = fetchHeightMapUncached(centerLat, centerLng, radiusMeters)
+		.then(hm => {
+			if (heightMapMemo.size >= HEIGHTMAP_MEMO_MAX) {
+				const oldest = heightMapMemo.keys().next().value
+				if (oldest) heightMapMemo.delete(oldest)
+			}
+			heightMapMemo.set(key, hm)
+			return hm
+		})
+		.finally(() => {
+			inflight.delete(key)
+		})
+
+	inflight.set(key, promise)
+	return promise
+}
+
 export { fetchHeightMap }
 
 export function resampleHeightMap(
 	heightMap: HeightMap,
 	targetSize: number,
 ): HeightMap {
-	const { data, width, height, minElevation, maxElevation } = heightMap
+	const { data, width, height, minElevation, maxElevation, demSource, tileZoom } =
+		heightMap
+
+	if (targetSize === width && targetSize === height) {
+		return heightMap
+	}
+
 	const resampled: number[][] = []
 
 	for (let y = 0; y < targetSize; y++) {
@@ -202,5 +263,7 @@ export function resampleHeightMap(
 		height: targetSize,
 		minElevation,
 		maxElevation,
+		demSource,
+		tileZoom,
 	}
 }

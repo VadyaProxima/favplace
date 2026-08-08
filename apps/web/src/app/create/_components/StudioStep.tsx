@@ -118,12 +118,17 @@ export function StudioStep() {
 	// is ever applied, so quick back-to-back analyses can't be overwritten by
 	// a stale one landing out of order ("works every other time").
 	const analyzeSeqRef = useRef(0)
+	const analyzeAbortRef = useRef<AbortController | null>(null)
 	const analyze = async (lat: number, lng: number, r: number) => {
 		const seq = ++analyzeSeqRef.current
+		analyzeAbortRef.current?.abort()
+		const ac = new AbortController()
+		analyzeAbortRef.current = ac
 		setFetching(true)
 		try {
 			const res = await fetch(
-				`/api/terrain/heightmap?lat=${lat}&lng=${lng}&radius=${r}&resolution=140`,
+				`/api/terrain/heightmap?lat=${lat}&lng=${lng}&radius=${r}&resolution=512`,
+				{ signal: ac.signal },
 			)
 			if (!res.ok) throw new Error(`API ${res.status}`)
 			const data = await res.json()
@@ -133,7 +138,8 @@ export function StudioStep() {
 				min: data.metadata.minElevation,
 				max: data.metadata.maxElevation,
 			})
-		} catch {
+		} catch (err) {
+			if ((err as Error)?.name === 'AbortError') return
 			// keep previous relief on failure
 		} finally {
 			if (seq === analyzeSeqRef.current) setFetching(false)
@@ -290,7 +296,7 @@ export function StudioStep() {
 							Анализировать
 						</button>
 						<button
-							onClick={() => setStep('material')}
+							onClick={() => setStep('form')}
 							disabled={!heightMap}
 							className="rounded-md bg-zinc-900 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-zinc-700 disabled:opacity-30"
 						>

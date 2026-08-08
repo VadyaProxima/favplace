@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { embossAmplitude, sculptReliefHeight } from './reliefSculpt'
 
 export const SIGNET_GLB_PATH = '/models/lion_signate_ring.glb'
 
@@ -45,22 +46,21 @@ function sampleHeightMap(hm: number[][] | null, u: number, v: number) {
 const RELIEF_COVER_SCALE = 1.4
 
 function makeRingMaterial(props: SignetMaterialProps) {
-	return new THREE.MeshPhysicalMaterial({
+	const mat = new THREE.MeshStandardMaterial({
 		color: props.color,
 		metalness: props.metalness,
 		roughness: props.roughness,
+		envMapIntensity: props.polished ? 1.55 : 1.0,
 		transparent: false,
 		opacity: 1,
 		depthWrite: true,
+		depthTest: true,
 		side: THREE.FrontSide,
-		envMapIntensity: props.polished ? 1.55 : 1.1,
-		clearcoat: props.polished ? 0.45 : 0.05,
-		clearcoatRoughness: 0.08,
-		reflectivity: 1,
-		sheen: props.polished ? 0.15 : 0,
-		sheenRoughness: 0.35,
-		sheenColor: new THREE.Color('#ffffff'),
+		alphaTest: 0,
 	})
+	mat.blending = THREE.NormalBlending
+	mat.needsUpdate = true
+	return mat
 }
 
 /** Запечь мировые координаты, выкинуть иерархию Sketchfab (rotation −90°) */
@@ -151,35 +151,7 @@ function fillInsertPocket(mesh: THREE.Mesh, recess: THREE.Box3) {
 
 type ReliefVertex = { x: number; y: number; z: number }
 
-function triNormal(
-	positions: number[],
-	ai: number,
-	bi: number,
-	ci: number,
-) {
-	const ax = positions[ai * 3]
-	const ay = positions[ai * 3 + 1]
-	const az = positions[ai * 3 + 2]
-	const bx = positions[bi * 3]
-	const by = positions[bi * 3 + 1]
-	const bz = positions[bi * 3 + 2]
-	const cx = positions[ci * 3]
-	const cy = positions[ci * 3 + 1]
-	const cz = positions[ci * 3 + 2]
-	const ux = bx - ax
-	const uy = by - ay
-	const uz = bz - az
-	const vx = cx - ax
-	const vy = cy - ay
-	const vz = cz - az
-	return {
-		x: uy * vz - uz * vy,
-		y: uz * vx - ux * vz,
-		z: ux * vy - uy * vx,
-	}
-}
-
-/** Верхняя грань + боковые стенки по контуру овала (без дна — не просвечивает сверху) */
+/** Верхняя грань + гладкая овальная боковина (не по зубцам рельефа). */
 function buildReliefGeometry(
 	recess: THREE.Box3,
 	heightMap: number[][] | null,
@@ -188,13 +160,18 @@ function buildReliefGeometry(
 	const { cx, cz, rx, rz, tableY } = insertFrame(recess)
 	const reliefRx = rx * RELIEF_COVER_SCALE
 	const reliefRz = rz * RELIEF_COVER_SCALE
-	const span = Math.max(
-		recess.max.x - recess.min.x,
-		recess.max.z - recess.min.z,
-	)
-	const emboss = span * 0.1 * reliefHeight
+	const span = Math.max(rx * 2, rz * 2)
+	const embossAmp = embossAmplitude(reliefHeight) * Math.max(span * 0.85, 0.35)
 	const floorY = tableY + span * 0.001
-	const segments = 140
+	const collarH = Math.max(embossAmp * 0.045, span * 0.004)
+	const rimY = floorY + collarH
+	const segments = 220
+	const rimSegs = 256
+
+	const smootherstep = (e0: number, e1: number, x: number) => {
+		const t = Math.min(1, Math.max(0, (x - e0) / (e1 - e0)))
+		return t * t * t * (t * (t * 6 - 15) + 10)
+	}
 
 	const topVerts: ReliefVertex[] = []
 	const grid: (number | null)[][] = []
@@ -215,8 +192,10 @@ function buildReliefGeometry(
 			const z = cz + nz * reliefRz
 			const u = clamp01((nx + 1) * 0.5)
 			const v = clamp01(1 - (nz + 1) * 0.5)
-			const h = sampleHeightMap(heightMap, u, v)
-			const y = floorY + h * emboss
+			const h = sculptReliefHeight(sampleHeightMap(heightMap, u, v))
+			// Full relief inside; height → rimY at the oval edge (smooth lip, no columns)
+			const fade = 1 - smootherstep(0.88, 0.995, rNorm)
+			const y = rimY + h * embossAmp * fade
 
 			row.push(topVerts.length)
 			topVerts.push({ x, y, z })
@@ -228,32 +207,6 @@ function buildReliefGeometry(
 	const indices: number[] = []
 
 	for (const v of topVerts) positions.push(v.x, v.y, v.z)
-
-	const bottomStart = topVerts.length
-	for (const v of topVerts) positions.push(v.x, floorY, v.z)
-
-	const addOutwardWall = (topA: number, topB: number) => {
-		const botA = bottomStart + topA
-		const botB = bottomStart + topB
-		const mx = (positions[topA * 3] + positions[topB * 3]) * 0.5 - cx
-		const mz = (positions[topA * 3 + 2] + positions[topB * 3 + 2]) * 0.5 - cz
-
-		const n = triNormal(positions, topA, topB, botB)
-		const dot = n.x * mx + n.z * mz
-		if (dot < 0) {
-			indices.push(topA, botB, topB, topA, botA, botB)
-		} else {
-			indices.push(topA, topB, botB, topA, botB, botA)
-		}
-	}
-
-	const wallEdges = new Set<string>()
-	const addWall = (a: number, b: number) => {
-		const key = a < b ? `${a}:${b}` : `${b}:${a}`
-		if (wallEdges.has(key)) return
-		wallEdges.add(key)
-		addOutwardWall(a, b)
-	}
 
 	for (let j = 0; j < segments; j++) {
 		for (let i = 0; i < segments; i++) {
@@ -268,36 +221,24 @@ function buildReliefGeometry(
 		}
 	}
 
-	for (let j = 0; j <= segments; j++) {
-		for (let i = 0; i < segments; i++) {
-			const a = grid[j]?.[i]
-			const b = grid[j]?.[i + 1]
-			if (a == null || b == null) continue
-
-			const holeAbove =
-				j === 0 || grid[j - 1]?.[i] == null || grid[j - 1]?.[i + 1] == null
-			const holeBelow =
-				j === segments ||
-				grid[j + 1]?.[i] == null ||
-				grid[j + 1]?.[i + 1] == null
-			if (holeAbove !== holeBelow) addWall(a, b)
-		}
+	// Parametric oval side wall — perfect smooth perimeter
+	const rimTopStart = positions.length / 3
+	for (let i = 0; i < rimSegs; i++) {
+		const a = (i / rimSegs) * Math.PI * 2
+		positions.push(cx + Math.cos(a) * reliefRx, rimY, cz + Math.sin(a) * reliefRz)
 	}
-
-	for (let j = 0; j < segments; j++) {
-		for (let i = 0; i <= segments; i++) {
-			const a = grid[j]?.[i]
-			const b = grid[j + 1]?.[i]
-			if (a == null || b == null) continue
-
-			const holeLeft =
-				i === 0 || grid[j]?.[i - 1] == null || grid[j + 1]?.[i - 1] == null
-			const holeRight =
-				i === segments ||
-				grid[j]?.[i + 1] == null ||
-				grid[j + 1]?.[i + 1] == null
-			if (holeLeft !== holeRight) addWall(a, b)
-		}
+	const rimBotStart = positions.length / 3
+	for (let i = 0; i < rimSegs; i++) {
+		const a = (i / rimSegs) * Math.PI * 2
+		positions.push(cx + Math.cos(a) * reliefRx, floorY, cz + Math.sin(a) * reliefRz)
+	}
+	for (let i = 0; i < rimSegs; i++) {
+		const i2 = (i + 1) % rimSegs
+		const t0 = rimTopStart + i
+		const t1 = rimTopStart + i2
+		const b0 = rimBotStart + i
+		const b1 = rimBotStart + i2
+		indices.push(t0, b1, t1, t0, b0, b1)
 	}
 
 	const geo = new THREE.BufferGeometry()

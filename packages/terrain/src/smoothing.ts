@@ -2,8 +2,8 @@ export type ReliefDetail = 'low' | 'medium' | 'high'
 
 /** Wildring-style detail radii (Gaussian σ in grid cells). */
 export const DETAIL_SMOOTHING: Record<ReliefDetail, number> = {
-	low: 4,
-	medium: 2,
+	low: 2.5,
+	medium: 1,
 	high: 0,
 }
 

@@ -1,122 +1,175 @@
 'use client'
 
+import Link from 'next/link'
 import { motion } from 'motion/react'
 
-const fadeUp = {
-	hidden: { opacity: 0, y: 30 },
-	visible: (i: number) => ({
-		opacity: 1,
-		y: 0,
-		transition: { delay: i * 0.15, duration: 0.6, ease: 'easeOut' as const },
-	}),
-}
-
-const steps = [
+const PRODUCTS = [
 	{
-		icon: '📍',
-		title: 'Выберите место',
-		desc: 'Гора, город, берег моря — любое место, которое вам дорого',
+		id: 'classic',
+		name: 'Классический',
+		desc: 'Сигнет с овальной площадкой под карту места',
 	},
 	{
-		icon: '🗺️',
-		title: 'Настройте масштаб',
-		desc: 'От 100 метров до 10 километров — выбирайте детализацию',
+		id: 'bar',
+		name: 'Планка',
+		desc: 'Прямоугольная вставка на всю ширину обруча',
 	},
 	{
-		icon: '💍',
-		title: 'Создайте изделие',
-		desc: 'Золото, серебро или платина с реальным рельефом местности',
+		id: 'mountain',
+		name: 'Горный',
+		desc: 'Рельеф продолжает металл обруча без отдельной вставки',
+	},
+	{
+		id: 'square',
+		name: 'Квадрат',
+		desc: 'Чёткая квадратная площадка и объёмный рельеф',
 	},
 ]
 
 export default function Home() {
 	return (
-		<main className="relative min-h-screen overflow-hidden">
-			<div className="relative mx-auto flex min-h-screen max-w-4xl flex-col items-center justify-center px-6">
-				<motion.div
-					className="mb-6 text-7xl"
-					initial={{ scale: 0, rotate: -180 }}
-					animate={{ scale: 1, rotate: 0 }}
-					transition={{ type: 'spring', duration: 1.2, bounce: 0.4 }}
-				>
-					💍
-				</motion.div>
+		<main className="bg-white text-zinc-900">
+			{/* ── Hero ───────────────────────────────────────────────── */}
+			<section className="relative min-h-[100svh] overflow-hidden bg-zinc-100">
+				{/* Full-bleed visual plane */}
+				<div
+					className="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_40%,#e8e8ea_0%,#f4f4f5_45%,#d4d4d8_100%)]"
+					aria-hidden
+				/>
+				<div
+					className="absolute inset-0 opacity-[0.35]"
+					style={{
+						backgroundImage:
+							'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'n\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.85\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23n)\' opacity=\'0.5\'/%3E%3C/svg%3E")',
+					}}
+					aria-hidden
+				/>
+				{/* Soft ring silhouette as hero anchor */}
+				<div
+					className="pointer-events-none absolute right-[-8%] top-1/2 h-[min(78vw,640px)] w-[min(78vw,640px)] -translate-y-1/2 rounded-full border border-zinc-400/40 bg-gradient-to-br from-zinc-200/80 via-zinc-300/30 to-transparent shadow-[inset_0_0_80px_rgba(255,255,255,0.5)]"
+					aria-hidden
+				/>
+				<div
+					className="pointer-events-none absolute right-[8%] top-1/2 h-[min(42vw,340px)] w-[min(42vw,340px)] -translate-y-1/2 rounded-full border border-zinc-500/25 bg-zinc-100/40"
+					aria-hidden
+				/>
 
-				<motion.h1
-					className="mb-4 text-center text-6xl font-semibold tracking-tight text-zinc-900"
-					custom={0}
-					variants={fadeUp}
-					initial="hidden"
-					animate="visible"
-				>
-					Favplace
-				</motion.h1>
+				<header className="relative z-10 flex items-center justify-between px-6 py-5 md:px-10">
+					<span className="font-display text-xl font-semibold tracking-tight md:text-2xl">
+						Favplace
+					</span>
+					<Link
+						href="/create"
+						className="text-sm font-medium text-zinc-600 transition hover:text-zinc-900"
+					>
+						Конструктор
+					</Link>
+				</header>
 
-				<motion.p
-					className="mb-2 text-center text-xl text-zinc-700"
-					custom={1}
-					variants={fadeUp}
-					initial="hidden"
-					animate="visible"
-				>
-					Рельеф вашего любимого места в металле
-				</motion.p>
-
-				<motion.p
-					className="mb-10 max-w-md text-center text-zinc-500"
-					custom={2}
-					variants={fadeUp}
-					initial="hidden"
-					animate="visible"
-				>
-					Настоящая топография, превращённая в изделие. Каждая линия рельефа —
-					реальные данные спутников.
-				</motion.p>
-
-				<motion.a
-					href="/create"
-					className="rounded-100 bg-zinc-900 px-10 py-4 text-lg font-medium text-white transition hover:bg-zinc-700"
-					custom={3}
-					variants={fadeUp}
-					initial="hidden"
-					animate="visible"
-					whileHover={{ scale: 1.03 }}
-					whileTap={{ scale: 0.97 }}
-				>
-					Создать
-				</motion.a>
-
-				<motion.div
-					className="mt-20 grid w-full max-w-3xl grid-cols-1 gap-6 sm:grid-cols-3"
-					custom={4}
-					variants={fadeUp}
-					initial="hidden"
-					animate="visible"
-				>
-					{steps.map(step => (
-						<motion.div
-							key={step.title}
-							className="rounded-xl border border-zinc-200 bg-white p-6"
-							whileHover={{ y: -4, borderColor: 'rgba(0,0,0,0.2)' }}
-							transition={{ duration: 0.2 }}
+				<div className="relative z-10 flex min-h-[calc(100svh-4.5rem)] max-w-xl flex-col justify-center px-6 pb-16 pt-8 md:px-10 md:pb-24">
+					<motion.h1
+						className="font-display text-[clamp(3.25rem,10vw,5.5rem)] font-semibold leading-[0.95] tracking-tight text-zinc-900"
+						initial={{ opacity: 0, y: 16 }}
+						animate={{ opacity: 1, y: 0 }}
+						transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+					>
+						Favplace
+					</motion.h1>
+					<motion.p
+						className="mt-5 max-w-sm text-base leading-relaxed text-zinc-600 md:text-lg"
+						initial={{ opacity: 0, y: 12 }}
+						animate={{ opacity: 1, y: 0 }}
+						transition={{ delay: 0.12, duration: 0.6 }}
+					>
+						Рельеф вашего места — в металле. Настоящая топография, отлитая в кольцо.
+					</motion.p>
+					<motion.div
+						className="mt-10"
+						initial={{ opacity: 0, y: 10 }}
+						animate={{ opacity: 1, y: 0 }}
+						transition={{ delay: 0.22, duration: 0.55 }}
+					>
+						<Link
+							href="/create"
+							className="inline-flex items-center bg-zinc-900 px-8 py-3.5 text-sm font-medium tracking-wide text-white transition hover:bg-zinc-700"
 						>
-							<div className="mb-3 text-3xl">{step.icon}</div>
-							<h3 className="mb-1 font-semibold text-zinc-900">{step.title}</h3>
-							<p className="text-sm text-zinc-500">{step.desc}</p>
-						</motion.div>
-					))}
-				</motion.div>
+							Создать кольцо
+						</Link>
+					</motion.div>
+				</div>
+			</section>
 
-				<motion.p
-					className="mt-16 mb-8 text-center text-sm text-zinc-400"
-					custom={5}
-					variants={fadeUp}
-					initial="hidden"
-					animate="visible"
-				>
-					Данные рельефа • Three.js рендеринг • Ювелирное качество
-				</motion.p>
-			</div>
+			{/* ── Products ───────────────────────────────────────────── */}
+			<section className="border-t border-zinc-200 px-6 py-20 md:px-10 md:py-28">
+				<div className="mx-auto max-w-6xl">
+					<h2 className="font-display text-3xl font-semibold tracking-tight text-zinc-900 md:text-4xl">
+						Коллекция форм
+					</h2>
+					<p className="mt-3 max-w-md text-sm text-zinc-500 md:text-base">
+						Выберите силуэт — рельеф места ляжет на площадку именно этой формы.
+					</p>
+
+					<div className="mt-12 grid gap-px bg-zinc-200 sm:grid-cols-2 lg:grid-cols-4">
+						{PRODUCTS.map((p, i) => (
+							<Link
+								key={p.id}
+								href={`/create?form=${p.id}`}
+								className="group flex flex-col bg-white p-6 transition hover:bg-zinc-50 md:p-8"
+							>
+								<span className="font-mono text-[11px] tracking-widest text-zinc-400">
+									{String(i + 1).padStart(2, '0')}
+								</span>
+								<span className="font-display mt-6 text-2xl font-semibold tracking-tight text-zinc-900">
+									{p.name}
+								</span>
+								<span className="mt-2 flex-1 text-sm leading-relaxed text-zinc-500">
+									{p.desc}
+								</span>
+								<span className="mt-8 text-xs font-medium uppercase tracking-wider text-zinc-900 opacity-0 transition group-hover:opacity-100">
+									Открыть →
+								</span>
+							</Link>
+						))}
+					</div>
+				</div>
+			</section>
+
+			{/* ── Footer ─────────────────────────────────────────────── */}
+			<footer className="border-t border-zinc-200 bg-white px-6 py-14 md:px-10">
+				<div className="mx-auto flex max-w-6xl flex-col gap-10 md:flex-row md:items-start md:justify-between">
+					<div className="max-w-sm">
+						<p className="font-display text-2xl font-semibold tracking-tight text-zinc-900">
+							Favplace
+						</p>
+						<p className="mt-3 text-sm leading-relaxed text-zinc-500">
+							Место, которое важно — всегда с вами. Топография в ювелирном металле.
+						</p>
+					</div>
+					<div className="space-y-2 text-sm text-zinc-600">
+						<p className="text-xs uppercase tracking-wider text-zinc-400">Контакты</p>
+						<a
+							href="mailto:hello@favplace.ru"
+							className="block transition hover:text-zinc-900"
+						>
+							hello@favplace.ru
+						</a>
+						<a
+							href="https://t.me/favplace"
+							target="_blank"
+							rel="noreferrer"
+							className="block transition hover:text-zinc-900"
+						>
+							Telegram
+						</a>
+					</div>
+					<p className="font-display text-lg italic text-zinc-400 md:max-w-[12rem] md:text-right">
+						Ваш ландшафт. Ваш металл.
+					</p>
+				</div>
+				<p className="mx-auto mt-12 max-w-6xl text-xs text-zinc-400">
+					© {new Date().getFullYear()} Favplace
+				</p>
+			</footer>
 		</main>
 	)
 }

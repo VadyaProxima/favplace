@@ -73,7 +73,8 @@ export const DEFAULT_RING_CONFIG: RingConfig = {
 };
 
 export const MATERIALS: Record<MaterialType, { label: string; color: string; metalness: number; roughness: number }> = {
-  gold: { label: "Золото", color: "#FFD700", metalness: 1.0, roughness: 0.15 },
-  silver: { label: "Серебро", color: "#C0C0C0", metalness: 1.0, roughness: 0.2 },
-  platinum: { label: "Платина", color: "#E5E4E2", metalness: 1.0, roughness: 0.1 },
+  /** Pale warm metal — not saturated yellow */
+  gold: { label: "Золото", color: "#E4DCCE", metalness: 1.0, roughness: 0.12 },
+  silver: { label: "Серебро", color: "#DCDFE2", metalness: 1.0, roughness: 0.11 },
+  platinum: { label: "Платина", color: "#E6E5E3", metalness: 1.0, roughness: 0.1 },
 };

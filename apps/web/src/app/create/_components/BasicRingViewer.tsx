@@ -1,7 +1,12 @@
 'use client'
 
+import {
+	BASIC_RING_GLB_PATH,
+	getBasicRingBottomY,
+	prepareBasicRingFromGlb,
+	type BasicRingVariant,
+} from '@/lib/basicRingFromGlb'
 import { JEWELLERY_ENV, JEWELLERY_GL } from '@/lib/jewelleryMaterial'
-import { getRingBottomY, SIGNET_GLB_PATH, prepareSignetFromGlb } from '@/lib/signetFromGlb'
 import { smoothHeightGridByDetail } from '@/lib/reliefSmoothing'
 import { useAppStore } from '@/store/useAppStore'
 import { MATERIALS } from '@favplace/shared'
@@ -12,14 +17,14 @@ import * as THREE from 'three'
 import { JewelleryLighting } from './JewelleryLighting'
 import { RingOrbitControls } from './RingOrbitControls'
 
-function SignetRing() {
+function BasicRing({ variant }: { variant: BasicRingVariant }) {
 	const heightMap = useAppStore(s => s.heightMap)
 	const material = useAppStore(s => s.material)
 	const surfaceFinish = useAppStore(s => s.surfaceFinish)
 	const reliefHeight = useAppStore(s => s.reliefHeight)
 	const reliefDetail = useAppStore(s => s.reliefDetail)
 
-	const gltf = useGLTF(SIGNET_GLB_PATH)
+	const gltf = useGLTF(BASIC_RING_GLB_PATH)
 	const mat = MATERIALS[material]
 	const polished = surfaceFinish === 'polished'
 	const roughness = polished ? mat.roughness * 0.55 : 0.4
@@ -30,14 +35,14 @@ function SignetRing() {
 	)
 
 	const { ring, bottomY } = useMemo(() => {
-		const r = prepareSignetFromGlb(gltf, reliefGrid, reliefHeight, {
+		const r = prepareBasicRingFromGlb(gltf, variant, reliefGrid, reliefHeight, {
 			color: mat.color,
 			metalness: mat.metalness,
 			roughness,
 			polished,
 		})
-		return { ring: r, bottomY: getRingBottomY(r) }
-	}, [gltf, reliefGrid, reliefHeight, mat, roughness, polished])
+		return { ring: r, bottomY: getBasicRingBottomY(r) }
+	}, [gltf, variant, reliefGrid, reliefHeight, mat, roughness, polished])
 
 	return (
 		<>
@@ -53,16 +58,20 @@ function SignetRing() {
 	)
 }
 
-function Scene({ cameraTarget }: { cameraTarget: [number, number, number] }) {
+function Scene({
+	variant,
+	cameraTarget,
+}: {
+	variant: BasicRingVariant
+	cameraTarget: [number, number, number]
+}) {
 	return (
 		<>
 			<color attach="background" args={['#f4f4f5']} />
 			<JewelleryLighting />
-
 			<Suspense fallback={null}>
-				<SignetRing />
+				<BasicRing variant={variant} />
 			</Suspense>
-
 			<RingOrbitControls
 				minDistance={0.85}
 				maxDistance={12}
@@ -74,17 +83,22 @@ function Scene({ cameraTarget }: { cameraTarget: [number, number, number] }) {
 	)
 }
 
-export function RingViewer({
+export function BasicRingViewer({
 	className = '',
+	variant,
 	cameraPosition = [-2.15, 1.75, 2.65] as [number, number, number],
 	cameraTarget = [0, 0.5, 0] as [number, number, number],
 }: {
 	className?: string
+	variant: BasicRingVariant
 	cameraPosition?: [number, number, number]
 	cameraTarget?: [number, number, number]
 }) {
 	return (
-		<div className={`absolute inset-0 ${className}`}>
+		<div
+			className={`absolute inset-0 ${className}`}
+			data-testid={`basic-ring-${variant}`}
+		>
 			<Canvas
 				shadows
 				camera={{ position: cameraPosition, fov: 30 }}
@@ -96,10 +110,10 @@ export function RingViewer({
 					gl.setClearColor('#f4f4f5', 1)
 				}}
 			>
-				<Scene cameraTarget={cameraTarget} />
+				<Scene variant={variant} cameraTarget={cameraTarget} />
 			</Canvas>
 		</div>
 	)
 }
 
-useGLTF.preload(SIGNET_GLB_PATH)
+useGLTF.preload(BASIC_RING_GLB_PATH)
