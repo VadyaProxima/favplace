@@ -3,7 +3,7 @@
 import { useAppStore } from '@/store/useAppStore'
 import { MATERIALS } from '@favplace/shared'
 import { useState } from 'react'
-import { RingViewer } from './RingViewer'
+import { FormRingViewer, RING_FORM_OPTIONS } from './FormRingViewer'
 
 export function SummaryStep() {
 	const {
@@ -11,10 +11,11 @@ export function SummaryStep() {
 		radius,
 		material,
 		surfaceFinish,
-		reliefHeight,
+		ringForm,
 		engraving,
 		elevationMeta,
 		heightMap,
+		reliefHeight,
 		setStep,
 	} = useAppStore()
 	const [exporting, setExporting] = useState(false)
@@ -30,7 +31,7 @@ export function SummaryStep() {
 					heightMap,
 					ringRadius: 1,
 					tubeRadius: 0.05,
-					reliefHeight: reliefHeight / 20,
+					reliefHeight,
 					segments: 256,
 				}),
 			})
@@ -49,17 +50,23 @@ export function SummaryStep() {
 	const rows = [
 		location && { label: 'Место', value: `${location.name}, ${location.country}` },
 		{ label: 'Масштаб', value: radius >= 1000 ? `${radius / 1000} км` : `${radius} м` },
+		{
+			label: 'Форма',
+			value: RING_FORM_OPTIONS.find(o => o.id === ringForm)?.label ?? ringForm,
+		},
 		{ label: 'Металл', value: MATERIALS[material].label },
 		{ label: 'Поверхность', value: surfaceFinish === 'polished' ? 'Полированная' : 'Матовая' },
-		{ label: 'Рельеф', value: `${reliefHeight.toFixed(2)}` },
-		elevationMeta && { label: 'Высоты', value: `${Math.round(elevationMeta.min)}–${Math.round(elevationMeta.max)} м` },
+		elevationMeta && {
+			label: 'Рельеф',
+			value: `${Math.round(elevationMeta.min)}–${Math.round(elevationMeta.max)} м · высота ${reliefHeight.toFixed(1)}`,
+		},
 		engraving && { label: 'Гравировка', value: engraving },
 	].filter(Boolean) as { label: string; value: string }[]
 
 	return (
 		<div className="flex h-full flex-col lg:flex-row">
 			<div className="relative flex flex-1 flex-col bg-zinc-100">
-				<RingViewer className="h-full w-full" />
+				<FormRingViewer className="h-full w-full" />
 				<div className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col items-center gap-1 bg-gradient-to-t from-zinc-100 to-transparent px-6 pb-8 pt-20 text-center">
 					<h2 className="text-2xl font-semibold tracking-tight text-zinc-900">Ваше место навсегда с вами</h2>
 					{location && (

@@ -71,10 +71,7 @@ export function getTilesForBounds(
 export function getDemProvider(): DemProvider {
 	const raw = process.env.MAPBOX_ACCESS_TOKEN?.trim()
 	const token = raw?.split(/\s+/)[0]
-	if (!token) {
-		throw new Error('MAPBOX_ACCESS_TOKEN is not set')
-	}
-	return 'mapbox'
+	return token ? 'mapbox' : 'terrarium'
 }
 
 export function getMapboxAccessToken(): string {
@@ -86,6 +83,7 @@ export function getMapboxAccessToken(): string {
 	return token
 }
 
+/** Prefer sharper DEM when tile count stays reasonable (wildring-like ridges). */
 export function getZoomForRadius(
   radiusMeters: number,
   centerLat: number,
@@ -96,19 +94,68 @@ export function getZoomForRadius(
   const lngDeg =
     (radiusMeters / (111_320 * Math.cos((centerLat * Math.PI) / 180))) * 2;
   const longestEdgeDeg = Math.max(latDeg, lngDeg);
-  const adaptive = Math.floor(Math.log2(1440 / Math.max(longestEdgeDeg, 1e-6)));
+  // Aim for dense DEM sampling across the crop (~Mapbox @2x)
+  const adaptive = Math.floor(Math.log2(3200 / Math.max(longestEdgeDeg, 1e-6)));
 
   let z: number;
   if (radiusMeters <= 100) z = 15;
-  else if (radiusMeters <= 200) z = 14;
-  else if (radiusMeters <= 500) z = 13;
-  else if (radiusMeters <= 1000) z = 12;
-  else if (radiusMeters <= 2000) z = 11;
-  else if (radiusMeters <= 5000) z = 10;
-  else if (radiusMeters <= 10000) z = 9;
-  else z = 8;
+  else if (radiusMeters <= 200) z = 15;
+  else if (radiusMeters <= 500) z = 15;
+  else if (radiusMeters <= 1000) z = 14;
+  else if (radiusMeters <= 2000) z = 13;
+  else if (radiusMeters <= 5000) z = 12;
+  else if (radiusMeters <= 10000) z = 11;
+  else if (radiusMeters <= 20000) z = 10;
+  else z = 9;
 
   return Math.min(maxZ, Math.max(1, Math.min(z, adaptive)));
+}
+
+/** Cap tile fan-out so large radii don't explode memory / S3 load. */
+export const MAX_DEM_TILES = 25;
+
+export function resolveZoomForBounds(
+  swLat: number,
+  swLng: number,
+  neLat: number,
+  neLng: number,
+  preferredZoom: number,
+  maxTiles = MAX_DEM_TILES,
+): number {
+  let z = preferredZoom;
+  while (z > 1 && getTilesForBounds(swLat, swLng, neLat, neLng, z).length > maxTiles) {
+    z -= 1;
+  }
+  return z;
+}
+
+async function mapPool<T, R>(
+  items: T[],
+  concurrency: number,
+  fn: (item: T, index: number) => Promise<R>,
+): Promise<R[]> {
+  const results = new Array<R>(items.length);
+  let next = 0;
+  const workers = Array.from(
+    { length: Math.min(concurrency, Math.max(1, items.length)) },
+    async () => {
+      while (true) {
+        const i = next++;
+        if (i >= items.length) return;
+        results[i] = await fn(items[i], i);
+      }
+    },
+  );
+  await Promise.all(workers);
+  return results;
+}
+
+export async function fetchTilesLimited(
+  tiles: TileCoord[],
+  provider: DemProvider = getDemProvider(),
+  concurrency = 4,
+): Promise<Buffer[]> {
+  return mapPool(tiles, concurrency, (tile) => fetchTile(tile, provider));
 }
 
 const tileCache = new Map<string, Buffer>();
@@ -122,26 +169,35 @@ function mapboxTileUrl(tile: TileCoord, token: string) {
   return `https://api.mapbox.com/v4/${MAPBOX_DEM_TILESET}/${tile.z}/${tile.x}/${tile.y}@2x.pngraw?access_token=${token}`;
 }
 
+function terrariumTileUrl(tile: TileCoord) {
+  return `${TERRARIUM_BASE}/${tile.z}/${tile.x}/${tile.y}.png`;
+}
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export async function fetchTile(
   tile: TileCoord,
   provider: DemProvider = getDemProvider(),
 ): Promise<Buffer> {
-  if (provider !== "mapbox") {
-    throw new Error("Only Mapbox Terrain-DEM is supported");
-  }
-
   const key = cacheKey(provider, tile);
   const cached = tileCache.get(key);
   if (cached) return cached;
 
-  const token = getMapboxAccessToken();
-  const url = mapboxTileUrl(tile, token);
+  const url =
+    provider === "mapbox"
+      ? mapboxTileUrl(tile, getMapboxAccessToken())
+      : terrariumTileUrl(tile);
 
-  const maxAttempts = 3;
+  const maxAttempts = 6;
   let lastErr: unknown;
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
-      const res = await fetch(url, { signal: AbortSignal.timeout(20000) });
+      const res = await fetch(url, {
+        signal: AbortSignal.timeout(25000),
+        headers: { "User-Agent": "favplace-terrain/1.0" },
+      });
       if (res.ok) {
         const buf = Buffer.from(await res.arrayBuffer());
         if (tileCache.size >= TILE_CACHE_MAX) {
@@ -156,12 +212,22 @@ export async function fetchTile(
         throw new Error(`HTTP ${res.status}`);
       }
       lastErr = new Error(`HTTP ${res.status}`);
+      // Rate limit / transient CDN — backoff
+      if (res.status === 429 || res.status >= 500) {
+        await sleep(400 * Math.pow(2, attempt) + Math.random() * 200);
+        continue;
+      }
     } catch (err) {
       lastErr = err;
-      if ((err as Error)?.message?.includes("HTTP 401") || (err as Error)?.message?.includes("HTTP 403")) {
+      const msg = (err as Error)?.message ?? "";
+      if (msg.includes("HTTP 401") || msg.includes("HTTP 403")) {
         break;
       }
+      // Network blips (fetch failed / abort) — retry with backoff
+      await sleep(350 * Math.pow(2, attempt) + Math.random() * 250);
+      continue;
     }
+    await sleep(300 * Math.pow(2, attempt));
   }
   throw new Error(`Failed to fetch tile ${key}: ${(lastErr as Error)?.message}`);
 }

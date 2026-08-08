@@ -1,12 +1,34 @@
 import { create } from "zustand";
 import type { MaterialType, SurfaceFinish, Coordinates, Location } from "@favplace/shared";
 
-export type Step = "studio" | "material" | "engraving" | "summary";
+export type Step = "studio" | "form" | "material" | "engraving" | "summary";
 export type ReliefDetail = "low" | "medium" | "high";
+/**
+ * classic = lion GLB signet, mountain = continuous plateau,
+ * disc / plug = procedural cylinder inserts,
+ * bar = rectangular insert spanning band width,
+ * square / circle / oval = basic_ring.glb empty faces + relief
+ */
+export type RingForm =
+  | "classic"
+  | "mountain"
+  | "disc"
+  | "plug"
+  | "bar"
+  | "square"
+  | "circle"
+  | "oval";
 
 interface AppState {
   step: Step;
   setStep: (step: Step) => void;
+
+  ringForm: RingForm;
+  setRingForm: (form: RingForm) => void;
+
+  /** Two-tone mountain/disc: polished band + light terrain */
+  mountainTwoTone: boolean;
+  setMountainTwoTone: (v: boolean) => void;
 
   location: Location | null;
   setLocation: (location: Location) => void;
@@ -47,6 +69,12 @@ export const useAppStore = create<AppState>((set) => ({
   step: "studio",
   setStep: (step) => set({ step }),
 
+  ringForm: "mountain",
+  setRingForm: (ringForm) => set({ ringForm }),
+
+  mountainTwoTone: false,
+  setMountainTwoTone: (mountainTwoTone) => set({ mountainTwoTone }),
+
   location: null,
   setLocation: (location) => set({ location }),
   setCoordinates: (lat, lng) =>
@@ -74,7 +102,7 @@ export const useAppStore = create<AppState>((set) => ({
   reliefHeight: 2,
   setReliefHeight: (reliefHeight) => set({ reliefHeight }),
 
-  reliefDetail: "medium",
+  reliefDetail: "high",
   setReliefDetail: (reliefDetail) => set({ reliefDetail }),
 
   engraving: "",
@@ -86,3 +114,8 @@ export const useAppStore = create<AppState>((set) => ({
   elevationMeta: null,
   setElevationMeta: (elevationMeta) => set({ elevationMeta }),
 }));
+
+if (typeof window !== 'undefined') {
+  ;(window as unknown as { __favplaceStore: typeof useAppStore }).__favplaceStore =
+    useAppStore
+}

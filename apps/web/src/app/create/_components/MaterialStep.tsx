@@ -1,8 +1,8 @@
 'use client'
 
-import { useAppStore } from '@/store/useAppStore'
+import { useAppStore, type ReliefDetail } from '@/store/useAppStore'
 import { MATERIALS, type MaterialType, type SurfaceFinish } from '@favplace/shared'
-import { RingViewer } from './RingViewer'
+import { FormRingViewer, RING_FORM_OPTIONS } from './FormRingViewer'
 
 const MATERIAL_KEYS: MaterialType[] = ['gold', 'silver', 'platinum']
 
@@ -12,8 +12,7 @@ export function MaterialStep() {
 		setMaterial,
 		surfaceFinish,
 		setSurfaceFinish,
-		ringWidth,
-		setRingWidth,
+		ringForm,
 		reliefHeight,
 		setReliefHeight,
 		reliefDetail,
@@ -21,22 +20,19 @@ export function MaterialStep() {
 		setStep,
 	} = useAppStore()
 
-	const DETAIL_OPTIONS = [
-		{ id: 'low' as const, label: 'Low' },
-		{ id: 'medium' as const, label: 'Medium' },
-		{ id: 'high' as const, label: 'High' },
-	]
-
 	return (
 		<div className="flex h-full flex-col lg:flex-row">
 			<div className="relative flex-1 bg-zinc-100">
-				<RingViewer className="h-full w-full" />
+				<FormRingViewer className="h-full w-full" />
 			</div>
 
 			<div className="flex shrink-0 flex-col gap-8 overflow-y-auto border-t border-zinc-200 bg-white p-6 lg:w-[38%] lg:border-l lg:border-t-0">
 				<div>
-					<h2 className="text-2xl font-semibold tracking-tight text-zinc-900">Материал и форма</h2>
-					<p className="mt-1 text-sm text-zinc-500">Как будет ощущаться ваше изделие</p>
+					<h2 className="text-2xl font-semibold tracking-tight text-zinc-900">Материал</h2>
+					<p className="mt-1 text-sm text-zinc-500">
+						{RING_FORM_OPTIONS.find(o => o.id === ringForm)?.label ?? 'Кольцо'} · как
+						будет ощущаться изделие
+					</p>
 				</div>
 
 				<div className="space-y-3">
@@ -86,8 +82,12 @@ export function MaterialStep() {
 
 				<div className="space-y-2">
 					<div className="flex items-center justify-between">
-						<span className="text-xs uppercase tracking-wider text-zinc-400">Высота рельефа</span>
-						<span className="text-sm tabular-nums text-zinc-700">{reliefHeight.toFixed(2)}</span>
+						<span className="text-xs uppercase tracking-wider text-zinc-400">
+							Высота рельефа
+						</span>
+						<span className="text-sm tabular-nums text-zinc-700">
+							{reliefHeight.toFixed(2)}
+						</span>
 					</div>
 					<input
 						type="range"
@@ -103,29 +103,26 @@ export function MaterialStep() {
 				<div className="space-y-2">
 					<span className="text-xs uppercase tracking-wider text-zinc-400">Детализация</span>
 					<div className="grid grid-cols-3 gap-2">
-						{DETAIL_OPTIONS.map(opt => (
+						{(['low', 'medium', 'high'] as ReliefDetail[]).map(d => (
 							<button
-								key={opt.id}
+								key={d}
 								type="button"
-								onClick={() => setReliefDetail(opt.id)}
-								className={`rounded-full border px-3 py-2 text-sm font-medium transition ${
-									reliefDetail === opt.id
-										? 'border-zinc-900 bg-zinc-900 text-white'
-										: 'border-zinc-200 text-zinc-600 hover:border-zinc-400'
+								onClick={() => setReliefDetail(d)}
+								className={`rounded-lg border px-2 py-2 text-sm font-medium transition ${
+									reliefDetail === d
+										? 'border-zinc-900 bg-zinc-50 text-zinc-900'
+										: 'border-zinc-200 text-zinc-500 hover:border-zinc-400'
 								}`}
 							>
-								{opt.label}
+								{d === 'low' ? 'Низкая' : d === 'medium' ? 'Средняя' : 'Высокая'}
 							</button>
 						))}
 					</div>
-					<p className="text-xs text-zinc-400">
-						Low — мягче рельеф, High — больше мелких деталей
-					</p>
 				</div>
 
 				<div className="mt-auto flex gap-2 pt-4">
 					<button
-						onClick={() => setStep('studio')}
+						onClick={() => setStep('form')}
 						className="rounded-md border border-zinc-300 px-5 py-2.5 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-100"
 					>
 						Назад

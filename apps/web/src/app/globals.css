@@ -1,56 +1,68 @@
-@import "tailwindcss";
+@import 'tailwindcss';
+
+@theme {
+	--font-sans: var(--font-sans), 'Manrope', ui-sans-serif, system-ui, sans-serif;
+	--font-display: var(--font-display), 'Cormorant Garamond', ui-serif, Georgia, serif;
+	--color-ink: #0a0a0a;
+	--color-mute: #71717a;
+	--color-line: #e4e4e7;
+	--color-paper: #ffffff;
+	--color-wash: #f4f4f5;
+}
 
 :root {
-  color-scheme: light;
+	color-scheme: light;
 }
 
 html,
 body {
-  background: #fafafa;
-  color: #18181b;
+	background: #ffffff;
+	color: #0a0a0a;
 }
 
 body {
-  font-feature-settings: "ss01", "cv01", "cv11";
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
+	font-family: var(--font-sans);
+	-webkit-font-smoothing: antialiased;
+	text-rendering: optimizeLegibility;
+}
+
+.font-display {
+	font-family: var(--font-display);
 }
 
 ::selection {
-  background: #18181b;
-  color: #fafafa;
+	background: #0a0a0a;
+	color: #ffffff;
 }
 
-/* slim scrollbars */
 * {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(0, 0, 0, 0.18) transparent;
+	scrollbar-width: thin;
+	scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
 }
 *::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+	width: 5px;
+	height: 5px;
 }
 *::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.18);
-  border-radius: 9999px;
+	background: rgba(0, 0, 0, 0.15);
+	border-radius: 9999px;
 }
 
-/* range slider — minimalist dark thumb on light track */
-input[type="range"] {
-  height: 2px;
-  background: rgba(0, 0, 0, 0.12);
-  border-radius: 9999px;
-  appearance: none;
+input[type='range'] {
+	height: 2px;
+	background: rgba(0, 0, 0, 0.12);
+	border-radius: 9999px;
+	appearance: none;
 }
-input[type="range"]::-webkit-slider-thumb {
-  appearance: none;
-  width: 14px;
-  height: 14px;
-  border-radius: 9999px;
-  background: #18181b;
-  cursor: pointer;
+input[type='range']::-webkit-slider-thumb {
+	appearance: none;
+	width: 14px;
+	height: 14px;
+	border-radius: 9999px;
+	background: #0a0a0a;
+	cursor: pointer;
 }
 
 .maplibregl-ctrl-attrib {
-  display: none;
+	display: none;
 }

@@ -1,8 +1,8 @@
 export type ReliefDetail = 'low' | 'medium' | 'high'
 
 export const DETAIL_SMOOTHING: Record<ReliefDetail, number> = {
-	low: 4,
-	medium: 2,
+	low: 2.5,
+	medium: 1,
 	high: 0,
 }
 

@@ -4,6 +4,7 @@ import { useAppStore, type Step } from '@/store/useAppStore'
 
 const STEPS: { key: Step; label: string }[] = [
 	{ key: 'studio', label: 'Место и рельеф' },
+	{ key: 'form', label: 'Форма' },
 	{ key: 'material', label: 'Материал' },
 	{ key: 'engraving', label: 'Гравировка' },
 	{ key: 'summary', label: 'Итог' },
