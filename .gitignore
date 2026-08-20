@@ -7,3 +7,5 @@ dist/
 *.tsbuildinfo
 *.db
 apps/web/.qa-mountain/
+.claude/
+.qwen/
