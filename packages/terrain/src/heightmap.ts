@@ -9,6 +9,11 @@ import {
 	resolveZoomForBounds,
 	type DemProvider,
 } from './tiles'
+import {
+	clampZoomOffset,
+	cropEnvelopeScale,
+	rotatedCropCoordinate,
+} from './referenceFrame'
 
 export interface HeightMap {
 	data: number[][]
@@ -18,6 +23,11 @@ export interface HeightMap {
 	maxElevation: number
 	demSource?: DemProvider
 	tileZoom?: number
+}
+
+export interface HeightMapRequestOptions {
+	bearing?: number
+	zoomOffset?: number
 }
 
 /** meters-per-degree latitude is constant; longitude shrinks by cos(lat). */
@@ -52,25 +62,42 @@ function sampleBilinear(data: Float32Array, w: number, h: number, px: number, py
 }
 
 /** Intermediate crop before client resample — higher = sharper ridges on the ring. */
-const CROP_SIZE = 512
+const CROP_SIZE = 1024
 
 const heightMapMemo = new Map<string, HeightMap>()
 const HEIGHTMAP_MEMO_MAX = 24
 const inflight = new Map<string, Promise<HeightMap>>()
 
-function memoKey(lat: number, lng: number, radiusMeters: number) {
-	// v2 = linear min/max DEM (no percentile / enhance)
-	return `v2:${lat.toFixed(5)},${lng.toFixed(5)},${Math.round(radiusMeters)}`
+function memoKey(
+	lat: number,
+	lng: number,
+	radiusMeters: number,
+	options: HeightMapRequestOptions,
+) {
+	// v3 = Terrarium z15 for small crops; avoids reusing the coarser z14 memo.
+	return `v4:${lat.toFixed(5)},${lng.toFixed(5)},${Math.round(radiusMeters)},${(
+		options.bearing ?? 0
+	).toFixed(2)},${clampZoomOffset(options.zoomOffset ?? 0)}`
 }
 
 async function fetchHeightMapUncached(
 	centerLat: number,
 	centerLng: number,
 	radiusMeters: number,
+	options: HeightMapRequestOptions,
 ): Promise<HeightMap> {
 	const provider = getDemProvider()
-	const preferredZoom = getZoomForRadius(radiusMeters, centerLat, provider)
-	const { latDeg, lngDeg } = metersToDegrees(centerLat, radiusMeters)
+	const bearing = options.bearing ?? 0
+	const preferredZoom = Math.min(
+		15,
+		Math.max(
+			1,
+			getZoomForRadius(radiusMeters, centerLat, provider) +
+				clampZoomOffset(options.zoomOffset ?? 0),
+		),
+	)
+	const envelopeRadius = radiusMeters * cropEnvelopeScale(bearing)
+	const { latDeg, lngDeg } = metersToDegrees(centerLat, envelopeRadius)
 
 	const swLat = centerLat - latDeg
 	const swLng = centerLng - lngDeg
@@ -154,10 +181,18 @@ async function fetchHeightMapUncached(
 	let globalMax = -Infinity
 
 	for (let row = 0; row < CROP_SIZE; row++) {
-		const lat = neLat - (row / (CROP_SIZE - 1)) * (neLat - swLat)
-		const py = (latToWorldY(lat) - worldYmin) * pxPerWorldY * pxScale
 		for (let col = 0; col < CROP_SIZE; col++) {
-			const lng = swLng + (col / (CROP_SIZE - 1)) * (neLng - swLng)
+			const x = (col / (CROP_SIZE - 1)) * 2 - 1
+			const y = (row / (CROP_SIZE - 1)) * 2 - 1
+			const { lat, lng } = rotatedCropCoordinate(
+				centerLat,
+				centerLng,
+				radiusMeters,
+				bearing,
+				x,
+				y,
+			)
+			const py = (latToWorldY(lat) - worldYmin) * pxPerWorldY * pxScale
 			const px = (lngToWorldX(lng) - worldXmin) * pxPerWorldX * pxScale
 			const val = sampleBilinear(merged, totalW, totalH, px, py)
 			cropped[row * CROP_SIZE + col] = val
@@ -193,15 +228,16 @@ async function fetchHeightMap(
 	centerLat: number,
 	centerLng: number,
 	radiusMeters: number,
+	options: HeightMapRequestOptions = {},
 ): Promise<HeightMap> {
-	const key = memoKey(centerLat, centerLng, radiusMeters)
+	const key = memoKey(centerLat, centerLng, radiusMeters, options)
 	const hit = heightMapMemo.get(key)
 	if (hit) return hit
 
 	const pending = inflight.get(key)
 	if (pending) return pending
 
-	const promise = fetchHeightMapUncached(centerLat, centerLng, radiusMeters)
+	const promise = fetchHeightMapUncached(centerLat, centerLng, radiusMeters, options)
 		.then(hm => {
 			if (heightMapMemo.size >= HEIGHTMAP_MEMO_MAX) {
 				const oldest = heightMapMemo.keys().next().value

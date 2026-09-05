@@ -1,6 +1,8 @@
 'use client'
 
+import { useExportTarget } from '@/lib/exportTarget'
 import { JEWELLERY_ENV, JEWELLERY_GL } from '@/lib/jewelleryMaterial'
+import { calibratedReliefHeight } from '@/lib/reliefCalibration'
 import { getRingBottomY, SIGNET_GLB_PATH, prepareSignetFromGlb } from '@/lib/signetFromGlb'
 import { smoothHeightGridByDetail } from '@/lib/reliefSmoothing'
 import { useAppStore } from '@/store/useAppStore'
@@ -30,7 +32,7 @@ function SignetRing() {
 	)
 
 	const { ring, bottomY } = useMemo(() => {
-		const r = prepareSignetFromGlb(gltf, reliefGrid, reliefHeight, {
+		const r = prepareSignetFromGlb(gltf, reliefGrid, calibratedReliefHeight('classic', reliefHeight), {
 			color: mat.color,
 			metalness: mat.metalness,
 			roughness,
@@ -38,6 +40,8 @@ function SignetRing() {
 		})
 		return { ring: r, bottomY: getRingBottomY(r) }
 	}, [gltf, reliefGrid, reliefHeight, mat, roughness, polished])
+
+	useExportTarget(ring)
 
 	return (
 		<>

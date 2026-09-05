@@ -14,9 +14,14 @@ export const DEFAULT_RING_CAMERA = {
 	target: [0, 0.5, 0] as [number, number, number],
 }
 
+const MOUNTAIN_RING_CAMERA = {
+	position: [-4.35, 3.45, 5.4] as [number, number, number],
+	target: [0, 0.2, 0] as [number, number, number],
+}
+
 export function FormRingViewer({ className = '' }: { className?: string }) {
 	const ringForm = useAppStore(s => s.ringForm)
-	const cam = DEFAULT_RING_CAMERA
+	const cam = ringForm === 'mountain' ? MOUNTAIN_RING_CAMERA : DEFAULT_RING_CAMERA
 
 	if (ringForm === 'mountain') {
 		return (
@@ -56,7 +61,17 @@ export function FormRingViewer({ className = '' }: { className?: string }) {
 			/>
 		)
 	}
-	if (ringForm === 'square' || ringForm === 'circle' || ringForm === 'oval') {
+	if (ringForm === 'square') {
+		return (
+			<BasicRingViewer
+				className={className}
+				variant="square"
+				cameraPosition={cam.position}
+				cameraTarget={cam.target}
+			/>
+		)
+	}
+	if (ringForm === 'circle' || ringForm === 'oval') {
 		return (
 			<BasicRingViewer
 				className={className}
@@ -75,36 +90,43 @@ export function FormRingViewer({ className = '' }: { className?: string }) {
 	)
 }
 
+/**
+ * Формы, доступные в конструкторе.
+ *
+ * Классический, диск, цилиндр и планка временно скрыты — раскомментировать
+ * здесь и в RING_FORMS (packages/shared/src/pricing.ts), плюс карточки на
+ * лендинге (apps/web/src/app/page.tsx). Код вьюеров и цены для них на месте.
+ */
 export const RING_FORM_OPTIONS: {
 	id: RingForm
 	label: string
 	hint: string
 }[] = [
-	{
-		id: 'classic',
-		label: 'Классический',
-		hint: 'Сигнет с овальной площадкой под карту',
-	},
+	// {
+	// 	id: 'classic',
+	// 	label: 'Классический',
+	// 	hint: 'Сигнет с овальной площадкой под карту',
+	// },
 	{
 		id: 'mountain',
 		label: 'Горный',
 		hint: 'Плато — продолжение обруча',
 	},
-	{
-		id: 'disc',
-		label: 'Диск',
-		hint: 'Обруч и круглая вставка состыкованы жёстко',
-	},
-	{
-		id: 'plug',
-		label: 'Цилиндр',
-		hint: 'Толще обруч и круглая вставка',
-	},
-	{
-		id: 'bar',
-		label: 'Планка',
-		hint: 'Прямоугольная вставка на всю ширину обруча',
-	},
+	// {
+	// 	id: 'disc',
+	// 	label: 'Диск',
+	// 	hint: 'Обруч и круглая вставка состыкованы жёстко',
+	// },
+	// {
+	// 	id: 'plug',
+	// 	label: 'Цилиндр',
+	// 	hint: 'Толще обруч и круглая вставка',
+	// },
+	// {
+	// 	id: 'bar',
+	// 	label: 'Планка',
+	// 	hint: 'Прямоугольная вставка на всю ширину обруча',
+	// },
 	{
 		id: 'square',
 		label: 'Квадрат',

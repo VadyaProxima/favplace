@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { embossAmplitude, sculptReliefHeight } from './reliefSculpt'
+import { embossAmplitude, sculptReliefHeight } from './reliefSculpt.ts'
 
 /**
  * Mountain Signet — continuous metal skin.

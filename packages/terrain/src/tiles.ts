@@ -89,7 +89,7 @@ export function getZoomForRadius(
   centerLat: number,
   provider: DemProvider = getDemProvider(),
 ): number {
-  const maxZ = provider === "mapbox" ? 15 : 14;
+  const maxZ = 15;
   const latDeg = (radiusMeters / 111_320) * 2;
   const lngDeg =
     (radiusMeters / (111_320 * Math.cos((centerLat * Math.PI) / 180))) * 2;

@@ -6,7 +6,9 @@ import {
 	prepareBasicRingFromGlb,
 	type BasicRingVariant,
 } from '@/lib/basicRingFromGlb'
+import { useExportTarget } from '@/lib/exportTarget'
 import { JEWELLERY_ENV, JEWELLERY_GL } from '@/lib/jewelleryMaterial'
+import { calibratedReliefHeight } from '@/lib/reliefCalibration'
 import { smoothHeightGridByDetail } from '@/lib/reliefSmoothing'
 import { useAppStore } from '@/store/useAppStore'
 import { MATERIALS } from '@favplace/shared'
@@ -35,7 +37,7 @@ function BasicRing({ variant }: { variant: BasicRingVariant }) {
 	)
 
 	const { ring, bottomY } = useMemo(() => {
-		const r = prepareBasicRingFromGlb(gltf, variant, reliefGrid, reliefHeight, {
+		const r = prepareBasicRingFromGlb(gltf, variant, reliefGrid, calibratedReliefHeight(variant, reliefHeight), {
 			color: mat.color,
 			metalness: mat.metalness,
 			roughness,
@@ -43,6 +45,8 @@ function BasicRing({ variant }: { variant: BasicRingVariant }) {
 		})
 		return { ring: r, bottomY: getBasicRingBottomY(r) }
 	}, [gltf, variant, reliefGrid, reliefHeight, mat, roughness, polished])
+
+	useExportTarget(ring)
 
 	return (
 		<>

@@ -1,6 +1,6 @@
 import * as THREE from 'three'
-import { buildDemoMountainHeightMap } from './mountainSignet'
-import { embossAmplitude, sculptReliefHeight } from './reliefSculpt'
+import { buildDemoMountainHeightMap } from './mountainSignet.ts'
+import { embossAmplitude, sculptReliefHeight } from './reliefSculpt.ts'
 
 /**
  * Disc / Plug rings.

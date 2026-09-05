@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { embossAmplitude, sculptReliefHeight } from './reliefSculpt'
+import { embossAmplitude, sculptReliefHeight } from './reliefSculpt.ts'
 
 export const SIGNET_GLB_PATH = '/models/lion_signate_ring.glb'
 

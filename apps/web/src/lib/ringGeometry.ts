@@ -168,17 +168,11 @@ export function buildSignetRing(
 
 					if (edge <= 1.08) {
 						const { u, v } = tableUV(tx, tz, p)
-						// bezel: full depth in centre, rim stays at table height
-						const bezelT = smoothstep(
-							1 - p.bezelFrac,
-							1,
-							edge,
-						)
-						const carve =
+						const relief =
 							hm && shell > 0.55
-								? sampleHeightMap(hm, u, v) * reliefDepth * shell * (1 - bezelT)
+								? sampleHeightMap(hm, u, v) * reliefDepth * shell
 								: 0
-						const yTable = yCrown - carve
+						const yTable = yCrown + relief
 
 						px = px * (1 - rise) + tx * rise
 						py = py * (1 - rise) + yTable * rise

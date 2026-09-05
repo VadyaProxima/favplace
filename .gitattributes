@@ -1,0 +1,5 @@
+# Разработка идёт на Windows, а скрипты исполняются в linux-контейнере:
+# CRLF в shebang ломает запуск ("no such file or directory").
+*.sh text eol=lf
+Dockerfile text eol=lf
+Caddyfile text eol=lf

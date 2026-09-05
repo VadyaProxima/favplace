@@ -3,17 +3,20 @@
 import Link from 'next/link'
 import { motion } from 'motion/react'
 
+// Карточки ведут прямо в конструктор с выбранной формой, поэтому список
+// держим в тех же рамках, что RING_FORM_OPTIONS: классический и планка
+// временно скрыты, иначе ссылка вела бы на недоступную форму.
 const PRODUCTS = [
-	{
-		id: 'classic',
-		name: 'Классический',
-		desc: 'Сигнет с овальной площадкой под карту места',
-	},
-	{
-		id: 'bar',
-		name: 'Планка',
-		desc: 'Прямоугольная вставка на всю ширину обруча',
-	},
+	// {
+	// 	id: 'classic',
+	// 	name: 'Классический',
+	// 	desc: 'Сигнет с овальной площадкой под карту места',
+	// },
+	// {
+	// 	id: 'bar',
+	// 	name: 'Планка',
+	// 	desc: 'Прямоугольная вставка на всю ширину обруча',
+	// },
 	{
 		id: 'mountain',
 		name: 'Горный',
@@ -166,9 +169,14 @@ export default function Home() {
 						Ваш ландшафт. Ваш металл.
 					</p>
 				</div>
-				<p className="mx-auto mt-12 max-w-6xl text-xs text-zinc-400">
-					© {new Date().getFullYear()} Favplace
-				</p>
+				<div className="mx-auto mt-12 flex max-w-6xl flex-wrap items-baseline gap-x-5 gap-y-2 text-xs text-zinc-400">
+					<p>© {new Date().getFullYear()} Favplace</p>
+					{/* Обязательно по CC-BY: атрибуция должна быть достижима оттуда,
+					    где используется материал. Не удалять вместе с редизайном футера. */}
+					<Link href="/credits" className="transition hover:text-zinc-700">
+						Использованные материалы
+					</Link>
+				</div>
 			</footer>
 		</main>
 	)
