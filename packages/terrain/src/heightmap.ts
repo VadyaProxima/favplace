@@ -43,22 +43,45 @@ export function computeRadiusInDegrees(lat: number, radiusMeters: number): numbe
 	return Math.max(latDeg, lngDeg)
 }
 
-function sampleBilinear(data: Float32Array, w: number, h: number, px: number, py: number) {
+/**
+ * Catmull-Rom по одной оси. Непрерывна не только по значению, но и по
+ * производной — в отличие от линейной интерполяции.
+ */
+function cubic(p0: number, p1: number, p2: number, p3: number, t: number) {
+	const t2 = t * t
+	const t3 = t2 * t
+	return (
+		0.5 *
+		(2 * p1 +
+			(-p0 + p2) * t +
+			(2 * p0 - 5 * p1 + 4 * p2 - p3) * t2 +
+			(-p0 + 3 * p1 - 3 * p2 + p3) * t3)
+	)
+}
+
+/**
+ * Здесь мозаика DEM-тайлов растягивается до кропа 1024×1024, и для мелких
+ * участков это увеличение в разы: реальных отсчётов может быть около сотни
+ * на сторону.
+ *
+ * Билинейная интерполяция рвёт градиент на границах исходных пикселей.
+ * Само значение высоты непрерывно, но нормаль скачет — а на полированном
+ * металле освещение считается именно по нормали, поэтому границы ячеек
+ * проступали сеткой квадратных граней, тем крупнее, чем сильнее увеличение.
+ *
+ * Бикубика детали не выдумывает: там, где DEM их не содержит, поверхность
+ * станет плавной, а не гранёной.
+ */
+function sampleBicubic(data: Float32Array, w: number, h: number, px: number, py: number) {
 	const x0 = Math.floor(px)
 	const y0 = Math.floor(py)
-	const x1 = x0 + 1
-	const y1 = y0 + 1
-	const cx0 = Math.min(Math.max(x0, 0), w - 1)
-	const cy0 = Math.min(Math.max(y0, 0), h - 1)
-	const cx1 = Math.min(Math.max(x1, 0), w - 1)
-	const cy1 = Math.min(Math.max(y1, 0), h - 1)
 	const fx = px - x0
 	const fy = py - y0
-	const v00 = data[cy0 * w + cx0]
-	const v10 = data[cy0 * w + cx1]
-	const v01 = data[cy1 * w + cx0]
-	const v11 = data[cy1 * w + cx1]
-	return v00 * (1 - fx) * (1 - fy) + v10 * fx * (1 - fy) + v01 * (1 - fx) * fy + v11 * fx * fy
+	const at = (x: number, y: number) =>
+		data[Math.min(Math.max(y, 0), h - 1) * w + Math.min(Math.max(x, 0), w - 1)]
+	const row = (dy: number) =>
+		cubic(at(x0 - 1, y0 + dy), at(x0, y0 + dy), at(x0 + 1, y0 + dy), at(x0 + 2, y0 + dy), fx)
+	return cubic(row(-1), row(0), row(1), row(2), fy)
 }
 
 /** Intermediate crop before client resample — higher = sharper ridges on the ring. */
@@ -194,7 +217,7 @@ async function fetchHeightMapUncached(
 			)
 			const py = (latToWorldY(lat) - worldYmin) * pxPerWorldY * pxScale
 			const px = (lngToWorldX(lng) - worldXmin) * pxPerWorldX * pxScale
-			const val = sampleBilinear(merged, totalW, totalH, px, py)
+			const val = sampleBicubic(merged, totalW, totalH, px, py)
 			cropped[row * CROP_SIZE + col] = val
 			if (val < globalMin) globalMin = val
 			if (val > globalMax) globalMax = val
