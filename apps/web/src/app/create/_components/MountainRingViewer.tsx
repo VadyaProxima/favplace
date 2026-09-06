@@ -1,139 +1,162 @@
 'use client'
 
-import { makeJewelleryMaterial, JEWELLERY_ENV, JEWELLERY_GL } from '@/lib/jewelleryMaterial'
-import { buildDemoMountainHeightMap } from '@/lib/mountainSignet'
-import { calibratedReliefScale } from '@/lib/reliefCalibration'
-import {
-	createInteractiveMountainSignet,
-	updateInteractiveMountainSignet,
-} from '@/lib/referenceMountainSignet'
-import {
-	createInteractiveReliefHostGeometry,
-	createInteractiveReliefSurface,
-	syncInteractiveReliefHostGeometry,
-	updateInteractiveReliefSurface,
-} from '@/lib/interactiveMountainReliefSurface'
-import type { TerrainFrame } from '@/lib/referenceSignetTerrain'
-import { useAppStore, type ReliefDetail } from '@/store/useAppStore'
+import { JEWELLERY_ENV, JEWELLERY_GL } from '@/lib/jewelleryMaterial'
+import { buildAcceptedMountainRing } from '@/lib/acceptedMountainRing'
+import { useAcceptedRelief } from '@/lib/useAcceptedRelief'
+import { useAppStore } from '@/store/useAppStore'
 import { MATERIALS } from '@favplace/shared'
 import { ContactShadows } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import type { BufferGeometry } from 'three'
 import { JewelleryLighting } from './JewelleryLighting'
+import { makeMountainRingMaterials } from './mountainRingAppearance'
 import { RingOrbitControls } from './RingOrbitControls'
 
 const DISPLAY_SCALE = 0.15
-const DETAIL_SMOOTHING: Record<ReliefDetail, 0 | 2 | 4> = {
-	low: 4,
-	medium: 2,
-	high: 0,
+const CAMERA_FRAMING_SCALE = 1.3
+const DISPOSE_EVENT = 'favplace:accepted-ring-geometry-disposed'
+
+type AcceptedRingDebug = {
+	checksum: string
+	vertexCount: number
+	indexCount: number
 }
 
-function demoTerrainFrame(): TerrainFrame {
-	const data = buildDemoMountainHeightMap(256)
+function acceptedRingDebug(geometry: BufferGeometry): AcceptedRingDebug {
+	const position = geometry.getAttribute('position')
+	if (!(position.array instanceof Float32Array)) {
+		throw new Error('Accepted mountain ring positions must be Float32')
+	}
+
+	let hash = 0x811c9dc5
+	const update = (byte: number) => {
+		hash ^= byte
+		hash = Math.imul(hash, 0x01000193) >>> 0
+	}
+	for (const byte of new Uint8Array(
+		position.array.buffer,
+		position.array.byteOffset,
+		position.array.byteLength,
+	)) {
+		update(byte)
+	}
+	const vertexCount = position.count
+	const indexCount = geometry.index?.count ?? 0
+	for (const count of [vertexCount, indexCount]) {
+		for (let shift = 0; shift < 32; shift += 8) update((count >>> shift) & 0xff)
+	}
+
 	return {
-		data,
-		size: data.length,
-		minElev: 0,
-		maxElev: 1,
-		frame: { lat: 0, lng: 0, radiusKm: 1, bearing: 0 },
-		final: true,
+		checksum: hash.toString(16).padStart(8, '0'),
+		vertexCount,
+		indexCount,
 	}
 }
 
-function MountainRing() {
-	const terrainFrame = useAppStore(s => s.terrainFrame)
-	const coarseTerrainFrame = useAppStore(s => s.coarseTerrainFrame)
-	const terrainViewFrame = useAppStore(s => s.terrainViewFrame)
+function MountainRing({onStatus}:{onStatus:(status:string)=>void}) {
 	const material = useAppStore(s => s.material)
 	const surfaceFinish = useAppStore(s => s.surfaceFinish)
-	const reliefScale = useAppStore(s => s.reliefScale)
-	const reliefDetail = useAppStore(s => s.reliefDetail)
 	const ringSize = useAppStore(s => s.ringSize)
 	const ringWeight = useAppStore(s => s.ringWeight)
 	const bandProfile = useAppStore(s => s.bandProfile)
 	const shoulderStyle = useAppStore(s => s.shoulderStyle)
+	const fine = useAppStore(s=>s.terrainFrame)
+	const coarse = useAppStore(s=>s.coarseTerrainFrame)
+	const view = useAppStore(s=>s.terrainViewFrame)
+	const relief = useAppStore(s=>s.reliefScale)
+	const detail = useAppStore(s=>s.reliefDetail)
+	const options = useMemo(()=>{
+	 if(!fine)return null
+	 const context=coarse??fine
+	 const distance=view?Math.hypot((view.lat-context.frame.lat)*111.32,(view.lng-context.frame.lng)*111.32*Math.cos(view.lat*Math.PI/180)):0
+	 // A jump outside loaded data holds the last real crop instead of fabricating clamped terrain.
+	 const effectiveView=view&&distance>context.frame.radiusKm+view.radiusKm?fine.frame:view
+	 return {ringDiameter:ringSize,mass:ringWeight,profile:bandProfile,shoulders:shoulderStyle,fine,coarse,view:effectiveView,relief,
+	 detail:(!fine.final||(effectiveView&&['lat','lng','radiusKm','bearing'].some(key=>effectiveView[key as keyof typeof effectiveView]!==fine.frame[key as keyof typeof effectiveView])))?'low' as const:detail}
+	},
+	 [ringSize,ringWeight,bandProfile,shoulderStyle,fine,coarse,view,relief,detail])
+	const terrain = useAcceptedRelief(options)
+	useEffect(()=>onStatus(terrain.error??(terrain.busy?'Уточняем рельеф…':'')),[terrain.error,terrain.busy,onStatus])
 
-	const model = useMemo(() => {
-		return createInteractiveMountainSignet({
-			ringDiameter: ringSize,
-			weight: ringWeight,
-			bandProfile,
-			shoulderStyle,
-		})
-	}, [ringSize, ringWeight, bandProfile, shoulderStyle])
-	const renderedHost = useMemo(
-		() => createInteractiveReliefHostGeometry(model),
-		[model],
+	const model = useMemo(
+		() =>
+			buildAcceptedMountainRing({
+				ringDiameter: ringSize,
+				mass: ringWeight,
+				profile: bandProfile,
+				shoulders: shoulderStyle,
+			}),
+		[ringSize, ringWeight, bandProfile, shoulderStyle],
 	)
-	const reliefSurface = useMemo(
-		() => createInteractiveReliefSurface(model, reliefDetail),
-		[model, reliefDetail],
-	)
+	const debug = useMemo(() => acceptedRingDebug(model.geometry), [model])
+	const disposalState = useRef({
+		pending: new Map<BufferGeometry, ReturnType<typeof setTimeout>>(),
+		disposed: new WeakSet<BufferGeometry>(),
+	})
 
-	const displayModel = useMemo(() => {
-		const fine = terrainFrame ?? demoTerrainFrame()
-		const options = {
-			fine,
-			coarse: coarseTerrainFrame,
-			view: terrainViewFrame ?? fine.frame,
-			relief: calibratedReliefScale(reliefScale),
-			smoothing: DETAIL_SMOOTHING[reliefDetail],
-		} as const
-		updateInteractiveMountainSignet(model, options)
-		syncInteractiveReliefHostGeometry(renderedHost, model)
-		updateInteractiveReliefSurface(reliefSurface, model, options)
-		return { host: renderedHost, relief: reliefSurface }
-	}, [
-		model,
-		renderedHost,
-		reliefSurface,
-		terrainFrame,
-		coarseTerrainFrame,
-		terrainViewFrame,
-		reliefScale,
-		reliefDetail,
-	])
+	useEffect(() => {
+		const state = disposalState.current
+		const replayTimer = state.pending.get(model.geometry)
+		if (replayTimer !== undefined) {
+			clearTimeout(replayTimer)
+			state.pending.delete(model.geometry)
+		}
+		return () => {
+			const geometry = model.geometry
+			const timer = setTimeout(() => {
+				state.pending.delete(geometry)
+				if (state.disposed.has(geometry)) return
+				state.disposed.add(geometry)
+				geometry.dispose()
+				if (process.env.NODE_ENV !== 'production') {
+					window.dispatchEvent(new CustomEvent(DISPOSE_EVENT, { detail: debug }))
+				}
+			}, 0)
+			state.pending.set(geometry, timer)
+		}
+	}, [debug, model])
 
-	useEffect(() => () => model.geometry.dispose(), [model])
-	useEffect(() => () => renderedHost.geometry.dispose(), [renderedHost])
-	useEffect(() => () => reliefSurface.geometry.dispose(), [reliefSurface])
+	useEffect(() => {
+		if (process.env.NODE_ENV === 'production') return
+		const debugWindow = window as typeof window & {
+			__favplaceAcceptedRingDebug?: AcceptedRingDebug
+		}
+		debugWindow.__favplaceAcceptedRingDebug = debug
+		return () => {
+			if (debugWindow.__favplaceAcceptedRingDebug === debug) {
+				delete debugWindow.__favplaceAcceptedRingDebug
+			}
+		}
+	}, [debug])
 
-	const jewelleryMaterial = useMemo(() => {
-		const source = MATERIALS[material]
-		return makeJewelleryMaterial({
-			color: source.color,
-			metalness: source.metalness,
-			roughness: source.roughness,
-			polished: surfaceFinish === 'polished',
-			variant: 'band',
-		})
+	const ringMaterials = useMemo(() => {
+		return makeMountainRingMaterials(MATERIALS[material], surfaceFinish)
 	}, [material, surfaceFinish])
-	useEffect(() => () => jewelleryMaterial.dispose(), [jewelleryMaterial])
+	useEffect(
+		() => () => {
+			ringMaterials.body.dispose()
+			ringMaterials.relief.dispose()
+		},
+		[ringMaterials],
+	)
 
 	const bottom =
-		(displayModel.host.geometry.boundingBox?.min.y ?? -ringSize / 2) * DISPLAY_SCALE
+		(model.geometry.boundingBox?.min.y ?? -ringSize / 2) * DISPLAY_SCALE
 
 	return (
 		<>
 			<mesh
-				geometry={displayModel.host.geometry}
-				material={jewelleryMaterial}
+				geometry={terrain.geometry??model.geometry}
+				material={
+					terrain.geometry
+						? [ringMaterials.body, ringMaterials.relief]
+						: ringMaterials.body
+				}
 				scale={DISPLAY_SCALE}
 				castShadow
 				receiveShadow
-				userData={{ quality: 'interactive-host' }}
-			/>
-			<mesh
-				geometry={displayModel.relief.geometry}
-				material={jewelleryMaterial}
-				scale={DISPLAY_SCALE}
-				castShadow
-				receiveShadow
-				userData={{
-					quality: 'interactive-relief',
-					gridSegments: displayModel.relief.gridSegments,
-				}}
+				userData={{ quality: 'accepted-parametric-body' }}
 			/>
 			<ContactShadows
 				position={[0, bottom - 0.025, 0]}
@@ -146,12 +169,12 @@ function MountainRing() {
 	)
 }
 
-function Scene({ cameraTarget }: { cameraTarget: [number, number, number] }) {
+function Scene({ cameraTarget,onStatus }: { cameraTarget: [number, number, number],onStatus:(status:string)=>void }) {
 	return (
 		<>
 			<color attach="background" args={['#f4f4f5']} />
 			<JewelleryLighting />
-			<MountainRing />
+			<MountainRing onStatus={onStatus}/>
 			<RingOrbitControls
 				minDistance={2.2}
 				maxDistance={12}
@@ -172,19 +195,34 @@ export function MountainRingViewer({
 	cameraPosition?: [number, number, number]
 	cameraTarget?: [number, number, number]
 }) {
+	const [status,setStatus]=useState('')
+	const hasRelief=useAppStore(s=>Boolean(s.terrainFrame))
+	const framedCameraPosition = cameraPosition.map(
+		(value, index) =>
+			cameraTarget[index] +
+			(value - cameraTarget[index]) * CAMERA_FRAMING_SCALE,
+	) as [number, number, number]
+
 	return (
-		<div className={`absolute inset-0 ${className}`} data-testid="mountain-ring-viewer">
+		<div
+			className={`absolute inset-0 ${className}`}
+			data-testid="mountain-ring-viewer"
+			data-model-source="accepted-parametric-v1"
+			data-relief-enabled={String(hasRelief)}
+		>
 			<Canvas
+				frameloop="demand"
 				shadows
-				camera={{ position: cameraPosition, fov: 30 }}
+				camera={{ position: framedCameraPosition, fov: 30 }}
 				gl={{
 					...JEWELLERY_GL,
 					toneMappingExposure: JEWELLERY_ENV.toneMappingExposure,
 				}}
 				onCreated={({ gl }) => gl.setClearColor('#f4f4f5', 1)}
 			>
-				<Scene cameraTarget={cameraTarget} />
+				<Scene cameraTarget={cameraTarget} onStatus={setStatus}/>
 			</Canvas>
+			{status&&<div role="status" className="pointer-events-none absolute bottom-5 left-5 rounded bg-white/90 px-3 py-2 text-xs text-zinc-600">{status}</div>}
 		</div>
 	)
 }

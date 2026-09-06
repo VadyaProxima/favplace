@@ -7,8 +7,7 @@ import {
 	auditWarnings,
 	type MeshAudit,
 } from '@/lib/meshAudit'
-import { buildDeformedMountainSignet } from '@/lib/referenceMountainSignet'
-import { calibratedReliefScale } from '@/lib/reliefCalibration'
+import { buildAcceptedReliefModel } from '@/lib/acceptedMountainRelief'
 import { buildStlExport, downloadBlob, encodeBinarySTL } from '@/lib/stlExport'
 import { useAppStore } from '@/store/useAppStore'
 import { useState } from 'react'
@@ -40,30 +39,30 @@ export function StlExportButton() {
 			.replace(/^-|-$/g, '')
 
 	/**
-	 * У горы превью строится по черновой сетке (resolution 0.2), поэтому
-	 * файл на печать пересобирается тем же кодом в качестве `exact` —
-	 * не с экранного меша. Остальные формы отдаются as-is из вьюера,
-	 * иначе превью и файл разъедутся.
+	 * У горы превью строится в воркере по черновой сетке, поэтому файл на
+	 * печать пересобирается тем же генератором принятой базы — не с экранного
+	 * меша. Остальные формы отдаются as-is из вьюера, иначе превью и файл
+	 * разъедутся.
+	 *
+	 * Масштаб рельефа передаётся сырым, как в MountainRingViewer:
+	 * calibratedReliefScale подгонялся под прежний генератор и на принятой
+	 * базе даст другую высоту, то есть превью разойдётся с файлом.
 	 */
 	const exportMountain = () => {
 		if (!terrainFrame) {
 			throw new Error('Рельеф ещё считается — подождите пару секунд')
 		}
-		const smoothing = reliefDetail === 'low' ? 4 : reliefDetail === 'medium' ? 2 : 0
-		const model = buildDeformedMountainSignet(
-			{
-				ringDiameter: ringSize,
-				weight: ringWeight,
-				bandProfile,
-				shoulderStyle,
-				fine: terrainFrame,
-				coarse: coarseTerrainFrame,
-				view: terrainViewFrame ?? terrainFrame.frame,
-				relief: calibratedReliefScale(reliefScale),
-				smoothing,
-			},
-			'exact',
-		)
+		const model = buildAcceptedReliefModel({
+			ringDiameter: ringSize,
+			mass: ringWeight,
+			profile: bandProfile,
+			shoulders: shoulderStyle,
+			fine: terrainFrame,
+			coarse: coarseTerrainFrame,
+			view: terrainViewFrame ?? terrainFrame.frame,
+			relief: reliefScale,
+			detail: reliefDetail,
+		})
 		try {
 			// auditMesh и бинарный STL читают позиции подряд, тройками вершин.
 			const flat = model.geometry.toNonIndexed()
