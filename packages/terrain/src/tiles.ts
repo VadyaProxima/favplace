@@ -9,10 +9,14 @@ export interface TileCoord {
 export type DemProvider = "mapbox" | "terrarium";
 
 const TERRARIUM_BASE = "https://s3.amazonaws.com/elevation-tiles-prod/terrarium";
-const MAPBOX_DEM_TILESET = "mapbox.mapbox-terrain-dem-v1";
+// Terrain-DEM v1 отдаёт 404 на z15 и выше: код просил z15, получал отказ и
+// молча откатывался на z14, теряя половину линейного разрешения. Terrain-RGB
+// работает на z15 (и даже z16), поэтому для мелких участков рельеф вдвое
+// подробнее: 1,74 м/пиксель против 3,47 на широте 43°.
+const MAPBOX_DEM_TILESET = "mapbox.terrain-rgb";
 
-/** Logical tile size in Mapbox Terrain-DEM (@2x PNG is 1024 px). */
-export const MAPBOX_DEM_LOGICAL_SIZE = 512;
+/** Логический тайл Terrain-RGB — 256 px; @2x возвращает 512 физических. */
+export const MAPBOX_DEM_LOGICAL_SIZE = 256;
 
 /** Web Mercator world-fraction X ([0..1], 0 = -180°, 1 = +180°) for a longitude. */
 export function lngToWorldX(lng: number): number {
