@@ -17,13 +17,21 @@ const smooth=(n:number)=>{const t=clamp(n);return t*t*t*(t*(t*6-15)+10)}
 const crownBaseReduction=.75 // mm total; never reduce terrain amplitude or the bore.
 
 /** The server samples grid NODES, not pixel centres. Keep all linear slopes linear. */
+/** Catmull-Rom по одной оси: непрерывна по значению и по производной. */
+function cubic(p0:number,p1:number,p2:number,p3:number,t:number) {
+ const t2=t*t,t3=t2*t
+ return .5*(2*p1+(-p0+p2)*t+(2*p0-5*p1+4*p2-p3)*t2+(-p0+3*p1-3*p2+p3)*t3)
+}
+
 export function sampleElevation(f:TerrainFrame,u:number,v:number) {
  const x=clamp(u)*(f.size-1),y=(1-clamp(v))*(f.size-1)
  const ix=Math.floor(x),iy=Math.floor(y),dx=x-ix,dy=y-iy
- const row=f.data[iy],next=f.data[Math.min(iy+1,f.size-1)]
- const a=row[ix]*(1-dx)+row[Math.min(ix+1,f.size-1)]*dx
- const b=next[ix]*(1-dx)+next[Math.min(ix+1,f.size-1)]*dx
- return f.minElev+(a*(1-dy)+b*dy)*(f.maxElev-f.minElev)
+ // Промежуточные ступени приходят сеткой 256, а меш кольца — 384 узла,
+ // то есть идёт увеличение. Линейная интерполяция дала бы здесь грани.
+ const at=(cx:number,cy:number)=>
+  f.data[Math.min(Math.max(cy,0),f.size-1)][Math.min(Math.max(cx,0),f.size-1)]
+ const row=(o:number)=>cubic(at(ix-1,iy+o),at(ix,iy+o),at(ix+1,iy+o),at(ix+2,iy+o),dx)
+ return f.minElev+cubic(row(-1),row(0),row(1),row(2),dy)*(f.maxElev-f.minElev)
 }
 
 function project(u:number,v:number,view:TerrainGeoFrame,source:TerrainGeoFrame) {
@@ -191,7 +199,9 @@ export function buildAcceptedReliefModel(options:AcceptedReliefOptions) {
  const fine=options.fine,view=options.view??fine.frame
  const direct=(u:number,v:number)=>sampleTerrainElevation(fine,options.coarse,view,u,v)
  const detail=options.detail??'high'
- const divisions=detail==='low'?95:191
+ // Полоса пропускания рельефа в предпросмотре. Сетка кольца — 384 узла,
+ // так что 255 ещё не упирается в неё, а стоит лишь лишних вызовов direct.
+ const divisions=detail==='low'?127:255
  // Separate numeric axes retain signed/outside-crop nodes without allocating a
  // string for every gradient probe. The cache belongs to this terrain build.
  const nodeCache=new Map<number,Map<number,number>>()
@@ -205,11 +215,17 @@ export function buildAcceptedReliefModel(options:AcceptedReliefOptions) {
  // Detail changes the bandwidth of the real DEM, not the connecting topology.
  // High uses the original full-resolution sampling unchanged. Preview nodes
  // extend beyond [0,1] where needed, so upper sides don't get a new clamp rim.
+ //
+ // Узловая сетка берётся бикубикой, а не линейно. У линейной интерполяции
+ // градиент постоянен внутри ячейки и скачет на её границе: высота
+ // непрерывна, нормаль — нет. На полировке нормаль задаёт блик, поэтому
+ // сетка узлов проступала квадратными гранями. Catmull-Rom непрерывна по
+ // производной, огранка исчезает.
  const sample=(u:number,v:number)=>{
   if(detail==='high')return direct(u,v)
   const x=u*divisions,y=v*divisions,ix=Math.floor(x),iy=Math.floor(y),dx=x-ix,dy=y-iy
-  return (node(ix,iy)*(1-dx)+node(ix+1,iy)*dx)*(1-dy)
-   +(node(ix,iy+1)*(1-dx)+node(ix+1,iy+1)*dx)*dy
+  const row=(o:number)=>cubic(node(ix-1,iy+o),node(ix,iy+o),node(ix+1,iy+o),node(ix+2,iy+o),dx)
+  return cubic(row(-1),row(0),row(1),row(2),dy)
  }
  const elevationAt=(id:number)=>sample(.5+sourcePosition[id*3]/footprint,.5-sourcePosition[id*3+2]/footprint)
  const elevations=new Float64Array(position.length/3).fill(NaN)
