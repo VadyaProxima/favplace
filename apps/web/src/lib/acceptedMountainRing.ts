@@ -86,9 +86,16 @@ const MASS = {
 const FACE_AXIAL_FACTOR = 1.23
 const BAND_AXIAL_FACTOR = 0.82
 const BAND_RADIAL_FACTOR = 0.84
-/** Площадка держится до этого угла, дальше начинается переход к шинке. */
-const BAND_SHAPE_START_DEGREES = 25
-const BAND_SHAPE_FULL_DEGREES = 62
+/**
+ * Площадка держится до первого угла, дальше идёт переход к шинке.
+ *
+ * Переход обязан быть длинным. Если сузить его до пары десятков градусов,
+ * широкая площадка обрывается в узкую шинку ступенькой, и по бокам
+ * вырастают «уши» — плоские крылья, торчащие за силуэт. Растянутый до
+ * самой шинки переход даёт вместо ступеньки плавное сужение.
+ */
+const BAND_SHAPE_START_DEGREES = 20
+const BAND_SHAPE_FULL_DEGREES = 90
 
 const SHOULDER = {
 	straight: { startDeg: 34, endDeg: 74, radialBias: 0.42, axialBias: 0.48 },
