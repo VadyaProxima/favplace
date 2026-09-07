@@ -36,7 +36,7 @@ const INNER_RADIUS = 8.5
  * Всё остальное подстраивается: направляющая внешнего профиля
  * подрезается в upperOuterPoint, потолок рельефа считается от неё же.
  */
-const FACE_HEIGHT = 10
+const FACE_HEIGHT = 11
 
 /**
  * Высота принятой базы: под неё выгружена таблица поправок
@@ -73,6 +73,22 @@ const MASS = {
 	classic: { radial: 1, axial: 1, support: 1 },
 	statement: { radial: 1.2, axial: 1.23, support: 1.04 },
 } as const
+
+/**
+ * Масса меняет площадку и обруч одной ручкой, поэтому «широкая площадка при
+ * тонком обруче» пресетом не выражается. Пропорции разведены по углу:
+ * у верха работает свой множитель, у шинки — свой, между ними плавный
+ * переход. Пресет массы умножается поверх и продолжает работать.
+ *
+ * Значения взяты из самих пресетов: площадка получает ширину «массивного»,
+ * обруч — ширину и толщину «лёгкого».
+ */
+const FACE_AXIAL_FACTOR = 1.23
+const BAND_AXIAL_FACTOR = 0.82
+const BAND_RADIAL_FACTOR = 0.84
+/** Площадка держится до этого угла, дальше начинается переход к шинке. */
+const BAND_SHAPE_START_DEGREES = 25
+const BAND_SHAPE_FULL_DEGREES = 62
 
 const SHOULDER = {
 	straight: { startDeg: 34, endDeg: 74, radialBias: 0.42, axialBias: 0.48 },
@@ -687,11 +703,27 @@ function baseVertex(
 		outerness,
 	)
 	const outerFieldWeight = smootherstep(radialFraction)
-	const radialScale = 1 + (mass.radial - 1) * outerFieldWeight
+	// Разведение пропорций площадки и обруча: см. FACE_AXIAL_FACTOR.
+	// Множитель действует только на внешнюю поверхность (outerFieldWeight),
+	// поэтому посадочное отверстие остаётся круглым и неизменным.
+	const bandBlend = smootherstep(
+		Math.min(
+			1,
+			Math.max(
+				0,
+				(degrees - BAND_SHAPE_START_DEGREES) /
+					(BAND_SHAPE_FULL_DEGREES - BAND_SHAPE_START_DEGREES),
+			),
+		),
+	)
+	const shapeAxial =
+		FACE_AXIAL_FACTOR + (BAND_AXIAL_FACTOR - FACE_AXIAL_FACTOR) * bandBlend
+	const shapeRadial = 1 + (BAND_RADIAL_FACTOR - 1) * bandBlend
+	const radialScale = (1 + (mass.radial - 1) * outerFieldWeight) * shapeRadial
 	const radialGrowth = shoulderRadialGrowth(degrees, shoulders)
 	const radial =
 		INNER_RADIUS + radialThickness * radialFraction * radialScale * radialGrowth
-	const axialScale = 1 + (mass.axial - 1) * outerFieldWeight
+	const axialScale = (1 + (mass.axial - 1) * outerFieldWeight) * shapeAxial
 	const axialGrowth = shoulderAxialGrowth(degrees, shoulders)
 	const axial =
 		axialSign * localHalfWidth * sectionWidthRatio * axialScale * axialGrowth
