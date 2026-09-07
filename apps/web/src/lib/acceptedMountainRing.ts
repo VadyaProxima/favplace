@@ -30,7 +30,23 @@ export const ACCEPTED_MOUNTAIN_DEFAULTS: Readonly<AcceptedMountainRingOptions> =
 const MINIMUM_RING_DIAMETER = 15
 const MAXIMUM_RING_DIAMETER = 22
 const INNER_RADIUS = 8.5
-const FACE_HEIGHT = 12.394
+
+/**
+ * Высота верха кольца. Опускаем — площадка становится площе.
+ * Всё остальное подстраивается: направляющая внешнего профиля
+ * подрезается в upperOuterPoint, потолок рельефа считается от неё же.
+ */
+const FACE_HEIGHT = 10
+
+/**
+ * Высота принятой базы: под неё выгружена таблица поправок
+ * (ACCEPTED_BOUNDS.max[1] = 12.394) и подогнаны координаты точек
+ * направляющей. Служит опорой, менять её нельзя.
+ */
+const ACCEPTED_FACE_HEIGHT = 12.394
+
+/** На столько ниже верха проходит гребень скоса в принятой подгонке. */
+const ACCEPTED_BEVEL_CREST_DROP = 0.032
 const FACE_HALF_X = 5
 const FACE_HALF_Z = 3.12
 const FACE_EXPONENT = 4.2
@@ -237,11 +253,11 @@ function cubicBezier(
 
 function upperOuterPoint(degreesInput: number): Point2 {
 	const radius80 = 10.4356
-	const points: readonly OuterRailPoint[] = [
+	const railPoints: readonly OuterRailPoint[] = [
 		[0, [0, FACE_HEIGHT], 0],
 		[10, [FACE_HEIGHT * Math.tan((10 * Math.PI) / 180), FACE_HEIGHT], 0],
-		[20, [4.511, 12.394], 0],
-		[25, [5.764, 12.362], -7.44],
+		[20, [ACCEPTED_FACE_HEIGHT * Math.tan((20 * Math.PI) / 180), ACCEPTED_FACE_HEIGHT], 0],
+		[25, [5.764, ACCEPTED_FACE_HEIGHT - ACCEPTED_BEVEL_CREST_DROP], -7.44],
 		[30, [6.621, 11.468], -59.73],
 		[35, [7.246, 10.349], -61.56],
 		[40, [7.8, 9.295], -62.89],
@@ -259,11 +275,32 @@ function upperOuterPoint(degreesInput: number): Point2 {
 		],
 		[90, [10.37, 0], -90],
 	]
+	// Координаты выше подогнаны под ACCEPTED_FACE_HEIGHT. Если площадку
+	// опустить, часть точек скоса оказывается выше верха кольца и лезет над
+	// площадкой бортиком. Каждая точка направляющей лежит на луче своего
+	// угла, поэтому подрезка — это сдвиг точки вдоль луча до плоскости
+	// y = FACE_HEIGHT; касательная там становится горизонтальной, потому что
+	// это уже площадка, а не скос.
+	const points: readonly OuterRailPoint[] =
+		FACE_HEIGHT >= ACCEPTED_FACE_HEIGHT
+			? railPoints
+			: railPoints.map(([degrees, [x, y], tangent]) =>
+					y > FACE_HEIGHT
+						? ([
+								degrees,
+								[FACE_HEIGHT * Math.tan((degrees * Math.PI) / 180), FACE_HEIGHT],
+								0,
+							] as OuterRailPoint)
+						: ([degrees, [x, y], tangent] as OuterRailPoint),
+				)
 	const degrees = Math.max(points[0][0], Math.min(points[points.length - 1][0], degreesInput))
 	const finish = (point: Point2): Point2 => {
 		if (degrees > 20 && degrees < 25) {
 			const amount = (degrees - 20) / 5
-			const ceiling = FACE_HEIGHT - (FACE_HEIGHT - 12.362) * smootherstep(amount)
+			// Просадка гребня скоса — величина абсолютная, а не доля высоты.
+			// Прежняя запись FACE_HEIGHT - (FACE_HEIGHT - 12.362) при
+			// FACE_HEIGHT < 12.362 поднимала потолок выше верха кольца.
+			const ceiling = FACE_HEIGHT - ACCEPTED_BEVEL_CREST_DROP * smootherstep(amount)
 			return [point[0], Math.min(point[1], ceiling)]
 		}
 		return point

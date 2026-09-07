@@ -253,7 +253,14 @@ export function buildAcceptedReliefModel(options:AcceptedReliefOptions) {
  // One source-grid cell across both probes: enough to resolve the actual mesh's
  // terrain without introducing the coarse body triangles into its reflection.
  const probe=.5/source.grid[0],probeDistance=2*probe*footprint
- const joinWidth=1.2,bodyScale=fullY-releaseY-joinWidth/2
+ // Ширина стыка привязана к высоте короны, а не задана намертво. У принятой
+ // базы над отверстием почти 4 мм и на стык хватало фиксированных 1.2 мм.
+ // Если FACE_HEIGHT опустить, releaseY упирается в защиту отверстия, зазор
+ // до верха становится меньше самого стыка, и bodyScale схлопывается почти
+ // в ноль — переход рельефа сжимается, вершина выглядит срезанной.
+ const crownSpan=fullY-releaseY
+ const joinWidth=Math.min(1.2,crownSpan*.5)
+ const bodyScale=Math.max(crownSpan-joinWidth/2,1e-3)
  const terrainDepth=terrainFullY-terrainReleaseY
  let maximumLift=0,boundaryMaximumLift=0
  for(let id=0;id<position.length/3;id++) {
