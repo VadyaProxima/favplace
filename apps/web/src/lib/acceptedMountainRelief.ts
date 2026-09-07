@@ -213,16 +213,27 @@ export function buildAcceptedReliefModel(options:AcceptedReliefOptions) {
   return result
  }
  // Detail changes the bandwidth of the real DEM, not the connecting topology.
- // High uses the original full-resolution sampling unchanged. Preview nodes
- // extend beyond [0,1] where needed, so upper sides don't get a new clamp rim.
+ // Preview nodes extend beyond [0,1] where needed, so upper sides don't get
+ // a new clamp rim.
  //
  // Узловая сетка берётся бикубикой, а не линейно. У линейной интерполяции
  // градиент постоянен внутри ячейки и скачет на её границе: высота
  // непрерывна, нормаль — нет. На полировке нормаль задаёт блик, поэтому
  // сетка узлов проступала квадратными гранями. Catmull-Rom непрерывна по
  // производной, огранка исчезает.
+ //
+ // High раньше читал кадр напрямую. Это и давало парадокс: на финальной
+ // ступени, где данных больше всего, квадраты появлялись, а на предыдущей
+ // их не было. Узлов меша 384, а финальный кадр приходит сеткой 1024 —
+ // читать его точечно значит недосэмплировать и получать алиасинг.
+ // Грубые ступени этим не страдали: узловая сетка работала фильтром
+ // низких частот. Усредняем по площадке, которую занимает узел меша.
+ const meshStep=1/source.grid[0]
  const sample=(u:number,v:number)=>{
-  if(detail==='high')return direct(u,v)
+  if(detail==='high') {
+   const h=meshStep*.25
+   return (direct(u-h,v-h)+direct(u+h,v-h)+direct(u-h,v+h)+direct(u+h,v+h))*.25
+  }
   const x=u*divisions,y=v*divisions,ix=Math.floor(x),iy=Math.floor(y),dx=x-ix,dy=y-iy
   const row=(o:number)=>cubic(node(ix-1,iy+o),node(ix,iy+o),node(ix+1,iy+o),node(ix+2,iy+o),dx)
   return cubic(row(-1),row(0),row(1),row(2),dy)

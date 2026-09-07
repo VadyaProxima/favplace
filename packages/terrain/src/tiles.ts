@@ -72,10 +72,26 @@ export function getTilesForBounds(
   return tiles;
 }
 
+/**
+ * По умолчанию Terrarium. Mapbox включается только явно —
+ * TERRAIN_DEM_PROVIDER=mapbox.
+ *
+ * Раньше источник выбирало наличие MAPBOX_ACCESS_TOKEN, то есть токен,
+ * заведённый для карты и геокодинга, молча подписывал проект ещё и на
+ * платный DEM-сервис.
+ *
+ * И дело не только в деньгах. Mapbox кодирует высоту с шагом 0,1 м, а
+ * Terrarium — 1/256 м, то есть в 25 раз точнее. На z15, где пиксель равен
+ * 1,74 м, перепад между соседними пикселями часто меньше 0,1 м: высоты
+ * совпадают, и рельеф распадается на плоские площадки. Замер на Эльбрусе
+ * (радиус 150 м, сетка 1024) показал у Mapbox регулярную структуру с
+ * периодом ровно в пиксель DEM силой 0,98, у Terrarium — 0,66 без
+ * выраженного периода. Это и были «квадраты» на кольце.
+ */
 export function getDemProvider(): DemProvider {
-	const raw = process.env.MAPBOX_ACCESS_TOKEN?.trim()
-	const token = raw?.split(/\s+/)[0]
-	return token ? 'mapbox' : 'terrarium'
+	return process.env.TERRAIN_DEM_PROVIDER?.trim().toLowerCase() === 'mapbox'
+		? 'mapbox'
+		: 'terrarium'
 }
 
 export function getMapboxAccessToken(): string {
