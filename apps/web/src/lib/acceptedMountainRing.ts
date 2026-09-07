@@ -436,9 +436,34 @@ function sectionRatio(
 	return classicRatio + (targetRatio - classicRatio) * profileWeight
 }
 
-function faceGate(x: number, z: number, outerness: number) {
+/**
+ * Множитель ширины на данном угле: у площадки один, у шинки другой.
+ * Вынесен отдельно, потому что нужен и при построении вершины, и воротам
+ * плоского верха — иначе они разъезжаются.
+ */
+function axialShapeFactor(degrees: number) {
+	const blend = smootherstep(
+		Math.min(
+			1,
+			Math.max(
+				0,
+				(degrees - BAND_SHAPE_START_DEGREES) /
+					(BAND_SHAPE_FULL_DEGREES - BAND_SHAPE_START_DEGREES),
+			),
+		),
+	)
+	return FACE_AXIAL_FACTOR + (BAND_AXIAL_FACTOR - FACE_AXIAL_FACTOR) * blend
+}
+
+/**
+ * axialFactor — то же расширение по оси, что применено к самой вершине.
+ * Без него ворота считались бы по исходной полуширине, прибавка ширины
+ * оказывалась за их границей, и вместо плоскости по краю площадки шёл
+ * скруглённый валик.
+ */
+function faceGate(x: number, z: number, outerness: number, axialFactor: number) {
 	const normX = Math.abs(x) / FACE_HALF_X
-	const normZ = Math.abs(z) / FACE_HALF_Z
+	const normZ = Math.abs(z) / (FACE_HALF_Z * axialFactor)
 	const xPower = normX ** FACE_EXPONENT
 	const zPower = normZ ** FACE_EXPONENT
 	const total = xPower + zPower
@@ -477,7 +502,7 @@ function faceAdjustedY(
 ) {
 	let adjustedY = Math.min(y, FACE_HEIGHT)
 	if (degrees <= 45 && adjustedY < FACE_HEIGHT) {
-		const gate = faceGate(x, z, outerness)
+		const gate = faceGate(x, z, outerness, axialShapeFactor(degrees))
 		adjustedY += gate * (FACE_HEIGHT - adjustedY)
 	}
 	return adjustedY
@@ -713,18 +738,10 @@ function baseVertex(
 	// Разведение пропорций площадки и обруча: см. FACE_AXIAL_FACTOR.
 	// Множитель действует только на внешнюю поверхность (outerFieldWeight),
 	// поэтому посадочное отверстие остаётся круглым и неизменным.
-	const bandBlend = smootherstep(
-		Math.min(
-			1,
-			Math.max(
-				0,
-				(degrees - BAND_SHAPE_START_DEGREES) /
-					(BAND_SHAPE_FULL_DEGREES - BAND_SHAPE_START_DEGREES),
-			),
-		),
-	)
-	const shapeAxial =
-		FACE_AXIAL_FACTOR + (BAND_AXIAL_FACTOR - FACE_AXIAL_FACTOR) * bandBlend
+	const shapeAxial = axialShapeFactor(degrees)
+	// Тот же переход, но для толщины: 1 у площадки, BAND_RADIAL_FACTOR у шинки.
+	const bandBlend =
+		(shapeAxial - FACE_AXIAL_FACTOR) / (BAND_AXIAL_FACTOR - FACE_AXIAL_FACTOR)
 	const shapeRadial = 1 + (BAND_RADIAL_FACTOR - 1) * bandBlend
 	const radialScale = (1 + (mass.radial - 1) * outerFieldWeight) * shapeRadial
 	const radialGrowth = shoulderRadialGrowth(degrees, shoulders)
