@@ -2,9 +2,8 @@
 
 import { OrbitControls } from '@react-three/drei'
 import { useThree } from '@react-three/fiber'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, type ElementRef } from 'react'
 import * as THREE from 'three'
-import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 
 type Props = {
 	target?: [number, number, number] | THREE.Vector3
@@ -28,7 +27,7 @@ export function RingOrbitControls({
 	minPolarAngle = 0.12,
 	maxPolarAngle = Math.PI / 1.75,
 }: Props) {
-	const controlsRef = useRef<OrbitControlsImpl>(null)
+	const controlsRef = useRef<ElementRef<typeof OrbitControls>>(null)
 	const { gl } = useThree()
 
 	useEffect(() => {

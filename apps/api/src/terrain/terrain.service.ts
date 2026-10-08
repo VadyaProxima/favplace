@@ -1,4 +1,8 @@
-import { fetchHeightMap, resampleHeightMap } from '@favplace/terrain'
+import {
+	createTerrainGeoFrame,
+	fetchHeightMap,
+	resampleHeightMap,
+} from '@favplace/terrain'
 import {
 	BadGatewayException,
 	BadRequestException,
@@ -15,6 +19,8 @@ export class TerrainService {
 		lng: number,
 		radius: number,
 		resolution: number,
+		bearing = 0,
+		zoomOffset = 0,
 	) {
 		if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
 			throw new BadRequestException('lat and lng must be finite numbers')
@@ -23,11 +29,14 @@ export class TerrainService {
 			throw new BadRequestException('radius must be a positive number')
 		}
 
-		const clampedRadius = Math.min(Math.max(radius, 50), 50_000)
-		const clampedRes = Math.min(Math.max(Math.round(resolution) || 512, 64), 512)
+		const clampedRadius = Math.min(Math.max(radius, 50), 100_000)
+		const clampedRes = Math.min(Math.max(Math.round(resolution) || 512, 64), 1024)
 
 		try {
-			const raw = await fetchHeightMap(lat, lng, clampedRadius)
+			const raw = await fetchHeightMap(lat, lng, clampedRadius, {
+				bearing,
+				zoomOffset,
+			})
 			const heightMap = resampleHeightMap(raw, clampedRes)
 
 			return {
@@ -41,6 +50,7 @@ export class TerrainService {
 					demSource: raw.demSource ?? 'mapbox',
 					tileZoom: raw.tileZoom ?? 0,
 				},
+				frame: createTerrainGeoFrame(lat, lng, clampedRadius, bearing),
 			}
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'Terrain fetch failed'

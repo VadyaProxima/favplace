@@ -4,8 +4,10 @@ import {
 	buildBarRing,
 	getBarRingBottomY,
 } from '@/lib/barRing'
+import { useExportTarget } from '@/lib/exportTarget'
 import { makeJewelleryMaterial, JEWELLERY_ENV, JEWELLERY_GL } from '@/lib/jewelleryMaterial'
 import { buildDemoMountainHeightMap } from '@/lib/mountainSignet'
+import { calibratedReliefHeight } from '@/lib/reliefCalibration'
 import { smoothHeightGridByDetail } from '@/lib/reliefSmoothing'
 import { useAppStore } from '@/store/useAppStore'
 import { MATERIALS } from '@favplace/shared'
@@ -36,7 +38,7 @@ function BarRing() {
 	)
 
 	const { mesh, bottomY } = useMemo(() => {
-		const geometry = buildBarRing(reliefGrid, reliefHeight)
+		const geometry = buildBarRing(reliefGrid, calibratedReliefHeight('bar', reliefHeight))
 
 		const bandMat = makeJewelleryMaterial({
 			color: mat.color,
@@ -83,6 +85,8 @@ function BarRing() {
 
 		return { mesh: m, bottomY: getBarRingBottomY(geometry) - cy + lift }
 	}, [reliefGrid, reliefHeight, mat, polished, twoTone])
+
+	useExportTarget(mesh)
 
 	return (
 		<>

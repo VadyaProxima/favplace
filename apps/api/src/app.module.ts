@@ -1,21 +1,11 @@
 import { Module } from '@nestjs/common'
+import { AdminModule } from './admin/admin.module'
 import { AiModule } from './ai/ai.module'
-import { AuthModule } from './auth/auth.module'
-import { ExportModule } from './export/export.module'
 import { OrdersModule } from './orders/orders.module'
 import { PrismaModule } from './prisma/prisma.module'
-import { ProjectsModule } from './projects/projects.module'
 import { TerrainModule } from './terrain/terrain.module'
 
 @Module({
-	imports: [
-		PrismaModule,
-		AuthModule,
-		TerrainModule,
-		ProjectsModule,
-		OrdersModule,
-		AiModule,
-		ExportModule,
-	],
+	imports: [PrismaModule, TerrainModule, OrdersModule, AiModule, AdminModule],
 })
 export class AppModule {}

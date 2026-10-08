@@ -1,0 +1,29 @@
+# HTTPS-сертификат Caddy получает и продлевает сам — для этого домен
+# SITE_DOMAIN должен A-записью указывать на IP этого сервера, а порты
+# 80 и 443 быть открыты.
+
+{$SITE_DOMAIN} {
+	encode zstd gzip
+
+	# /api/* уходит прямо в NestJS. Через rewrites Next это тоже работает,
+	# но тогда тяжёлые heightmap-ответы гоняются лишний раз через прокси.
+	handle /api/* {
+		reverse_proxy api:4000
+	}
+
+	handle {
+		reverse_proxy web:3000
+	}
+
+	# 24 МБ моделей в /models отдаются с иммутабельным кэшем: имена файлов
+	# стабильные, поэтому браузер не должен перекачивать их на каждый визит.
+	@models path /models/*
+	header @models Cache-Control "public, max-age=31536000, immutable"
+
+	log {
+		output file /data/access.log {
+			roll_size 10MiB
+			roll_keep 5
+		}
+	}
+}

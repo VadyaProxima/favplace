@@ -3,26 +3,12 @@
 import Link from 'next/link'
 import { motion } from 'motion/react'
 
+// В продаже доступно только горное кольцо.
 const PRODUCTS = [
-	{
-		id: 'classic',
-		name: 'Классический',
-		desc: 'Сигнет с овальной площадкой под карту места',
-	},
-	{
-		id: 'bar',
-		name: 'Планка',
-		desc: 'Прямоугольная вставка на всю ширину обруча',
-	},
 	{
 		id: 'mountain',
 		name: 'Горный',
 		desc: 'Рельеф продолжает металл обруча без отдельной вставки',
-	},
-	{
-		id: 'square',
-		name: 'Квадрат',
-		desc: 'Чёткая квадратная площадка и объёмный рельеф',
 	},
 ]
 
@@ -103,13 +89,13 @@ export default function Home() {
 			<section className="border-t border-zinc-200 px-6 py-20 md:px-10 md:py-28">
 				<div className="mx-auto max-w-6xl">
 					<h2 className="font-display text-3xl font-semibold tracking-tight text-zinc-900 md:text-4xl">
-						Коллекция форм
+						Горное кольцо
 					</h2>
 					<p className="mt-3 max-w-md text-sm text-zinc-500 md:text-base">
-						Выберите силуэт — рельеф места ляжет на площадку именно этой формы.
+						Рельеф вашего места продолжает металл обруча без отдельной вставки.
 					</p>
 
-					<div className="mt-12 grid gap-px bg-zinc-200 sm:grid-cols-2 lg:grid-cols-4">
+					<div className="mt-12 grid max-w-xl gap-px border border-zinc-200 bg-zinc-200">
 						{PRODUCTS.map((p, i) => (
 							<Link
 								key={p.id}
@@ -166,9 +152,14 @@ export default function Home() {
 						Ваш ландшафт. Ваш металл.
 					</p>
 				</div>
-				<p className="mx-auto mt-12 max-w-6xl text-xs text-zinc-400">
-					© {new Date().getFullYear()} Favplace
-				</p>
+				<div className="mx-auto mt-12 flex max-w-6xl flex-wrap items-baseline gap-x-5 gap-y-2 text-xs text-zinc-400">
+					<p>© {new Date().getFullYear()} Favplace</p>
+					{/* Обязательно по CC-BY: атрибуция должна быть достижима оттуда,
+					    где используется материал. Не удалять вместе с редизайном футера. */}
+					<Link href="/credits" className="transition hover:text-zinc-700">
+						Использованные материалы
+					</Link>
+				</div>
 			</footer>
 		</main>
 	)

@@ -1,0 +1,39 @@
+# Всё, что не должно попасть в build context.
+# node_modules ставится внутри образа под linux — хостовые бинарники туда нельзя.
+node_modules
+**/node_modules
+
+.git
+.gitignore
+.github
+HOSTING.md
+docker-compose.override.yml
+
+.turbo
+**/.turbo
+**/.next
+**/dist
+**/*.tsbuildinfo
+*.tar.gz
+build-*.log
+start-*.log
+
+# Секреты и локальная БД
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+*.db
+**/*.db
+
+# Мусор разработки
+screenshots
+.claude
+.qwen
+apps/web/.qa-mountain
+Dockerfile
+**/Dockerfile
+docker-compose.yml
+README.md

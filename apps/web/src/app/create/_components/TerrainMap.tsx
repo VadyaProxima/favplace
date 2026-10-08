@@ -69,28 +69,52 @@ interface TerrainMapProps {
 	onRadiusChange: (radius: number) => void
 	/** ring insert shape → frame geometry */
 	frameShape?: ReliefFrameShape
+	/** поворот выбранного кропа по часовой, градусы */
+	bearing?: number
+	/** карта движется — кольцо строится по черновой сетке */
+	onInteractingChange?: (interacting: boolean) => void
 }
 
-export type MapStyleType = 'satellite' | 'street' | 'terrain'
+export type MapStyleType = 'satellite' | 'street' | 'topo' | 'terrain'
 
 const STYLE_TILES: Record<
 	MapStyleType,
-	{ name: string; url: string; maxzoom: number }
+	{
+		name: string
+		description: string
+		url: string
+		maxzoom: number
+		attribution: string
+	}
 > = {
 	satellite: {
 		name: 'Спутник',
+		description: 'Спутниковые снимки местности',
 		url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
 		maxzoom: 19,
+		attribution: '© Esri',
 	},
 	street: {
 		name: 'Схема',
+		description: 'Населённые пункты и дороги',
 		url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
 		maxzoom: 18,
+		attribution: '© Esri',
+	},
+	topo: {
+		name: 'Топокарта',
+		description:
+			'Названия и высоты вершин, перевалы, тропы и горизонтали. Приблизьте карту, чтобы увидеть больше подписей.',
+		url: 'https://a.tile.opentopomap.org/{z}/{x}/{y}.png',
+		maxzoom: 17,
+		attribution: '© OpenStreetMap contributors, SRTM | © OpenTopoMap (CC-BY-SA)',
 	},
 	terrain: {
 		name: 'Рельеф',
+		description: 'Отмывка рельефа местности',
 		url: 'https://services.arcgisonline.com/arcgis/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}',
 		maxzoom: 15,
+		attribution: '© Esri',
 	},
 }
 
@@ -107,7 +131,7 @@ function buildStyle(type: MapStyleType) {
 				tiles: [STYLE_TILES[type].url],
 				tileSize: 256,
 				maxzoom: STYLE_TILES[type].maxzoom,
-				attribution: '© Esri',
+				attribution: STYLE_TILES[type].attribution,
 			},
 		},
 		layers: [{ id: 'basemap', type: 'raster' as const, source: 'basemap' }],
@@ -129,6 +153,8 @@ export function TerrainMap({
 	onCenterChange,
 	onRadiusChange,
 	frameShape = 'square',
+	bearing = 0,
+	onInteractingChange,
 }: TerrainMapProps) {
 	const containerRef = useRef<HTMLDivElement>(null)
 	const mapRef = useRef<maplibregl.Map | null>(null)
@@ -142,6 +168,8 @@ export function TerrainMap({
 	onRadiusChangeRef.current = onRadiusChange
 	const frameShapeRef = useRef(frameShape)
 	frameShapeRef.current = frameShape
+	const onInteractingChangeRef = useRef(onInteractingChange)
+	onInteractingChangeRef.current = onInteractingChange
 
 	const [styleType, setStyleType] = useState<MapStyleType>('satellite')
 	const [mapReady, setMapReady] = useState(false)
@@ -149,7 +177,8 @@ export function TerrainMap({
 	const radiusRef = useRef(radius)
 	const lastEmittedRadiusRef = useRef(radius)
 	const rafRef = useRef<number | null>(null)
-	const resizeDragRef = useRef<{ pointerId: number } | null>(null)
+	const initialFitDoneRef = useRef(false)
+	const lastLiveEmitRef = useRef(0)
 
 	const pxPer1000m = () => {
 		const map = mapRef.current
@@ -160,51 +189,103 @@ export function TerrainMap({
 		return Math.abs(p1.y - p2.y) || 1
 	}
 
+	/**
+	 * Рамка занимает постоянную долю окна и в пикселях не меняется.
+	 * Площадь съёмки регулируется зумом карты — рамка её только показывает.
+	 */
+	const frameLongPx = () => {
+		const rect = containerRef.current?.getBoundingClientRect()
+		if (!rect || rect.width === 0) return 0
+		return FIT_FRACTION * Math.min(rect.width, rect.height * frameAspect(frameShapeRef.current))
+	}
+
+	/** Сколько метров сейчас попадает в рамку по длинной стороне. */
+	const frameSideMeters = () => (frameLongPx() / pxPer1000m()) * 1000
+
+	/** Половина длинной стороны — тот самый radius, которым живёт весь конструктор. */
+	const currentRadius = () =>
+		Math.min(MAX_RADIUS, Math.max(MIN_RADIUS, Math.round(frameSideMeters() / 2)))
+
 	const applyFrameSize = () => {
 		const el = frameElRef.current
 		if (!el) return
 		const shape = frameShapeRef.current
 		const aspect = frameAspect(shape)
-		const longPx = ((radiusRef.current * 2) / 1000) * pxPer1000m()
+		const longPx = frameLongPx()
 		el.style.width = `${longPx}px`
 		el.style.height = `${longPx / aspect}px`
 		if (borderElRef.current) {
 			borderElRef.current.style.borderRadius = frameRadiusCss(shape)
 		}
 		if (labelElRef.current) {
-			const wM = radiusRef.current * 2
-			const hM = wM / aspect
-			labelElRef.current.textContent = `${formatSide(wM)} × ${formatSide(hM)}`
+			const wM = frameSideMeters()
+			labelElRef.current.textContent = `${formatSide(wM)} × ${formatSide(wM / aspect)}`
 		}
 	}
 
+	// Таймер, а не requestAnimationFrame: в фоновой вкладке rAF не вызывается
+	// вообще, и рамка оставалась бы неинициализированной вместе с подписью.
 	const scheduleFrameSize = () => {
 		if (rafRef.current !== null) return
-		rafRef.current = requestAnimationFrame(() => {
+		rafRef.current = window.setTimeout(() => {
 			rafRef.current = null
 			applyFrameSize()
-		})
+		}, 16)
 	}
 
-	const emitCenter = () => {
+	/**
+	 * Отдаём наружу и центр, и площадь — оба меняются одним жестом.
+	 * Только по moveend: во время панорамирования писать в стор незачем,
+	 * иначе рельеф пересчитывался бы на каждый кадр.
+	 */
+	const emitViewport = () => {
 		const map = mapRef.current
 		if (!map) return
 		const c = map.getCenter()
 		onCenterChangeRef.current(c.lng, c.lat)
+
+		// До первой подгонки зум ещё стартовый, и вычисленная из него площадь
+		// затёрла бы radius, пришедший из ссылки.
+		if (!initialFitDoneRef.current) return
+
+		const r = currentRadius()
+		// Допуск: после подгонки зума под пресет обратный пересчёт даёт
+		// 1999 вместо 2000. Без него пресет сразу терял бы подсветку.
+		const drift = Math.abs(r - lastEmittedRadiusRef.current) / lastEmittedRadiusRef.current
+		if (drift > 0.015) {
+			lastEmittedRadiusRef.current = r
+			radiusRef.current = r
+			onRadiusChangeRef.current(r)
+		}
 	}
 
+	/**
+	 * Первая подгонка зума под radius из ссылки. На событии `load` контейнер
+	 * бывает ещё нулевого размера — тогда подгонка молча пропускалась, и
+	 * первый же emitViewport фиксировал площадь по стартовому зуму.
+	 * Поэтому пробуем повторно, пока размер не появится.
+	 */
+	const tryInitialFit = (center?: [number, number]) => {
+		if (initialFitDoneRef.current) return
+		if (!mapRef.current || frameLongPx() <= 0) return
+		initialFitDoneRef.current = true
+		fitZoomToFrame(center, true)
+		applyFrameSize()
+		emitViewport()
+	}
+
+	/** Подбирает зум так, чтобы в рамку постоянного размера попало radius×2 метров. */
 	const fitZoomToFrame = (center?: [number, number], jump = false) => {
 		const map = mapRef.current
-		const container = containerRef.current
-		if (!map || !container) return
-		const rect = container.getBoundingClientRect()
-		const aspect = frameAspect(frameShapeRef.current)
-		const desiredLongPx = FIT_FRACTION * Math.min(rect.width, rect.height * aspect)
-		const currentLongPx = ((radiusRef.current * 2) / 1000) * pxPer1000m()
-		if (currentLongPx <= 0) return
+		if (!map) return
+		const longPx = frameLongPx()
+		if (longPx <= 0) return
+		const neededPxPer1000m = longPx / ((radiusRef.current * 2) / 1000)
 		const zoom = Math.min(
-			STYLE_TILES[styleType].maxzoom,
-			Math.max(2, map.getZoom() + Math.log2(desiredLongPx / currentLongPx)),
+			// Source maxzoom limits tile requests; the camera can still overzoom
+			// those tiles to keep a small selection at the requested size.
+			map.getMaxZoom(),
+			Math.max(2, map.getZoom() + Math.log2(neededPxPer1000m / pxPer1000m())),
 		)
 		const opts = { center: center ?? map.getCenter(), zoom }
 		if (jump) map.jumpTo(opts)
@@ -213,6 +294,9 @@ export function TerrainMap({
 
 	useEffect(() => {
 		if (!containerRef.current || mapRef.current) return
+		// Ref переживает размонтирование, карта — нет. Без сброса второй
+		// монтаж в StrictMode считал бы подгонку зума уже выполненной.
+		initialFitDoneRef.current = false
 		const map = new maplibregl.Map({
 			container: containerRef.current,
 			style: buildStyle(styleType),
@@ -225,76 +309,72 @@ export function TerrainMap({
 		mapRef.current = map
 		map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
 
-		map.on('move', scheduleFrameSize)
-		map.on('moveend', emitCenter)
-
-		map.on('load', () => {
-			map.resize()
-			fitZoomToFrame([target.lng, target.lat], true)
-			applyFrameSize()
-			setMapReady(true)
-			emitCenter()
+		// Рельеф должен обновляться прямо во время перетаскивания, но писать в
+		// стор на каждый кадр нельзя — throttle держит поток на ~5 обновлений
+		// в секунду. Перестроение меша занимает ~55 мс, в этот бюджет влезает.
+		map.on('movestart', () => onInteractingChangeRef.current?.(true))
+		map.on('move', () => {
+			scheduleFrameSize()
+			const now = performance.now()
+			if (now - lastLiveEmitRef.current < 300) return
+			lastLiveEmitRef.current = now
+			onInteractingChangeRef.current?.(true)
+			emitViewport()
 		})
+		// На остановке — точное финальное значение без throttle,
+		// и переход на точную сетку рельефа
+		map.on('moveend', () => {
+			lastLiveEmitRef.current = 0
+			emitViewport()
+			onInteractingChangeRef.current?.(false)
+		})
+
+		// Ни на 'load', ни на ResizeObserver полагаться нельзя: оба начинались
+		// с map.resize(), и одна его осечка глушила всю инициализацию рамки.
+		// Поэтому опрашиваем кадрами, пока контейнер не получит размер.
+		let initFrame = 0
+		let attempts = 0
+		const pump = () => {
+			attempts++
+			try {
+				map.resize()
+			} catch {
+				/* стиль ещё не готов — не повод бросать инициализацию */
+			}
+			applyFrameSize()
+			tryInitialFit([target.lng, target.lat])
+			if (initialFitDoneRef.current) {
+				setMapReady(true)
+				return
+			}
+			if (attempts < 120) initFrame = window.setTimeout(pump, 25)
+		}
+		pump()
 
 		map.on('click', e => {
 			map.easeTo({ center: e.lngLat, duration: 300 })
 		})
 
 		const ro = new ResizeObserver(() => {
-			map.resize()
+			try {
+				map.resize()
+			} catch {
+				/* см. pump выше */
+			}
 			scheduleFrameSize()
+			// Рамка привязана к размеру окна, значит площадь съёмки изменилась
+			emitViewport()
 		})
 		ro.observe(containerRef.current)
 
 		return () => {
+			clearTimeout(initFrame)
 			ro.disconnect()
-			if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
+			if (rafRef.current !== null) clearTimeout(rafRef.current)
 			try {
 				map.remove()
 			} catch {}
 			mapRef.current = null
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [])
-
-	useEffect(() => {
-		const onMove = (e: PointerEvent) => {
-			const st = resizeDragRef.current
-			const map = mapRef.current
-			const container = containerRef.current
-			if (!st || !map || !container || e.pointerId !== st.pointerId) return
-			const rect = container.getBoundingClientRect()
-			const cx = rect.width / 2
-			const cy = rect.height / 2
-			const px = e.clientX - rect.left
-			const py = e.clientY - rect.top
-			const aspect = frameAspect(frameShapeRef.current)
-			const dx = Math.abs(px - cx)
-			const dy = Math.abs(py - cy) * aspect
-			const halfLongPx = Math.max(dx, dy)
-			radiusRef.current = Math.min(
-				MAX_RADIUS,
-				Math.max(MIN_RADIUS, (halfLongPx / pxPer1000m()) * 1000),
-			)
-			applyFrameSize()
-			e.preventDefault()
-		}
-		const onUp = (e: PointerEvent) => {
-			const st = resizeDragRef.current
-			if (!st || e.pointerId !== st.pointerId) return
-			resizeDragRef.current = null
-			mapRef.current?.dragPan.enable()
-			const r = Math.round(radiusRef.current)
-			lastEmittedRadiusRef.current = r
-			onRadiusChangeRef.current(r)
-		}
-		window.addEventListener('pointermove', onMove)
-		window.addEventListener('pointerup', onUp)
-		window.addEventListener('pointercancel', onUp)
-		return () => {
-			window.removeEventListener('pointermove', onMove)
-			window.removeEventListener('pointerup', onUp)
-			window.removeEventListener('pointercancel', onUp)
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [])
@@ -325,39 +405,34 @@ export function TerrainMap({
 	useEffect(() => {
 		frameShapeRef.current = frameShape
 		scheduleFrameSize()
+		// Другая пропорция рамки — другая площадь в кадре
+		emitViewport()
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [frameShape])
 
-	const onHandlePointerDown = (e: React.PointerEvent) => {
-		const map = mapRef.current
-		if (!map) return
-		e.preventDefault()
-		e.stopPropagation()
-		map.dragPan.disable()
-		resizeDragRef.current = { pointerId: e.pointerId }
-	}
-
-	const handleCursor: Record<string, string> = {
-		'left-0 top-0': 'nwse-resize',
-		'right-0 top-0': 'nesw-resize',
-		'left-0 bottom-0': 'nesw-resize',
-		'right-0 bottom-0': 'nwse-resize',
-	}
-
-	const aspect = frameAspect(frameShape)
-	const labelW = radius * 2
-	const labelH = labelW / aspect
+	// Рамку крутим, подпись — обратно, чтобы она осталась читаемой.
+	useEffect(() => {
+		if (frameElRef.current) frameElRef.current.style.rotate = `${bearing}deg`
+		if (labelElRef.current) labelElRef.current.style.rotate = `${-bearing}deg`
+	}, [bearing])
 
 	return (
 		<div className="relative h-full w-full overflow-hidden bg-zinc-200">
 			<div ref={containerRef} className="absolute inset-0 h-full w-full" />
 
-			<div className="absolute left-3 top-3 z-10 flex overflow-hidden rounded-md border border-black/10 bg-white/95 shadow-sm backdrop-blur">
+			<div
+				role="group"
+				aria-label="Вид карты"
+				className="absolute left-3 right-12 top-3 z-10 flex w-fit max-w-[calc(100%-3.75rem)] flex-wrap overflow-hidden rounded-md border border-black/10 bg-white/95 shadow-sm backdrop-blur"
+			>
 				{(Object.keys(STYLE_TILES) as MapStyleType[]).map(t => (
 					<button
 						key={t}
+						type="button"
+						title={STYLE_TILES[t].description}
+						aria-pressed={styleType === t}
 						onClick={() => setStyleType(t)}
-						className={`px-2.5 py-1.5 text-[11px] font-medium transition ${
+						className={`px-2 py-1.5 text-[10px] font-medium transition sm:px-2.5 sm:text-[11px] ${
 							styleType === t
 								? 'bg-zinc-900 text-white'
 								: 'text-zinc-600 hover:bg-zinc-100'
@@ -368,9 +443,34 @@ export function TerrainMap({
 				))}
 			</div>
 
+			<div className="absolute bottom-0 right-0 z-10 rounded-tl bg-white/90 px-1.5 py-0.5 text-[9px] leading-tight text-zinc-600">
+				{styleType === 'topo' ? (
+					<>
+						©{' '}
+						<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer" className="hover:underline">
+							OpenStreetMap
+						</a>
+						{' · SRTM · '}
+						<a href="https://opentopomap.org" target="_blank" rel="noopener noreferrer" className="hover:underline">
+							OpenTopoMap
+						</a>
+						{' ('}
+						<a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noopener noreferrer" className="hover:underline">
+							CC-BY-SA
+						</a>
+						{')'}
+					</>
+				) : (
+					<a href="https://www.esri.com" target="_blank" rel="noopener noreferrer" className="hover:underline">
+						© Esri
+					</a>
+				)}
+			</div>
+
 			<div
 				ref={frameElRef}
 				className={`pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 select-none transition-[border-radius] duration-200 ${mapReady ? '' : 'invisible'}`}
+				style={{ rotate: `${bearing}deg` }}
 			>
 				<div
 					ref={borderElRef}
@@ -378,31 +478,19 @@ export function TerrainMap({
 					style={{ borderRadius: frameRadiusCss(frameShape) }}
 				/>
 
-				{(['left-0 top-0', 'right-0 top-0', 'left-0 bottom-0', 'right-0 bottom-0'] as const).map(
-					pos => (
-						<div
-							key={pos}
-							className={`pointer-events-auto absolute ${pos} h-4 w-4 touch-none`}
-							style={{
-								cursor: handleCursor[pos],
-								transform: `translate(${pos.includes('left') ? '-50%' : '50%'}, ${pos.includes('top') ? '-50%' : '50%'})`,
-							}}
-							onPointerDown={onHandlePointerDown}
-						>
-							<div className="absolute left-1/2 top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-[2px] border border-black/30 bg-white shadow-sm" />
-						</div>
-					),
-				)}
-
 				<div className="absolute left-1/2 top-1/2 h-3 w-px -translate-x-1/2 -translate-y-1/2 bg-white/70" />
 				<div className="absolute left-1/2 top-1/2 h-px w-3 -translate-x-1/2 -translate-y-1/2 bg-white/70" />
 
+				{/*
+					Содержимое пишет applyFrameSize напрямую в textContent.
+					Детей здесь быть не должно: React затирал бы вычисленную
+					площадь обратно на radius × 2 при каждом ререндере.
+				*/}
 				<div
 					ref={labelElRef}
 					className="absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-white/90 px-2 py-0.5 text-[10px] uppercase tracking-wider text-zinc-700 shadow-sm backdrop-blur"
-				>
-					{formatSide(labelW)} × {formatSide(labelH)}
-				</div>
+					style={{ rotate: `${-bearing}deg` }}
+				/>
 			</div>
 		</div>
 	)

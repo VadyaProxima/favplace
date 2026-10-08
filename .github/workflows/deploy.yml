@@ -1,0 +1,58 @@
+name: Deploy production
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: favplace-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      DEPLOY_HOST: 178.212.15.39
+    steps:
+      - name: Check out the version being deployed
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+
+      - name: Prepare SSH access
+        env:
+          DEPLOY_KEY: ${{ secrets.FAVPLACE_DEPLOY_KEY }}
+          KNOWN_HOSTS: ${{ secrets.FAVPLACE_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_KEY"
+          test -n "$KNOWN_HOSTS"
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/favplace_deploy
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/favplace_deploy ~/.ssh/known_hosts
+
+      - name: Upload source and deploy
+        run: |
+          set -euo pipefail
+          git archive --format=tar.gz HEAD > "$RUNNER_TEMP/favplace-source.tar.gz"
+          ssh -i ~/.ssh/favplace_deploy -o BatchMode=yes -o StrictHostKeyChecking=yes \
+            -o ConnectTimeout=20 "root@$DEPLOY_HOST" "upload $GITHUB_SHA" \
+            < "$RUNNER_TEMP/favplace-source.tar.gz"
+          ssh -i ~/.ssh/favplace_deploy -o BatchMode=yes -o StrictHostKeyChecking=yes \
+            -o ConnectTimeout=20 -o ServerAliveInterval=20 "root@$DEPLOY_HOST" "deploy $GITHUB_SHA"
+
+      - name: Check the public site
+        run: |
+          curl --fail --silent --show-error --retry 5 --retry-all-errors \
+            --retry-delay 3 --max-time 30 https://favplace.178.212.15.39.sslip.io/api/admin/session
+
+      - name: Remove the local SSH key
+        if: always()
+        run: rm -f ~/.ssh/favplace_deploy
