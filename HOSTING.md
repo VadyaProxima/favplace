@@ -62,14 +62,21 @@ Actions загружает архив конкретного коммита по
 Резервная копия базы:
 
 ```bash
-cd /opt/favplace
-docker compose exec -T db pg_dump -U favplace favplace | gzip > backup-$(date +%F).sql.gz
+docker exec favplace-db-1 pg_dump -U favplace favplace | gzip > backup-$(date +%F).sql.gz
 ```
 
 ## Свой домен
 
 Добавьте A-запись домена на `178.212.15.39`, замените `SITE_DOMAIN` в серверном `.env`
-и выполните `docker compose up -d caddy`. Caddy получит сертификат для нового домена.
+и выполните на сервере:
+
+```bash
+cd /opt/favplace/current
+docker compose -p favplace -f docker-compose.yml -f /opt/favplace/docker-compose.override.yml up -d --no-deps caddy
+```
+
+Caddy получит сертификат для нового домена. При смене домена обновите также
+адрес проверки в `.github/workflows/deploy.yml` и серверном `favplace-deploy`.
 
 ## Ключ автодеплоя
 
