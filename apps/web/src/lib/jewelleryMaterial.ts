@@ -54,17 +54,18 @@ export function forceOpaque<T extends THREE.Material>(mat: T): T {
 	mat.alphaToCoverage = false
 	mat.blending = THREE.NormalBlending
 	mat.toneMapped = true
-	if ('transmission' in mat) {
-		;(mat as THREE.MeshPhysicalMaterial).transmission = 0
+	const physical = mat as unknown as THREE.MeshPhysicalMaterial
+	if ('transmission' in physical) {
+		physical.transmission = 0
 	}
-	if ('thickness' in mat) {
-		;(mat as THREE.MeshPhysicalMaterial).thickness = 0
+	if ('thickness' in physical) {
+		physical.thickness = 0
 	}
-	if ('attenuationDistance' in mat) {
-		;(mat as THREE.MeshPhysicalMaterial).attenuationDistance = Infinity
+	if ('attenuationDistance' in physical) {
+		physical.attenuationDistance = Infinity
 	}
-	if ('forceSinglePass' in mat) {
-		;(mat as THREE.MeshPhysicalMaterial).forceSinglePass = true
+	if ('forceSinglePass' in physical) {
+		physical.forceSinglePass = true
 	}
 	mat.needsUpdate = true
 	return mat
@@ -85,8 +86,8 @@ export const JEWELLERY_GL = {
  * Custom nature HDRI from /public/models.
  */
 export const JEWELLERY_ENV = {
-	files: '/models/PrirodaHDRI_68.hdr',
-	environmentIntensity: 1.15,
+	files: '/models/small_empty_room_3_1k.hdr',
+	environmentIntensity: 1.20,
 	blur: 0.15,
 	toneMappingExposure: JEWELLERY_GL.toneMappingExposure,
 }

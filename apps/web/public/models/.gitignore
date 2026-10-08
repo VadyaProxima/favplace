@@ -1,1 +1,8 @@
 *.binz
+
+# Тяжёлые HDRI, оставленные после подбора освещения. В сборку идёт только
+# small_empty_room_3_1k.hdr (1,5 МБ) — он и указан в jewelleryMaterial.ts.
+# Эти два весят 29 и 73 МБ: в git их класть нельзя (история хранит блобы
+# вечно), а из public/ их стоит просто удалить — Poly Haven отдаёт заново.
+preller_drive_4k.hdr
+qwantani_night_puresky_4k.exr

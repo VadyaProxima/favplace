@@ -1,3 +1,7 @@
+export * from "./pricing";
+
+import type { ReliefDetail, RingForm } from "./pricing";
+
 export interface Coordinates {
   lat: number;
   lng: number;
@@ -51,6 +55,48 @@ export interface Order {
   status: OrderStatus;
   totalPrice: number;
   createdAt: string;
+}
+
+/** Снапшот конфигуратора, который уходит вместе с заявкой. */
+export interface CheckoutConfig {
+  ringForm: RingForm;
+  material: MaterialType;
+  surfaceFinish: SurfaceFinish;
+  reliefDetail: ReliefDetail;
+  reliefHeight: number;
+  twoTone: boolean;
+  ringSize: number;
+  engraving: string;
+  radius: number;
+  location: {
+    name: string;
+    country: string;
+    lat: number;
+    lng: number;
+  } | null;
+  /** ссылка на конфигуратор с этими же параметрами */
+  shareUrl?: string;
+}
+
+export interface CheckoutCustomer {
+  name: string;
+  phone: string;
+  email: string;
+  delivery: string;
+  comment?: string;
+  promo?: string;
+}
+
+export interface CheckoutRequest {
+  config: CheckoutConfig;
+  customer: CheckoutCustomer;
+}
+
+export interface CheckoutResponse {
+  id: string;
+  number: string;
+  totalPrice: number;
+  status: OrderStatus;
 }
 
 export interface TerrainGenerationParams {

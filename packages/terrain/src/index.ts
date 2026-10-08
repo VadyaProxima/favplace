@@ -1,5 +1,15 @@
 export { fetchHeightMap, resampleHeightMap, computeRadiusInDegrees } from "./heightmap";
 export type { HeightMap } from "./heightmap";
+export type { HeightMapRequestOptions } from "./heightmap";
+export {
+  clampZoomOffset,
+  contextTerrainGeoFrame,
+  createTerrainGeoFrame,
+  cropEnvelopeScale,
+  normalizeBearing,
+  rotatedCropCoordinate,
+} from "./referenceFrame";
+export type { TerrainGeoFrame } from "./referenceFrame";
 export { buildRingGeometry, buildFlatRingGeometry } from "./mesh";
 export type { RingMeshParams } from "./mesh";
 export {

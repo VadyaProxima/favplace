@@ -19,6 +19,7 @@
       "esnext"
     ],
     "allowJs": true,
+    "allowImportingTsExtensions": true,
     "incremental": true
   },
   "include": [

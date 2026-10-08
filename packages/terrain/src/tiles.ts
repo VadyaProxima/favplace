@@ -9,10 +9,14 @@ export interface TileCoord {
 export type DemProvider = "mapbox" | "terrarium";
 
 const TERRARIUM_BASE = "https://s3.amazonaws.com/elevation-tiles-prod/terrarium";
-const MAPBOX_DEM_TILESET = "mapbox.mapbox-terrain-dem-v1";
+// Terrain-DEM v1 отдаёт 404 на z15 и выше: код просил z15, получал отказ и
+// молча откатывался на z14, теряя половину линейного разрешения. Terrain-RGB
+// работает на z15 (и даже z16), поэтому для мелких участков рельеф вдвое
+// подробнее: 1,74 м/пиксель против 3,47 на широте 43°.
+const MAPBOX_DEM_TILESET = "mapbox.terrain-rgb";
 
-/** Logical tile size in Mapbox Terrain-DEM (@2x PNG is 1024 px). */
-export const MAPBOX_DEM_LOGICAL_SIZE = 512;
+/** Логический тайл Terrain-RGB — 256 px; @2x возвращает 512 физических. */
+export const MAPBOX_DEM_LOGICAL_SIZE = 256;
 
 /** Web Mercator world-fraction X ([0..1], 0 = -180°, 1 = +180°) for a longitude. */
 export function lngToWorldX(lng: number): number {
@@ -68,10 +72,26 @@ export function getTilesForBounds(
   return tiles;
 }
 
+/**
+ * По умолчанию Terrarium. Mapbox включается только явно —
+ * TERRAIN_DEM_PROVIDER=mapbox.
+ *
+ * Раньше источник выбирало наличие MAPBOX_ACCESS_TOKEN, то есть токен,
+ * заведённый для карты и геокодинга, молча подписывал проект ещё и на
+ * платный DEM-сервис.
+ *
+ * И дело не только в деньгах. Mapbox кодирует высоту с шагом 0,1 м, а
+ * Terrarium — 1/256 м, то есть в 25 раз точнее. На z15, где пиксель равен
+ * 1,74 м, перепад между соседними пикселями часто меньше 0,1 м: высоты
+ * совпадают, и рельеф распадается на плоские площадки. Замер на Эльбрусе
+ * (радиус 150 м, сетка 1024) показал у Mapbox регулярную структуру с
+ * периодом ровно в пиксель DEM силой 0,98, у Terrarium — 0,66 без
+ * выраженного периода. Это и были «квадраты» на кольце.
+ */
 export function getDemProvider(): DemProvider {
-	const raw = process.env.MAPBOX_ACCESS_TOKEN?.trim()
-	const token = raw?.split(/\s+/)[0]
-	return token ? 'mapbox' : 'terrarium'
+	return process.env.TERRAIN_DEM_PROVIDER?.trim().toLowerCase() === 'mapbox'
+		? 'mapbox'
+		: 'terrarium'
 }
 
 export function getMapboxAccessToken(): string {
@@ -89,7 +109,7 @@ export function getZoomForRadius(
   centerLat: number,
   provider: DemProvider = getDemProvider(),
 ): number {
-  const maxZ = provider === "mapbox" ? 15 : 14;
+  const maxZ = 15;
   const latDeg = (radiusMeters / 111_320) * 2;
   const lngDeg =
     (radiusMeters / (111_320 * Math.cos((centerLat * Math.PI) / 180))) * 2;

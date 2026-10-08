@@ -5,8 +5,10 @@ import {
 	buildPlugRing,
 	getDiscRingBottomY,
 } from '@/lib/discRing'
+import { useExportTarget } from '@/lib/exportTarget'
 import { makeJewelleryMaterial, JEWELLERY_ENV, JEWELLERY_GL } from '@/lib/jewelleryMaterial'
 import { buildDemoMountainHeightMap } from '@/lib/mountainSignet'
+import { calibratedReliefHeight } from '@/lib/reliefCalibration'
 import { smoothHeightGridByDetail } from '@/lib/reliefSmoothing'
 import { useAppStore } from '@/store/useAppStore'
 import { MATERIALS } from '@favplace/shared'
@@ -39,8 +41,8 @@ function DiscOrPlugRing({ mode }: { mode: 'disc' | 'plug' }) {
 	const { mesh, bottomY } = useMemo(() => {
 		const geometry =
 			mode === 'plug'
-				? buildPlugRing(reliefGrid, reliefHeight)
-				: buildDiscRing(reliefGrid, reliefHeight)
+				? buildPlugRing(reliefGrid, calibratedReliefHeight('plug', reliefHeight))
+				: buildDiscRing(reliefGrid, calibratedReliefHeight('disc', reliefHeight))
 
 		const bandMat = makeJewelleryMaterial({
 			color: mat.color,
@@ -80,6 +82,8 @@ function DiscOrPlugRing({ mode }: { mode: 'disc' | 'plug' }) {
 
 		return { mesh: m, bottomY: getDiscRingBottomY(geometry) - cy + lift }
 	}, [mode, reliefGrid, reliefHeight, mat, polished, twoTone])
+
+	useExportTarget(mesh)
 
 	return (
 		<>
