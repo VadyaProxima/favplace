@@ -80,6 +80,6 @@ ln -sfn "$release" "$root/current"
 printf '%s\n' "$revision" > "$root/deployed-sha"
 rm -f "$archive"
 docker image prune -f
-docker builder prune -f --filter 'until=168h'
+docker buildx prune --all --force --max-used-space 2GB
 compose "$release" ps
 echo "Deployed $revision"
