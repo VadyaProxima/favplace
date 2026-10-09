@@ -66,7 +66,7 @@ export function CreateStudio() {
 		contentRef.current?.scrollTo({ top: 0 })
 	}, [step])
 
-	const previewExpanded = previewOverride ?? (!shortScreen && step !== 'place' && step !== 'order')
+	const previewExpanded = previewOverride ?? (!shortScreen && step !== 'order')
 	const [flyTarget, setFlyTarget] = useState<FlyTarget>({
 		lng: 138.7307,
 		lat: 35.3628,
