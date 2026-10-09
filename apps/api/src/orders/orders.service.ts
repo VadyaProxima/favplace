@@ -20,7 +20,9 @@ export class OrdersService {
 
   /** Заявка из конструктора: без авторизации, цена пересчитывается на сервере. */
   async checkout(body: CheckoutRequest): Promise<CheckoutResponse> {
-    const config = body?.config;
+    // Гравировка временно отключена, в том числе для старых клиентов.
+    // const config = body?.config;
+    const config = body?.config ? { ...body.config, engraving: "" } : undefined;
     const customer = body?.customer;
     if (!config || !customer) throw new BadRequestException("Пустая заявка");
 
@@ -52,7 +54,7 @@ export class OrdersService {
       ringForm: config.ringForm,
       material: config.material,
       reliefDetail: config.reliefDetail,
-      engraving: config.engraving,
+      // engraving: config.engraving, // Временно отключена.
       twoTone: config.twoTone,
     });
 
@@ -113,7 +115,7 @@ export class OrdersService {
       `Металл: ${MATERIALS[config.material].label}, ${config.surfaceFinish === "polished" ? "полированная" : "матовая"}`,
       `Размер: ⌀ ${config.ringSize} мм`,
       `Рельеф: ${config.reliefHeight} мм, детализация ${config.reliefDetail}`,
-      config.engraving ? `Гравировка: «${config.engraving}»` : null,
+      // config.engraving ? `Гравировка: «${config.engraving}»` : null,
       config.location
         ? `Место: ${config.location.name} (${config.location.lat.toFixed(5)}, ${config.location.lng.toFixed(5)}), радиус ${config.radius} м`
         : null,

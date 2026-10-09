@@ -67,7 +67,7 @@ export function StepOrder() {
 		ringForm: state.ringForm,
 		material: state.material,
 		reliefDetail: state.reliefDetail,
-		engraving: state.engraving,
+		// engraving: state.engraving, // Временно отключена.
 		twoTone: state.mountainTwoTone,
 	})
 
@@ -97,7 +97,8 @@ export function StepOrder() {
 					reliefHeight: state.reliefHeight,
 					twoTone: state.mountainTwoTone,
 					ringSize: state.ringSize,
-					engraving: state.engraving,
+					// engraving: state.engraving,
+					engraving: '', // Временно отключена; сохраняем совместимость формата заявки.
 					radius: state.radius,
 					location: state.location
 						? {
@@ -217,9 +218,11 @@ export function StepOrder() {
 						value={`${state.reliefHeight.toFixed(1).replace('.', ',')} мм · ${RELIEF_DETAIL_LABELS[state.reliefDetail].toLowerCase()} детализация`}
 					/>
 					<Row label="Размер" value={`⌀ ${fmtSize(state.ringSize)} мм`} />
+					{/* Гравировка временно отключена.
 					{state.engraving.trim() && (
 						<Row label="Гравировка" value={`«${state.engraving.trim()}»`} />
 					)}
+					*/}
 				</dl>
 			</div>
 

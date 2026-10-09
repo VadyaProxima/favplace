@@ -40,7 +40,7 @@ export function CreateStudio() {
 	const ringForm = useAppStore(s => s.ringForm)
 	const material = useAppStore(s => s.material)
 	const reliefDetail = useAppStore(s => s.reliefDetail)
-	const engraving = useAppStore(s => s.engraving)
+	// const engraving = useAppStore(s => s.engraving)
 	const twoTone = useAppStore(s => s.mountainTwoTone)
 	const ringSize = useAppStore(s => s.ringSize)
 
@@ -135,7 +135,7 @@ export function CreateStudio() {
 		ringForm,
 		material,
 		reliefDetail,
-		engraving,
+		// engraving, // Временно отключена.
 		twoTone,
 	})
 

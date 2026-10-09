@@ -3,7 +3,7 @@
 import { MAX_RELIEF_MM, MIN_RELIEF_MM } from '@/lib/referenceSignetTerrain'
 import { STEPS, useAppStore, type Step } from '@/store/useAppStore'
 import {
-	ENGRAVING_MAX_LENGTH,
+	// ENGRAVING_MAX_LENGTH,
 	MATERIALS,
 	RING_FORMS,
 	RING_SIZES_MM,
@@ -36,7 +36,7 @@ export function buildConfigParams(): URLSearchParams {
 	p.set('sh', s.shoulderStyle)
 	if (s.terrainBearing !== 0) p.set('b', String(Math.round(s.terrainBearing)))
 	if (s.mountainTwoTone) p.set('tt', '1')
-	if (s.engraving.trim()) p.set('e', s.engraving.trim())
+	// if (s.engraving.trim()) p.set('e', s.engraving.trim()) // Временно отключена.
 	if (s.location) {
 		p.set('lat', s.location.coordinates.lat.toFixed(5))
 		p.set('lng', s.location.coordinates.lng.toFixed(5))
@@ -117,8 +117,10 @@ function readConfigFromUrl(search: string) {
 
 	s.setMountainTwoTone(p.get('tt') === '1')
 
-	const engraving = p.get('e')
-	if (engraving) s.setEngraving(engraving.slice(0, ENGRAVING_MAX_LENGTH))
+	// Гравировка временно отключена, включая старые ссылки с ?e=.
+	// const engraving = p.get('e')
+	// if (engraving) s.setEngraving(engraving.slice(0, ENGRAVING_MAX_LENGTH))
+	s.setEngraving('')
 
 	// Number(null) === 0, поэтому проверяем именно наличие параметров,
 	// иначе пустой URL читается как «выбрано место 0,0».

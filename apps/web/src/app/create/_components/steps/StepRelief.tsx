@@ -2,10 +2,10 @@
 
 import { useAppStore, type ReliefDetail } from '@/store/useAppStore'
 import {
-	ENGRAVING_MAX_LENGTH,
-	ENGRAVING_PRICE,
+	// ENGRAVING_MAX_LENGTH,
+	// ENGRAVING_PRICE,
 	RELIEF_DETAIL_LABELS,
-	formatPrice,
+	// formatPrice,
 } from '@favplace/shared'
 import { ChoiceButton, FieldLabel, Hint, StepHeading } from '../ui'
 
@@ -16,8 +16,8 @@ export function StepRelief() {
 		setReliefScale,
 		reliefDetail,
 		setReliefDetail,
-		engraving,
-		setEngraving,
+		// engraving,
+		// setEngraving,
 		heightMap,
 		elevationMeta,
 	} = useAppStore()
@@ -78,6 +78,7 @@ export function StepRelief() {
 				<Hint>Плотность сетки рельефа и объём ручной доводки после литья.</Hint>
 			</div>
 
+			{/* Гравировка временно отключена.
 			<div>
 				<FieldLabel aside={`+${formatPrice(ENGRAVING_PRICE)}`}>
 					Гравировка внутри шинки
@@ -96,6 +97,7 @@ export function StepRelief() {
 					гравировка не нужна.
 				</Hint>
 			</div>
+			*/}
 		</div>
 	)
 }
