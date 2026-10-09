@@ -125,13 +125,13 @@ export function StlExportButton() {
 				type="button"
 				onClick={run}
 				disabled={busy}
-				className="border border-zinc-300 bg-white/80 px-3.5 py-2 text-xs font-medium text-zinc-700 backdrop-blur transition hover:bg-white disabled:opacity-40"
+				className="min-h-11 border border-zinc-300 bg-white/80 px-3.5 py-2 text-xs font-medium text-zinc-700 backdrop-blur transition hover:bg-white disabled:opacity-40 lg:min-h-0"
 			>
 				{busy ? 'Считаем…' : 'Скачать STL'}
 			</button>
 
 			{(audit || error) && (
-				<div className="absolute bottom-16 right-0 w-80 border border-zinc-200 bg-white/95 p-4 text-left shadow-sm backdrop-blur">
+				<div className="absolute right-0 top-full mt-2 max-h-[60dvh] w-[min(20rem,calc(100vw-2rem))] overflow-y-auto border border-zinc-200 bg-white/95 p-4 text-left shadow-sm backdrop-blur lg:bottom-16 lg:top-auto lg:mt-0">
 					<div className="flex items-start justify-between gap-3">
 						<span className="text-[11px] uppercase tracking-wider text-zinc-400">
 							Проверка файла

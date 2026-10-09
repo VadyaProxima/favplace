@@ -9,7 +9,7 @@ export function StepProgress() {
 	const current = STEPS.indexOf(step)
 
 	return (
-		<div className="flex min-w-0 flex-1 items-end gap-2">
+		<nav aria-label="Шаги конструктора" className="flex min-w-0 flex-1 items-end gap-1 lg:gap-2">
 			{STEPS.map((id, i) => {
 				const active = i === current
 				const passed = i < current
@@ -20,7 +20,7 @@ export function StepProgress() {
 						onClick={() => setStep(id)}
 						aria-current={active ? 'step' : undefined}
 						aria-label={`Шаг: ${STEP_LABELS[id]}`}
-						className="group flex min-w-0 flex-1 flex-col gap-2"
+						className="group flex min-h-11 min-w-0 flex-1 flex-col justify-center gap-1.5 lg:gap-2"
 					>
 						<span
 							className={`h-[3px] w-full transition-colors ${
@@ -43,6 +43,6 @@ export function StepProgress() {
 					</button>
 				)
 			})}
-		</div>
+		</nav>
 	)
 }

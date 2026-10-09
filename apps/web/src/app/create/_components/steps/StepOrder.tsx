@@ -10,7 +10,7 @@ import {
 	type CheckoutResponse,
 } from '@favplace/shared'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { RING_FORM_OPTIONS } from '../FormRingViewer'
 import { buildShareUrl } from '../useConfigUrl'
 import { StepHeading, TextField } from '../ui'
@@ -52,6 +52,13 @@ export function StepOrder() {
 	const [submitting, setSubmitting] = useState(false)
 	const [failed, setFailed] = useState<string | null>(null)
 	const [done, setDone] = useState<CheckoutResponse | null>(null)
+	const orderRef = useRef<HTMLDivElement>(null)
+
+	useEffect(() => {
+		const firstInvalid = orderRef.current?.querySelector<HTMLInputElement>('input[aria-invalid="true"]')
+		firstInvalid?.focus({ preventScroll: true })
+		firstInvalid?.scrollIntoView({ block: 'center' })
+	}, [errors])
 
 	const formLabel =
 		RING_FORM_OPTIONS.find(o => o.id === state.ringForm)?.label ?? state.ringForm
@@ -175,7 +182,7 @@ export function StepOrder() {
 	}
 
 	return (
-		<div className="space-y-6">
+		<div ref={orderRef} className="space-y-6">
 			<button
 				type="button"
 				onClick={prevStep}
@@ -238,6 +245,7 @@ export function StepOrder() {
 			<div className="space-y-4">
 				<TextField
 					label="Имя"
+					autoComplete="name"
 					required
 					value={name}
 					onChange={setName}
@@ -248,6 +256,7 @@ export function StepOrder() {
 					label="Телефон"
 					required
 					type="tel"
+					autoComplete="tel"
 					value={phone}
 					onChange={setPhone}
 					placeholder="+7 900 000-00-00"
@@ -257,6 +266,7 @@ export function StepOrder() {
 					label="Email"
 					required
 					type="email"
+					autoComplete="email"
 					value={email}
 					onChange={setEmail}
 					placeholder="you@example.com"
@@ -280,7 +290,7 @@ export function StepOrder() {
 						onChange={e => setComment(e.target.value)}
 						rows={3}
 						placeholder="Пожелания к изделию, срокам, упаковке"
-						className="mt-1.5 w-full resize-none border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-300 focus:border-zinc-400 focus:outline-none"
+						className="mt-1.5 w-full resize-none border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 placeholder:text-zinc-300 focus:border-zinc-400 focus:outline-none lg:text-sm"
 					/>
 				</label>
 
@@ -326,9 +336,9 @@ export function StepOrder() {
 
 function Row({ label, value }: { label: string; value: string }) {
 	return (
-		<div className="flex items-baseline justify-between gap-4 px-4 py-2.5">
-			<dt className="shrink-0 text-zinc-400">{label}</dt>
-			<dd className="min-w-0 truncate text-right text-zinc-800">{value}</dd>
+		<div className="flex items-baseline justify-between gap-3 px-4 py-2.5">
+			<dt className="max-w-[50%] text-zinc-400">{label}</dt>
+			<dd className="min-w-0 flex-1 break-words text-right text-zinc-800">{value}</dd>
 		</div>
 	)
 }

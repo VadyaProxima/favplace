@@ -84,11 +84,12 @@ export function StepRelief() {
 				</FieldLabel>
 				<input
 					type="text"
+					aria-label="Гравировка внутри шинки"
 					value={engraving}
 					onChange={e => setEngraving(e.target.value.slice(0, ENGRAVING_MAX_LENGTH))}
 					maxLength={ENGRAVING_MAX_LENGTH}
 					placeholder="Дата, координаты, имя…"
-					className="mt-2 w-full border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-300 focus:border-zinc-400 focus:outline-none"
+					className="mt-2 min-h-11 w-full border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 placeholder:text-zinc-300 focus:border-zinc-400 focus:outline-none lg:text-sm"
 				/>
 				<Hint>
 					{engraving.length}/{ENGRAVING_MAX_LENGTH} символов. Оставьте пустым, если

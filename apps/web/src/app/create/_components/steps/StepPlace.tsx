@@ -189,11 +189,14 @@ export function StepPlace({
 			<div className="space-y-3">
 				<div className="flex gap-2">
 					<input
+						aria-label="Поиск места"
+						type="search"
+						enterKeyHint="search"
 						value={query}
 						onChange={e => setQuery(e.target.value)}
 						onKeyDown={e => e.key === 'Enter' && handleSearch()}
 						placeholder="Гора, город, место…"
-						className="min-w-0 flex-1 border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none"
+						className="min-h-11 min-w-0 flex-1 border border-zinc-200 bg-white px-3 py-2 text-base text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none lg:text-sm"
 					/>
 					<button
 						type="button"
@@ -227,14 +230,17 @@ export function StepPlace({
 							key={p.name}
 							type="button"
 							onClick={() => pick(p.name, p.lat, p.lng)}
-							className="border border-zinc-200 px-2.5 py-1 text-xs text-zinc-500 transition hover:border-zinc-400 hover:text-zinc-800"
+							className="min-h-11 border border-zinc-200 px-3 py-2 text-xs text-zinc-500 transition hover:border-zinc-400 hover:text-zinc-800"
 						>
 							{p.name}
 						</button>
 					))}
 				</div>
 
-				<div className="relative h-64 overflow-hidden border border-zinc-200 bg-zinc-100">
+				<p className="hidden text-xs leading-relaxed text-zinc-500 [@media(pointer:coarse)]:block">
+					Двигайте карту двумя пальцами. Одним пальцем прокручивайте настройки.
+				</p>
+				<div className="relative h-72 overflow-hidden border border-zinc-200 bg-zinc-100 lg:h-64">
 					<TerrainMap
 						target={flyTarget}
 						radius={radius}
@@ -324,7 +330,8 @@ export function StepPlace({
 							key={opt.value}
 							type="button"
 							onClick={() => setRadius(opt.value)}
-							className={`px-2.5 py-1.5 text-xs font-medium transition ${
+							aria-pressed={radius === opt.value}
+							className={`min-h-11 px-3 py-2 text-xs font-medium transition ${
 								radius === opt.value
 									? 'bg-zinc-900 text-white'
 									: 'text-zinc-500 hover:bg-zinc-100'

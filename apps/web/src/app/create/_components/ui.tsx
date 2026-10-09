@@ -31,7 +31,7 @@ export function FieldLabel({
 			<span className="text-[11px] uppercase tracking-wider text-zinc-400">
 				{children}
 			</span>
-			{aside && <span className="text-sm tabular-nums text-zinc-700">{aside}</span>}
+			{aside && <span className="shrink-0 text-sm tabular-nums text-zinc-700">{aside}</span>}
 		</div>
 	)
 }
@@ -56,7 +56,7 @@ export function ChoiceButton({
 			type="button"
 			onClick={onClick}
 			aria-pressed={selected}
-			className={`border px-3 py-2.5 text-sm font-medium transition ${
+			className={`min-h-11 min-w-0 border px-2 py-2.5 text-xs font-medium transition sm:px-3 sm:text-sm ${
 				selected
 					? 'border-zinc-900 bg-zinc-50 text-zinc-900'
 					: 'border-zinc-200 text-zinc-500 hover:border-zinc-400'
@@ -76,6 +76,7 @@ export function TextField({
 	required,
 	error,
 	maxLength,
+	autoComplete,
 }: {
 	label: string
 	value: string
@@ -85,6 +86,7 @@ export function TextField({
 	required?: boolean
 	error?: string
 	maxLength?: number
+	autoComplete?: string
 }) {
 	return (
 		<label className="block">
@@ -98,8 +100,10 @@ export function TextField({
 				onChange={e => onChange(e.target.value)}
 				placeholder={placeholder}
 				maxLength={maxLength}
+				autoComplete={autoComplete}
+				aria-required={required || undefined}
 				aria-invalid={error ? true : undefined}
-				className={`mt-1.5 w-full border bg-white px-3 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-300 focus:outline-none ${
+				className={`mt-1.5 min-h-11 w-full border bg-white px-3 py-2.5 text-base text-zinc-900 placeholder:text-zinc-300 focus:outline-none lg:text-sm ${
 					error
 						? 'border-red-400 focus:border-red-500'
 						: 'border-zinc-200 focus:border-zinc-400'

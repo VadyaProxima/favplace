@@ -305,6 +305,12 @@ export function TerrainMap({
 			minZoom: 2,
 			maxZoom: 19,
 			attributionControl: false,
+			cooperativeGestures: window.matchMedia('(pointer: coarse)').matches,
+			locale: {
+				'NavigationControl.ZoomIn': 'Приблизить карту',
+				'NavigationControl.ZoomOut': 'Отдалить карту',
+				'CooperativeGesturesHandler.MobileHelpText': 'Двигайте карту двумя пальцами',
+			},
 		})
 		mapRef.current = map
 		map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
@@ -423,7 +429,7 @@ export function TerrainMap({
 			<div
 				role="group"
 				aria-label="Вид карты"
-				className="absolute left-3 right-12 top-3 z-10 flex w-fit max-w-[calc(100%-3.75rem)] flex-wrap overflow-hidden rounded-md border border-black/10 bg-white/95 shadow-sm backdrop-blur"
+				className="absolute left-2 right-14 top-2 z-10 grid grid-cols-2 overflow-hidden rounded-md border border-black/10 bg-white/95 shadow-sm backdrop-blur lg:left-3 lg:right-auto lg:top-3 lg:flex lg:max-w-[calc(100%-3.75rem)]"
 			>
 				{(Object.keys(STYLE_TILES) as MapStyleType[]).map(t => (
 					<button
@@ -432,7 +438,7 @@ export function TerrainMap({
 						title={STYLE_TILES[t].description}
 						aria-pressed={styleType === t}
 						onClick={() => setStyleType(t)}
-						className={`px-2 py-1.5 text-[10px] font-medium transition sm:px-2.5 sm:text-[11px] ${
+						className={`min-h-11 px-2 py-1.5 text-xs font-medium transition lg:min-h-0 lg:px-2.5 lg:text-[11px] ${
 							styleType === t
 								? 'bg-zinc-900 text-white'
 								: 'text-zinc-600 hover:bg-zinc-100'

@@ -62,11 +62,12 @@ export function StepSize() {
 					<FieldLabel>Длина окружности пальца, мм</FieldLabel>
 					<input
 						type="text"
+						aria-label="Длина окружности пальца, мм"
 						inputMode="decimal"
 						value={measured}
 						onChange={e => setMeasured(e.target.value)}
 						placeholder="например 54,5"
-						className="mt-2 w-full border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-300 focus:border-zinc-400 focus:outline-none"
+						className="mt-2 min-h-11 w-full border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 placeholder:text-zinc-300 focus:border-zinc-400 focus:outline-none lg:text-sm"
 					/>
 					<Hint>
 						Оберните полоску бумаги вокруг основания пальца, отметьте место стыка и

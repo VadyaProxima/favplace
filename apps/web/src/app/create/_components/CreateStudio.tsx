@@ -23,6 +23,7 @@ import { StepPlace } from './steps/StepPlace'
 import { StepRelief } from './steps/StepRelief'
 import { StepSize } from './steps/StepSize'
 import { buildShareUrl, useConfigUrl } from './useConfigUrl'
+import styles from './CreateStudio.module.css'
 
 const fmtSize = (n: number) => n.toFixed(1).replace('.', ',').replace(',0', '')
 
@@ -48,6 +49,24 @@ export function CreateStudio() {
 
 	const [fetching, setFetching] = useState(false)
 	const [shared, setShared] = useState(false)
+	const [previewOverride, setPreviewOverride] = useState<boolean | null>(null)
+	const [shortScreen, setShortScreen] = useState(false)
+	const contentRef = useRef<HTMLDivElement>(null)
+
+	useEffect(() => {
+		const query = window.matchMedia('(max-height: 480px)')
+		const update = () => setShortScreen(query.matches)
+		update()
+		query.addEventListener('change', update)
+		return () => query.removeEventListener('change', update)
+	}, [])
+
+	useEffect(() => {
+		setPreviewOverride(null)
+		contentRef.current?.scrollTo({ top: 0 })
+	}, [step])
+
+	const previewExpanded = previewOverride ?? (!shortScreen && step !== 'place' && step !== 'order')
 	const [flyTarget, setFlyTarget] = useState<FlyTarget>({
 		lng: 138.7307,
 		lat: 35.3628,
@@ -189,21 +208,50 @@ export function CreateStudio() {
 	})
 
 	return (
-		<div className="flex h-[100svh] w-full overflow-hidden bg-zinc-100">
-			{/* 65% — 3D-превью */}
-			<section className="relative flex min-w-0 flex-[65] items-center justify-center">
+		<div className={styles.studio}>
+			<header className={`${styles.header} flex items-center justify-between gap-3 border-b border-zinc-200 bg-white px-4 py-2 lg:px-8 lg:py-4`}>
+				<Link href="/" className="font-display text-xl font-semibold tracking-tight">
+					Favplace
+				</Link>
+				<span className="hidden text-[11px] uppercase tracking-wider text-zinc-400 lg:block">
+					Конструктор
+				</span>
+				{isAdmin && (
+					<div className="relative z-30 ml-auto lg:hidden"><StlExportButton /></div>
+				)}
+				<button
+					type="button"
+					onClick={share}
+					className="min-h-11 min-w-11 px-2 text-xs font-medium text-zinc-700 lg:hidden"
+					aria-live="polite"
+					aria-label={shared ? 'Ссылка скопирована' : 'Поделиться'}
+				>
+					{isAdmin ? (shared ? '✓' : '↗') : (shared ? 'Ссылка скопирована' : 'Поделиться ↗')}
+				</button>
+			</header>
+			<section
+				aria-label="3D-превью кольца"
+				className={styles.preview}
+				data-expanded={previewExpanded}
+				data-preview-mode={previewOverride === null ? 'auto' : 'manual'}
+				id="ring-preview"
+			>
 				<div className="absolute inset-0">
 					<FormRingViewer className="h-full w-full" />
 				</div>
 
 				{fetching && (
-					<div className="pointer-events-none absolute left-6 top-6 z-10 flex items-center gap-2 bg-white/90 px-3 py-1.5 text-xs text-zinc-600 backdrop-blur">
+					<div role="status" className="pointer-events-none absolute left-4 top-3 z-10 flex items-center gap-2 bg-white/90 px-3 py-1.5 text-xs text-zinc-600 backdrop-blur lg:left-6 lg:top-6">
 						<span className="h-1.5 w-1.5 animate-pulse rounded-full bg-zinc-900" />
 						Рельеф…
 					</div>
 				)}
 
-				<div className="pointer-events-none absolute bottom-6 left-6 z-10">
+				<p className="pointer-events-none absolute bottom-3 inset-x-4 text-center text-[11px] text-zinc-500 lg:hidden">
+					Вращайте кольцо пальцем · приближайте двумя
+				</p>
+
+				<div className="pointer-events-none absolute bottom-6 left-6 z-10 hidden lg:block">
 					<p className="text-[11px] uppercase tracking-wider text-zinc-500">
 						{formLabel} · ⌀ {fmtSize(ringSize)} мм · {MATERIALS[material].label}
 					</p>
@@ -212,40 +260,30 @@ export function CreateStudio() {
 					</p>
 				</div>
 
-				<div className="absolute bottom-6 right-6 z-10 flex items-center gap-2">
+				<div className="absolute bottom-6 right-6 z-10 hidden items-center gap-2 lg:flex">
 					{isAdmin && <StlExportButton />}
 					<button
 						type="button"
 						onClick={share}
-						className="border border-zinc-300 bg-white/80 px-3.5 py-2 text-xs font-medium text-zinc-700 backdrop-blur transition hover:bg-white"
+						className="hidden border border-zinc-300 bg-white/80 px-3.5 py-2 text-xs font-medium text-zinc-700 backdrop-blur transition hover:bg-white lg:block"
 					>
 						{shared ? 'Ссылка скопирована' : 'Поделиться'}
 					</button>
 				</div>
 			</section>
 
-			{/* 35% — панель шага */}
-			<aside className="relative z-10 flex min-w-[360px] flex-[35] flex-col border-l border-zinc-200 bg-white">
-				<div className="flex items-center justify-between border-b border-zinc-200 px-6 py-4 md:px-8">
-					<Link href="/" className="font-display text-lg font-semibold tracking-tight">
-						Favplace
-					</Link>
-					<span className="text-[11px] uppercase tracking-wider text-zinc-400">
-						Конструктор
-					</span>
-				</div>
-
-				<div className="flex items-center gap-3 border-b border-zinc-200 px-6 py-3 md:px-8">
+			<aside aria-label="Настройки кольца" className={styles.panel}>
+				<div className="flex shrink-0 items-center gap-2 border-b border-zinc-200 px-4 py-1 lg:px-8 lg:py-2">
 					<button
 						type="button"
 						onClick={prevStep}
 						disabled={stepIndex === 0}
 						aria-label="Предыдущий шаг"
-						className="text-zinc-400 transition hover:text-zinc-800 disabled:opacity-0"
+						className="flex size-11 shrink-0 items-center justify-center text-lg text-zinc-500 transition hover:text-zinc-800 disabled:opacity-0"
 					>
 						←
 					</button>
-					<span className="flex-1 text-center">
+					<span className="min-w-0 flex-1 lg:text-center">
 						<span className="font-display text-lg font-medium text-zinc-900">
 							{STEP_LABELS[step]}
 						</span>
@@ -255,16 +293,27 @@ export function CreateStudio() {
 					</span>
 					<button
 						type="button"
+						onClick={() => setPreviewOverride(!previewExpanded)}
+						aria-expanded={previewExpanded}
+						aria-controls="ring-preview"
+						className="min-h-11 shrink-0 px-2 text-xs font-medium text-zinc-600 lg:hidden"
+					>
+						{previewExpanded ? 'Скрыть 3D ↑' : 'Показать 3D ↓'}
+					</button>
+					<button
+						type="button"
 						onClick={nextStep}
 						disabled={isLast}
 						aria-label="Следующий шаг"
-						className="text-zinc-400 transition hover:text-zinc-800 disabled:opacity-0"
+						className="hidden size-11 shrink-0 items-center justify-center text-lg text-zinc-500 transition hover:text-zinc-800 disabled:opacity-0 lg:flex"
 					>
 						→
 					</button>
 				</div>
 
-				<div className="flex-1 overflow-y-auto px-6 py-6 md:px-8">
+				<div className="shrink-0 border-b border-zinc-100 px-4 lg:hidden"><StepProgress /></div>
+
+				<div ref={contentRef} className={`${styles.content} px-4 py-5 lg:px-8 lg:py-6`}>
 					{step === 'form' && <StepForm />}
 					{step === 'place' && (
 						<StepPlace flyTarget={flyTarget} flyTo={flyTo} fetching={fetching} />
@@ -275,17 +324,22 @@ export function CreateStudio() {
 					{step === 'order' && <StepOrder />}
 				</div>
 
-				<div className="flex items-end gap-4 border-t border-zinc-200 px-6 py-4 md:px-8">
-					<StepProgress />
+				<div className={`${styles.footer} flex shrink-0 items-center gap-4 border-t border-zinc-200 bg-white px-4 pt-3 lg:px-8 lg:py-4`}>
+					<div className="hidden min-w-0 flex-1 lg:block"><StepProgress /></div>
+					<div className="min-w-0 flex-1 lg:hidden">
+						<p className="truncate text-[11px] text-zinc-500">{MATERIALS[material].label} · ⌀ {fmtSize(ringSize)} мм</p>
+						<p className="font-display text-2xl font-semibold tabular-nums text-zinc-900">{formatPrice(price.total)}</p>
+					</div>
 					{!isLast && (
 						<button
 							type="button"
 							onClick={() => setStep(STEPS[stepIndex + 1])}
-							className="shrink-0 rounded-full bg-zinc-900 px-6 py-3 text-xs font-medium uppercase tracking-wider text-white transition hover:bg-zinc-700"
+							className="min-h-12 shrink-0 rounded-full bg-zinc-900 px-7 py-3 text-sm font-medium text-white transition hover:bg-zinc-700 lg:text-xs lg:uppercase lg:tracking-wider"
 						>
 							{stepIndex === STEPS.length - 2 ? 'К заказу →' : 'Далее →'}
 						</button>
 					)}
+					{isLast && <span className="text-xs text-zinc-400 lg:hidden">Без оплаты сейчас</span>}
 				</div>
 			</aside>
 		</div>
