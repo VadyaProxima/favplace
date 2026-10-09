@@ -28,6 +28,8 @@ export type AcceptedReliefOptions = AcceptedMountainRingOptions & {
  edgeStart?: number
  relief?: number
  detail?: 'low' | 'medium' | 'high'
+ /** A smaller crown for live map motion. Export always uses the full mesh. */
+ preview?: boolean
 }
 const clamp=(n:number,a=0,b=1)=>Math.max(a,Math.min(b,n))
 const smooth=(n:number)=>{const t=clamp(n);return t*t*t*(t*(t*6-15)+10)}
@@ -85,6 +87,35 @@ export function sampleTerrainElevation(fine:TerrainFrame,coarse:TerrainFrame|nul
  return sampleElevation(fine,...uv)*weight+contextElevation*(1-weight)
 }
 
+/** Compute geographic transforms once per frame, rather than once per vertex/probe. */
+function terrainSampler(fine:TerrainFrame,coarse:TerrainFrame|null|undefined,view:TerrainGeoFrame) {
+ const angle=-view.bearing*Math.PI/180
+ const cos=Math.cos(angle),sin=Math.sin(angle),diameter=2*view.radiusKm
+ const prepare=(source:TerrainFrame)=>{
+  const inv=source.frame.bearing*Math.PI/180,sourceCos=Math.cos(inv),sourceSin=Math.sin(inv)
+  const eastOffset=(view.lng-source.frame.lng)*111.32*Math.cos(source.frame.lat*Math.PI/180)
+  const northOffset=(view.lat-source.frame.lat)*111.32,sourceDiameter=2*source.frame.radiusKm
+  return (u:number,v:number)=>{
+   const x=(u-.5)*diameter,y=(v-.5)*diameter
+   const east=x*cos-y*sin+eastOffset,north=x*sin+y*cos+northOffset
+   const su=.5+(east*sourceCos-north*sourceSin)/sourceDiameter
+   const sv=.5+(east*sourceSin+north*sourceCos)/sourceDiameter
+   return {u:su,v:sv,margin:Math.min(su,1-su,sv,1-sv)}
+  }
+ }
+ const fineUv=prepare(fine),coarseUv=coarse?prepare(coarse):null
+ return (u:number,v:number)=>{
+  const uv=fineUv(u,v)
+  if(uv.margin>=.04||!coarse||!coarseUv)return sampleElevation(fine,uv.u,uv.v)
+  const context=coarseUv(u,v)
+  if(context.margin<0)return sampleElevation(fine,uv.u,uv.v)
+  const elevation=sampleElevation(coarse,context.u,context.v)
+  if(uv.margin<=0)return elevation
+  const weight=smooth(uv.margin/.04)
+  return sampleElevation(fine,uv.u,uv.v)*weight+elevation*(1-weight)
+ }
+}
+
 function cyclicRange(start:number,end:number,count:number) {
  const result=[start];while(result.at(-1)!==end)result.push((result.at(-1)!+1)%count)
  return result
@@ -116,7 +147,7 @@ type ReliefSource = {
 // height/detail changes reuse the expensive, validated ring/transition source.
 const sourceCache=new Map<string,ReliefSource>()
 
-function buildReliefSource(options:AcceptedMountainRingOptions):ReliefSource {
+function buildReliefSource(options:AcceptedMountainRingOptions,nx=384):ReliefSource {
  const base=buildAcceptedMountainRing(options)
  const original=base.originalPositions,sc=base.sectionCount
  const originalNormals=base.geometry.attributes.normal.array
@@ -133,7 +164,6 @@ function buildReliefSource(options:AcceptedMountainRingOptions):ReliefSource {
  const spanX=axisX.at(-1)!-axisX[0],spanZ=axisZ.at(-1)!-axisZ[0]
  // The source collar is identical in every mode: a coarse source zipper can
  // overlap itself even before a heightfield is applied to an extreme profile.
- const nx=384
  const nz=Math.max(48,Math.round(nx*spanZ/spanX))
  let position:number[]=Array.from(original),indices:number[]=[]
  const crownVertices=new Set(radials.flatMap(r=>sections.map(s=>r*sc+s)))
@@ -237,18 +267,19 @@ function buildReliefSource(options:AcceptedMountainRingOptions):ReliefSource {
 
 export function buildAcceptedReliefModel(options:AcceptedReliefOptions) {
  const normalized=normalizeAcceptedMountainRingOptions(options)
- const key=JSON.stringify(normalized)
+ const gridSegments=options.preview?96:384
+ const key=JSON.stringify([normalized,gridSegments])
  let source=sourceCache.get(key)
  if(!source) {
-  source=buildReliefSource(normalized)
+  source=buildReliefSource(normalized,gridSegments)
   sourceCache.set(key,source)
-  if(sourceCache.size>2)sourceCache.delete(sourceCache.keys().next().value!)
+  if(sourceCache.size>4)sourceCache.delete(sourceCache.keys().next().value!)
  }
  const {positions:sourcePosition,normals:sourceNormal,indices,crownStart,seamVertices,footprint,releaseY,fullY,terrainReleaseY,terrainFullY}=source
  const position=new Float32Array(sourcePosition)
  const normals=new Float32Array(sourceNormal.length)
  const fine=options.fine,view=options.view??fine.frame
- const directMain=(u:number,v:number)=>sampleTerrainElevation(fine,options.coarse,view,u,v)
+ const directMain=terrainSampler(fine,options.coarse,view)
 
  // Вторая местность по краям площадки.
  //
@@ -260,7 +291,7 @@ export function buildAcceptedReliefModel(options:AcceptedReliefOptions) {
  const edgeSource=edge?edge.fine:null
  const edgeView=edge?edge.view??edge.fine.frame:null
  const directEdge=edge&&edgeSource&&edgeView
-  ?(u:number,v:number)=>sampleTerrainElevation(edgeSource,edge.coarse,edgeView,u,v)
+  ?terrainSampler(edgeSource,edge.coarse,edgeView)
   :null
  // 0 в центре площадки, 1 у длинного края со стороны скосов.
  const edgeStart=clamp(options.edgeStart??.55,.2,.95)
@@ -295,7 +326,7 @@ export function buildAcceptedReliefModel(options:AcceptedReliefOptions) {
   const other=rangeEdge>1e-6?clamp((directEdge(u,v)-minEdge)/rangeEdge):0
   return w>=1?other:main*(1-w)+other*w
  }
- const detail=options.detail??'high'
+ const detail=options.preview?'high':options.detail??'high'
  // Полоса пропускания рельефа в предпросмотре. Сетка кольца — 384 узла,
  // так что 255 ещё не упирается в неё, а стоит лишь лишних вызовов direct.
  const divisions=detail==='low'?127:255
@@ -388,6 +419,7 @@ export function buildAcceptedReliefModel(options:AcceptedReliefOptions) {
    const lift=macro*weight+detailHeight*terrainWeight
    position[id*3+1]=loweredY+lift;maximumLift=Math.max(maximumLift,lift)
    if(seamVertices.has(id))boundaryMaximumLift=Math.max(boundaryMaximumLift,position[id*3+1]-Math.fround(loweredY))
+   if(options.preview)continue
    // Transport accepted normals through Y'=Y+(M-reduction)*wBody+(H-M)*wFine.
    // M<=H makes both terrain terms nonnegative and the vertical Jacobian >0.
    const derivative=smooth(t)/bodyScale
@@ -404,6 +436,7 @@ export function buildAcceptedReliefModel(options:AcceptedReliefOptions) {
     nz-=(terrainWeight*dz+(weight-terrainWeight)*mz)*ny
    }
   }
+  if(options.preview)continue
   const length=Math.hypot(nx,ny,nz)||1
   normals[id*3]=nx/length;normals[id*3+1]=ny/length;normals[id*3+2]=nz/length
  }
@@ -411,6 +444,16 @@ export function buildAcceptedReliefModel(options:AcceptedReliefOptions) {
  geometry.setAttribute('position',new THREE.BufferAttribute(position,3))
  geometry.setAttribute('normal',new THREE.BufferAttribute(normals,3))
  geometry.setIndex(new THREE.BufferAttribute(indices.slice(),1))
+ if(options.preview) {
+  // The small live mesh already samples the shape: derive its normals in one
+  // triangle pass instead of four extra DEM/gradient probes per upper vertex.
+  geometry.computeVertexNormals()
+  for(let id=0;id<position.length/3;id++)if(sourcePosition[id*3+1]<=releaseY) {
+   const nx=sourceNormal[id*3],ny=sourceNormal[id*3+1],nz=sourceNormal[id*3+2]
+   const length=Math.hypot(nx,ny,nz)||1
+   normals[id*3]=nx/length;normals[id*3+1]=ny/length;normals[id*3+2]=nz/length
+  }
+ }
  geometry.addGroup(0,crownStart,0)
  geometry.addGroup(crownStart,indices.length-crownStart,1)
  geometry.computeBoundingBox();geometry.computeBoundingSphere()

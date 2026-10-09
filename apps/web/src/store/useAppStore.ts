@@ -108,6 +108,7 @@ interface AppState {
   terrainFrame: TerrainFrame | null;
   coarseTerrainFrame: TerrainFrame | null;
   terrainViewFrame: TerrainGeoFrame | null;
+  setTerrainViewFrame: (frame: TerrainGeoFrame) => void;
   setReferenceTerrainFrames: (
     fine: TerrainFrame,
     coarse: TerrainFrame | null,
@@ -254,6 +255,7 @@ export const useAppStore = create<AppState>((set) => ({
   terrainFrame: null,
   coarseTerrainFrame: null,
   terrainViewFrame: null,
+  setTerrainViewFrame: (terrainViewFrame) => set({ terrainViewFrame }),
   setReferenceTerrainFrames: (terrainFrame, coarseTerrainFrame, terrainViewFrame) =>
     set({
       terrainFrame,

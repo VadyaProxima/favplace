@@ -3,6 +3,7 @@
 import { JEWELLERY_ENV, JEWELLERY_GL } from '@/lib/jewelleryMaterial'
 import { buildAcceptedMountainRing } from '@/lib/acceptedMountainRing'
 import { useAcceptedRelief } from '@/lib/useAcceptedRelief'
+import { terrainFrameContains } from '@/lib/liveTerrainAnalysis'
 import { useAppStore } from '@/store/useAppStore'
 import { MATERIALS } from '@favplace/shared'
 import { ContactShadows } from '@react-three/drei'
@@ -66,6 +67,7 @@ function MountainRing({onStatus}:{onStatus:(status:string)=>void}) {
 	const view = useAppStore(s=>s.terrainViewFrame)
 	const relief = useAppStore(s=>s.reliefScale)
 	const detail = useAppStore(s=>s.reliefDetail)
+	const interacting = useAppStore(s=>s.interacting)
 	const ringForm = useAppStore(s=>s.ringForm)
 	const edgeFine = useAppStore(s=>s.edgeTerrainFrame)
 	const edgeCoarse = useAppStore(s=>s.edgeCoarseTerrainFrame)
@@ -73,7 +75,6 @@ function MountainRing({onStatus}:{onStatus:(status:string)=>void}) {
 	const options = useMemo(()=>{
 	 if(!fine)return null
 	 const context=coarse??fine
-	 const distance=view?Math.hypot((view.lat-context.frame.lat)*111.32,(view.lng-context.frame.lng)*111.32*Math.cos(view.lat*Math.PI/180)):0
 	 // Раньше на незавершённых ступенях детализация принудительно ставилась в
 	 // low — считалось, что так быстрее. Замер показал обратное: low строит
 	 // рельеф за 396 мс, medium за 435, а high за 244. Путь предпросмотра идёт
@@ -81,13 +82,13 @@ function MountainRing({onStatus}:{onStatus:(status:string)=>void}) {
 	 // прямого чтения кадра. Понижение давало и худшую картинку, и большую
 	 // задержку, поэтому его больше нет.
 	 // A jump outside loaded data holds the last real crop instead of fabricating clamped terrain.
-	 const effectiveView=view&&distance>context.frame.radiusKm+view.radiusKm?fine.frame:view
+	 const effectiveView=view&&!terrainFrameContains(context.frame,view)?fine.frame:view
 	 // Вторая местность только у формы «duo» и только когда её кадр загружен.
 	 const edge=ringForm==='duo'&&edgeFine?{fine:edgeFine,coarse:edgeCoarse}:null
 	 return {ringDiameter:ringSize,mass:ringWeight,profile:bandProfile,shoulders:shoulderStyle,fine,coarse,view:effectiveView,relief,
-	 detail,edge,edgeStart}
+	 detail,edge,edgeStart,preview:interacting||!fine.final}
 	},
-	 [ringSize,ringWeight,bandProfile,shoulderStyle,fine,coarse,view,relief,detail,ringForm,edgeFine,edgeCoarse,edgeStart])
+	 [ringSize,ringWeight,bandProfile,shoulderStyle,fine,coarse,view,relief,detail,interacting,ringForm,edgeFine,edgeCoarse,edgeStart])
 	const terrain = useAcceptedRelief(options)
 	useEffect(()=>onStatus(terrain.error??(terrain.busy?'Уточняем рельеф…':'')),[terrain.error,terrain.busy,onStatus])
 

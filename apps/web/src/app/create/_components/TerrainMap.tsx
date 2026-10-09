@@ -235,8 +235,8 @@ export function TerrainMap({
 
 	/**
 	 * Отдаём наружу и центр, и площадь — оба меняются одним жестом.
-	 * Только по moveend: во время панорамирования писать в стор незачем,
-	 * иначе рельеф пересчитывался бы на каждый кадр.
+	 * During motion the loaded DEM follows this view locally; network crops are
+	 * loaded only when the view approaches the edge of its cached region.
 	 */
 	const emitViewport = () => {
 		const map = mapRef.current
@@ -316,13 +316,12 @@ export function TerrainMap({
 		map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
 
 		// Рельеф должен обновляться прямо во время перетаскивания, но писать в
-		// стор на каждый кадр нельзя — throttle держит поток на ~5 обновлений
-		// в секунду. Перестроение меша занимает ~55 мс, в этот бюджет влезает.
+		// The worker keeps one active job and the latest view, without a backlog.
 		map.on('movestart', () => onInteractingChangeRef.current?.(true))
 		map.on('move', () => {
 			scheduleFrameSize()
 			const now = performance.now()
-			if (now - lastLiveEmitRef.current < 300) return
+			if (now - lastLiveEmitRef.current < 50) return
 			lastLiveEmitRef.current = now
 			onInteractingChangeRef.current?.(true)
 			emitViewport()

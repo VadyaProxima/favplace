@@ -5,9 +5,9 @@ import {
 	createTerrainRequestPlan,
 	terrainFrameFromResponse,
 	terrainRequestUrl,
-	waitForTerrainStageDelay,
 	type TerrainApiResponse,
 } from '@/lib/referenceTerrainRequests'
+import { useTerrainAnalysis } from '@/lib/useTerrainAnalysis'
 import { STEPS, STEP_LABELS, useAppStore } from '@/store/useAppStore'
 import { MATERIALS, calcPrice, formatPrice } from '@favplace/shared'
 import Link from 'next/link'
@@ -44,10 +44,9 @@ export function CreateStudio() {
 	const twoTone = useAppStore(s => s.mountainTwoTone)
 	const ringSize = useAppStore(s => s.ringSize)
 
-	const setReferenceTerrainFrames = useAppStore(s => s.setReferenceTerrainFrames)
 	const setEdgeTerrainFrames = useAppStore(s => s.setEdgeTerrainFrames)
 
-	const [fetching, setFetching] = useState(false)
+	const { fetching, error: terrainError } = useTerrainAnalysis()
 	const [shared, setShared] = useState(false)
 	const [previewOverride, setPreviewOverride] = useState<boolean | null>(null)
 	const [shortScreen, setShortScreen] = useState(false)
@@ -72,59 +71,6 @@ export function CreateStudio() {
 		lat: 35.3628,
 		key: 0,
 	})
-
-	const analyzeSeqRef = useRef(0)
-	const analyzeAbortRef = useRef<AbortController | null>(null)
-
-	/**
-	 * Рельеф приходит лесенкой: сперва грубый кадр и широкий контекст для
-	 * плеч, затем всё более точные кропы. Первый кадр появляется сразу,
-	 * последний — точный — только если жест уже закончился.
-	 */
-	const analyze = useCallback(
-		async (lat: number, lng: number, r: number, bearing: number) => {
-			const seq = ++analyzeSeqRef.current
-			analyzeAbortRef.current?.abort()
-			const ac = new AbortController()
-			analyzeAbortRef.current = ac
-			setFetching(true)
-			try {
-				const plan = createTerrainRequestPlan({
-					lat,
-					lng,
-					radiusMeters: r,
-					bearing,
-				})
-				const requestStage = async (stage: (typeof plan.fine)[number]) => {
-					await waitForTerrainStageDelay(stage.delayMs, ac.signal)
-					const res = await fetch(terrainRequestUrl(stage), { signal: ac.signal })
-					if (!res.ok) throw new Error(`Terrain API ${res.status}`)
-					return (await res.json()) as TerrainApiResponse
-				}
-
-				const [coarseData, firstFineData] = await Promise.all([
-					requestStage(plan.coarse),
-					requestStage(plan.fine[0]),
-				])
-				if (seq !== analyzeSeqRef.current) return
-				const coarse = terrainFrameFromResponse(coarseData, true)
-				let fine = terrainFrameFromResponse(firstFineData, false)
-				setReferenceTerrainFrames(fine, coarse, fine.frame)
-
-				for (const stage of plan.fine.slice(1)) {
-					const nextData = await requestStage(stage)
-					if (seq !== analyzeSeqRef.current) return
-					fine = terrainFrameFromResponse(nextData, stage.final)
-					setReferenceTerrainFrames(fine, coarse, fine.frame)
-				}
-			} catch (err) {
-				if ((err as Error)?.name === 'AbortError') return
-			} finally {
-				if (seq === analyzeSeqRef.current) setFetching(false)
-			}
-		},
-		[setReferenceTerrainFrames],
-	)
 
 	// Вторая местность формы «duo». Отдельный лёгкий запрос: она ложится
 	// узкими полосами по краям площадки, и разрешение 512 там избыточно.
@@ -163,20 +109,6 @@ export function CreateStudio() {
 	const flyTo = useCallback((lat: number, lng: number) => {
 		setFlyTarget(prev => ({ lat, lng, key: prev.key + 1 }))
 	}, [])
-
-	// Рельеф пересчитывается прямо во время движения карты: TerrainMap шлёт
-	// координаты примерно 5 раз в секунду, здесь остаётся короткий зазор,
-	// чтобы склеить соседние кадры. Незавершённый запрос analyze отменяет сам.
-	const lat = useAppStore(s => s.location?.coordinates.lat)
-	const lng = useAppStore(s => s.location?.coordinates.lng)
-	const radius = useAppStore(s => s.radius)
-	const terrainBearing = useAppStore(s => s.terrainBearing)
-
-	useEffect(() => {
-		if (lat === undefined || lng === undefined) return
-		const timer = setTimeout(() => analyze(lat, lng, radius, terrainBearing), 60)
-		return () => clearTimeout(timer)
-	}, [lat, lng, radius, terrainBearing, analyze])
 
 	// Ссылка-конфигурация: подхватываем место. Рельеф построит эффект выше.
 	const onHydrated = useCallback(
@@ -314,6 +246,11 @@ export function CreateStudio() {
 				<div className="shrink-0 border-b border-zinc-100 px-4 lg:hidden"><StepProgress /></div>
 
 				<div ref={contentRef} className={`${styles.content} px-4 py-5 lg:px-8 lg:py-6`}>
+					{terrainError && step === 'place' && (
+						<p role="alert" className="mb-4 border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+							Не удалось загрузить высоты. Выберите место ещё раз.
+						</p>
+					)}
 					{step === 'form' && <StepForm />}
 					{step === 'place' && (
 						<StepPlace flyTarget={flyTarget} flyTo={flyTo} fetching={fetching} />

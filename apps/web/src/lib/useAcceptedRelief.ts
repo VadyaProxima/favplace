@@ -33,7 +33,9 @@ export function useAcceptedRelief(options:AcceptedReliefOptions|null) {
      geometry.setAttribute('normal',new THREE.BufferAttribute(data.normal,3))
      geometry.setIndex(new THREE.BufferAttribute(data.index,1))
      for(const group of data.groups)geometry.addGroup(group.start,group.count,group.materialIndex)
-     geometry.computeBoundingBox();geometry.computeBoundingSphere()
+     // The worker already scanned these buffers; avoid repeating that work on the UI thread.
+     geometry.boundingBox=new THREE.Box3(new THREE.Vector3().fromArray(data.bounds.min),new THREE.Vector3().fromArray(data.bounds.max))
+     geometry.boundingSphere=new THREE.Sphere(new THREE.Vector3().fromArray(data.sphere.center),data.sphere.radius)
      const old=lastGeometry.current;lastGeometry.current=geometry
      // Show progressive frames during continuous motion, not only after the pointer stops.
      setResult({geometry,error:null,busy:data.id!==serial.current})
