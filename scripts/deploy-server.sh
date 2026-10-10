@@ -29,6 +29,13 @@ compose() {
 }
 compose "$release" config --quiet
 
+# Check the hostname actually configured in the running TLS proxy.
+site_domain=$(docker inspect --format '{{range .Config.Env}}{{println .}}{{end}}' favplace-caddy-1 | sed -n 's/^SITE_DOMAIN=//p')
+if [[ ! $site_domain =~ ^[a-zA-Z0-9][a-zA-Z0-9.-]*$ ]]; then
+  echo 'Caddy has no valid SITE_DOMAIN' >&2
+  exit 64
+fi
+
 previous="$root"
 if [[ -L $root/current ]]; then previous=$(readlink -f "$root/current"); fi
 api_image=$(docker inspect --format '{{.Image}}' favplace-api-1)
@@ -66,9 +73,9 @@ compose "$release" up -d --no-build api web
 ready=false
 for attempt in $(seq 1 30); do
   if curl --fail --silent --show-error --max-time 10 \
-       https://favplace.178.212.15.39.sslip.io/api/admin/session >/dev/null \
+       "https://$site_domain/api/admin/session" >/dev/null \
      && curl --fail --silent --show-error --max-time 10 \
-       https://favplace.178.212.15.39.sslip.io/ >/dev/null; then
+       "https://$site_domain/" >/dev/null; then
     ready=true
     break
   fi

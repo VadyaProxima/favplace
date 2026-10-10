@@ -27,3 +27,12 @@
 		}
 	}
 }
+
+# Preserve old shared URLs and use one canonical address.
+www.mestometal.ru, favplace.178.212.15.39.sslip.io {
+	redir https://{$SITE_DOMAIN}{uri} 308
+}
+
+http://178.212.15.39 {
+	redir https://{$SITE_DOMAIN}{uri} 308
+}

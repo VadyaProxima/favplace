@@ -19,6 +19,7 @@ jobs:
     timeout-minutes: 30
     env:
       DEPLOY_HOST: 178.212.15.39
+      DEPLOY_DOMAIN: mestometal.ru
     steps:
       - name: Check out the version being deployed
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
@@ -51,7 +52,7 @@ jobs:
       - name: Check the public site
         run: |
           curl --fail --silent --show-error --retry 5 --retry-all-errors \
-            --retry-delay 3 --max-time 30 https://favplace.178.212.15.39.sslip.io/api/admin/session
+            --retry-delay 3 --max-time 30 "https://$DEPLOY_DOMAIN/api/admin/session"
 
       - name: Remove the local SSH key
         if: always()
