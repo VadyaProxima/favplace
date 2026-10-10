@@ -1,16 +1,20 @@
 # Развёрнутый сервер
 
-Сайт: https://favplace.178.212.15.39.sslip.io/
+Сайт: https://mestometal.ru/
 
-Конструктор: https://favplace.178.212.15.39.sslip.io/create
+Конструктор: https://mestometal.ru/create
 
-Админка: https://favplace.178.212.15.39.sslip.io/admin
+Админка: https://mestometal.ru/admin
+
+Старый адрес `favplace.178.212.15.39.sslip.io` и `www.mestometal.ru`
+перенаправляются на основной домен с сохранением пути, query и метода запроса.
 
 VPS Hostland: `178.212.15.39`, Ubuntu 24.04, 2 CPU, 4 ГБ RAM, 30 ГБ диска.
 Проект расположен в `/opt/favplace`, текущие исходники — в `/opt/favplace/current`.
 Сайт, API, PostgreSQL и Caddy запущены
 через Docker Compose с автоматическим перезапуском. HTTPS выдаёт и продлевает Caddy.
-HTTP по IP перенаправляется на HTTPS-адрес сайта.
+HTTP по IP перенаправляется на HTTPS-адрес сайта. Сертификаты получает Caddy,
+покупать отдельный SSL-сертификат не нужно.
 
 ## Доступ
 
@@ -69,7 +73,13 @@ docker exec favplace-db-1 pg_dump -U favplace favplace | gzip > backup-$(date +%
 
 ## Свой домен
 
-Добавьте A-запись домена на `178.212.15.39`, замените `SITE_DOMAIN` в серверном `.env`
+Для `mestometal.ru` нужны A-записи `@` и `www` на `178.212.15.39`.
+Их можно задать в Hostland: «Домены → Управление DNS». NS-серверы домена
+должны соответствовать выбранному DNS-провайдеру; для Hostland используются
+`ns.hostland.ru` и `ns3.hostland.ru`. AAAA-запись следует добавлять только
+при настроенном IPv6 на VPS.
+
+При следующей смене домена добавьте A-запись на `178.212.15.39`, замените `SITE_DOMAIN` в серверном `.env`
 и выполните на сервере:
 
 ```bash
@@ -77,8 +87,10 @@ cd /opt/favplace/current
 docker compose -p favplace -f docker-compose.yml -f /opt/favplace/docker-compose.override.yml up -d --no-deps caddy
 ```
 
-Caddy получит сертификат для нового домена. При смене домена обновите также
-адрес проверки в `.github/workflows/deploy.yml` и серверном `favplace-deploy`.
+Caddy получит сертификат для нового домена после появления DNS-записей.
+При смене домена обновите `DEPLOY_DOMAIN` в `.github/workflows/deploy.yml`
+и домены перенаправлений в production `Caddyfile`. Серверный `favplace-deploy`
+берёт домен проверки из окружения запущенного контейнера Caddy.
 
 ## Ключ автодеплоя
 
