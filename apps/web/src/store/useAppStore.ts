@@ -7,7 +7,7 @@ import type {
   RingForm,
   SurfaceFinish,
 } from "@favplace/shared";
-import { RING_FORMS } from "@favplace/shared";
+import { RING_FORMS, RING_PRODUCTION_DEFAULTS } from "@favplace/shared";
 import {
   MAX_RELIEF_MM,
   MIN_RELIEF_MM,
@@ -29,7 +29,6 @@ export const STEPS = [
   "place",
   "relief",
   "form",
-  "material",
   "size",
   "order",
 ] as const;
@@ -40,7 +39,6 @@ export const STEP_LABELS: Record<Step, string> = {
   form: "форма",
   place: "место",
   relief: "рельеф",
-  material: "металл",
   size: "размер",
   order: "заказ",
 };
@@ -63,7 +61,6 @@ interface AppState {
 
   /** Two-tone mountain/disc: polished band + light terrain */
   mountainTwoTone: boolean;
-  setMountainTwoTone: (v: boolean) => void;
 
   location: Location | null;
   setLocation: (location: Location) => void;
@@ -73,10 +70,8 @@ interface AppState {
   setRadius: (radius: number) => void;
 
   material: MaterialType;
-  setMaterial: (material: MaterialType) => void;
 
   surfaceFinish: SurfaceFinish;
-  setSurfaceFinish: (finish: SurfaceFinish) => void;
 
   ringSize: number;
   setRingSize: (size: number) => void;
@@ -175,8 +170,7 @@ export const useAppStore = create<AppState>((set) => ({
   interacting: false,
   setInteracting: (interacting) => set({ interacting }),
 
-  mountainTwoTone: false,
-  setMountainTwoTone: (mountainTwoTone) => set({ mountainTwoTone }),
+  mountainTwoTone: RING_PRODUCTION_DEFAULTS.twoTone,
 
   location: null,
   setLocation: (location) => set({ location }),
@@ -190,11 +184,9 @@ export const useAppStore = create<AppState>((set) => ({
   radius: 500,
   setRadius: (radius) => set({ radius }),
 
-  material: "silver",
-  setMaterial: (material) => set({ material }),
+  material: RING_PRODUCTION_DEFAULTS.material,
 
-  surfaceFinish: "polished",
-  setSurfaceFinish: (surfaceFinish) => set({ surfaceFinish }),
+  surfaceFinish: RING_PRODUCTION_DEFAULTS.surfaceFinish,
 
   ringSize: 17,
   setRingSize: (ringSize) => set({ ringSize }),

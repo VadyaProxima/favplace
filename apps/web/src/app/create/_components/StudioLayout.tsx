@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import Link from 'next/link'
-import { MATERIALS, calcPrice, formatPrice } from '@favplace/shared'
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
+import { RING_PRODUCTION_DEFAULTS, calcPrice, formatPrice } from '@favplace/shared'
 import { STEPS, useAppStore } from '@/store/useAppStore'
 import { FormRingViewer } from './FormRingViewer'
 import { CanvasMouseHint } from './CanvasMouseHint'
@@ -24,20 +25,19 @@ export function StudioLayout({ children, isAdmin, fetching, shared, onShare }: {
 	const step = useAppStore(s => s.step)
 	const setStep = useAppStore(s => s.setStep)
 	const ringForm = useAppStore(s => s.ringForm)
-	const material = useAppStore(s => s.material)
 	const reliefDetail = useAppStore(s => s.reliefDetail)
-	const twoTone = useAppStore(s => s.mountainTwoTone)
 	const ringSize = useAppStore(s => s.ringSize)
 	const location = useAppStore(s => s.location)
 	const [previewOverride, setPreviewOverride] = useState<boolean | null>(null)
 	const [shortScreen, setShortScreen] = useState(false)
 	const contentRef = useRef<HTMLDivElement>(null)
+	const reduceMotion = useReducedMotion()
 	const stepIndex = STEPS.indexOf(step)
 	const sectionIndex = STUDIO_SECTIONS.findIndex(section => section.steps.includes(step))
 	const section = STUDIO_SECTIONS[sectionIndex]
 	const isLast = step === 'order'
 	const previewExpanded = previewOverride ?? (!shortScreen && !isLast)
-	const price = calcPrice({ ringForm, material, reliefDetail, twoTone })
+	const price = calcPrice({ ringForm, reliefDetail, ...RING_PRODUCTION_DEFAULTS })
 	const next = STEPS[stepIndex + 1]
 
 	useEffect(() => {
@@ -73,7 +73,7 @@ export function StudioLayout({ children, isAdmin, fetching, shared, onShare }: {
 			<ResizableWorkspace>
 				<section id="studio-result" className={styles.result} aria-label="Предпросмотр и параметры кольца">
 					<div className={styles.resultHeading}>
-						<div><p className={styles.eyebrow}>Ваше изделие</p><h1 className="font-display text-2xl font-semibold">Горное кольцо</h1></div>
+						<h1 className="font-display text-xl font-semibold">Горное кольцо</h1>
 						<span className={styles.modelHint}>Вращайте, чтобы рассмотреть</span>
 					</div>
 					<section id="ring-preview" aria-label="3D-превью кольца" className={styles.preview} data-expanded={previewExpanded} data-preview-mode={previewOverride === null ? 'auto' : 'manual'}>
@@ -82,8 +82,8 @@ export function StudioLayout({ children, isAdmin, fetching, shared, onShare }: {
 						<p className={styles.previewHint}>Вращайте кольцо пальцем · приближайте двумя</p>
 					</section>
 					<dl className={styles.summary}>
-						<div className={styles.summaryPlace}><dt>Место</dt><dd>{location?.name ?? 'Выберите точку на карте'}{location && <p>{location.coordinates.lat.toFixed(4)}° · {location.coordinates.lng.toFixed(4)}°</p>}</dd></div>
-						<div><dt>Металл</dt><dd>{MATERIALS[material].label}</dd></div>
+						<div className={styles.summaryPlace}><dt>Место</dt><dd>{location?.name ?? 'Выберите точку на карте'}</dd></div>
+						<div><dt>Изделие</dt><dd>Серебряное кольцо</dd></div>
 						<div><dt>Размер</dt><dd>⌀ {fmtSize(ringSize)} мм</dd></div>
 					</dl>
 				</section>
@@ -95,7 +95,16 @@ export function StudioLayout({ children, isAdmin, fetching, shared, onShare }: {
 							{section.steps.map(id => <button key={id} type="button" onClick={() => setStep(id)} aria-current={id === step ? 'step' : undefined}>{STUDIO_STEP_TITLES[id]}</button>)}
 						</nav>}
 					</div>
-					<div ref={contentRef} className={styles.content}>{children}</div>
+					<div ref={contentRef} className={styles.content}>
+						<AnimatePresence initial={false} mode="wait" onExitComplete={() => contentRef.current?.scrollTo({ top: 0 })}>
+							<motion.div key={step} data-studio-step={step}
+								initial={{ opacity: reduceMotion ? 1 : 0, y: reduceMotion ? 0 : 8 }}
+								animate={{ opacity: 1, y: 0, transition: { duration: reduceMotion ? 0 : .22, ease: [.22, 1, .36, 1] } }}
+								exit={{ opacity: reduceMotion ? 1 : 0, y: reduceMotion ? 0 : -4, transition: { duration: reduceMotion ? 0 : .1 } }}>
+								{children}
+							</motion.div>
+						</AnimatePresence>
+					</div>
 				</section>
 			</ResizableWorkspace>
 

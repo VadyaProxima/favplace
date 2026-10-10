@@ -2,6 +2,7 @@ import { Injectable, Logger, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import {
   MATERIALS,
+  RING_PRODUCTION_DEFAULTS,
   RING_FORMS,
   RING_SIZES_MM,
   calcPrice,
@@ -20,17 +21,15 @@ export class OrdersService {
 
   /** Заявка из конструктора: без авторизации, цена пересчитывается на сервере. */
   async checkout(body: CheckoutRequest): Promise<CheckoutResponse> {
-    // Гравировка временно отключена, в том числе для старых клиентов.
-    // const config = body?.config;
-    const config = body?.config ? { ...body.config, engraving: "" } : undefined;
+    // Apply the current production finish, including requests from old clients.
+    const config: CheckoutRequest["config"] | undefined = body?.config
+      ? { ...body.config, ...RING_PRODUCTION_DEFAULTS, engraving: "" }
+      : undefined;
     const customer = body?.customer;
     if (!config || !customer) throw new BadRequestException("Пустая заявка");
 
     if (!RING_FORMS.includes(config.ringForm)) {
       throw new BadRequestException("Неизвестная форма изделия");
-    }
-    if (!(config.material in MATERIALS)) {
-      throw new BadRequestException("Неизвестный металл");
     }
     if (!RING_SIZES_MM.includes(config.ringSize)) {
       throw new BadRequestException("Недоступный размер кольца");

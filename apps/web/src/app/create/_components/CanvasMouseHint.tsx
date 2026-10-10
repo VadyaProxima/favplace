@@ -1,40 +1,67 @@
 'use client'
 
-import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from 'react'
+import { useEffect, useId, useRef, useState, type PointerEvent, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import styles from './CreateStudio.module.css'
 
-const SEEN_KEY = 'favplace:canvas-controls-seen'
+type Point = { x: number; y: number }
 
 export function CanvasMouseHint({ children }: { children: ReactNode }) {
+	const id = useId()
 	const seen = useRef(false)
-	const [point, setPoint] = useState<{ x: number; y: number } | null>(null)
+	const visible = useRef(false)
+	const cursor = useRef<Point>({ x: 0, y: 0 })
+	const delay = useRef<ReturnType<typeof setTimeout> | null>(null)
 	const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
-	const hide = () => { setPoint(null); if (timer.current) clearTimeout(timer.current) }
+	const [point, setPoint] = useState<Point | null>(null)
 
-	useEffect(() => {
-		try { seen.current = sessionStorage.getItem(SEEN_KEY) === '1' } catch { /* Show once for this mount. */ }
-		return () => { if (timer.current) clearTimeout(timer.current) }
-	}, [])
-
+	const hide = () => {
+		visible.current = false
+		setPoint(null)
+		if (delay.current) clearTimeout(delay.current)
+		if (timer.current) clearTimeout(timer.current)
+		delay.current = timer.current = null
+	}
+	const show = (at: Point) => {
+		hide()
+		visible.current = true
+		setPoint(at)
+		timer.current = setTimeout(() => { seen.current = true; hide() }, 8000)
+	}
 	const follow = (event: PointerEvent<HTMLDivElement>) => {
 		if (event.pointerType !== 'mouse' || !(event.target instanceof HTMLCanvasElement)) return
 		if (event.buttons) { hide(); return }
-		if (point) setPoint({ x: event.clientX, y: event.clientY })
+		cursor.current = { x: event.clientX, y: event.clientY }
+		if (visible.current) setPoint(cursor.current)
+		else if (!seen.current && !delay.current) {
+			delay.current = setTimeout(() => show(cursor.current), 250)
+		}
 	}
+	const interact = () => {
+		if (visible.current) seen.current = true
+		hide()
+	}
+	useEffect(() => () => {
+		if (delay.current) clearTimeout(delay.current)
+		if (timer.current) clearTimeout(timer.current)
+	}, [])
+
 	return <>
 		<div className={styles.mouseHintArea}
-			onPointerOver={event => {
-				if (event.pointerType !== 'mouse' || event.buttons || seen.current || !(event.target instanceof HTMLCanvasElement)) return
-				seen.current = true
-				try { sessionStorage.setItem(SEEN_KEY, '1') } catch { /* The in-memory flag is sufficient. */ }
-				setPoint({ x: event.clientX, y: event.clientY })
-				timer.current = setTimeout(hide, 6000)
-			}}
-			onPointerMove={follow} onPointerLeave={hide} onPointerDownCapture={hide} onWheelCapture={hide}>
+			onPointerOver={follow} onPointerMove={follow} onPointerLeave={hide}
+			onPointerDownCapture={interact} onWheelCapture={interact}
+			onKeyDown={event => { if (event.key === 'Escape') hide() }}>
 			{children}
+			<button type="button" className={styles.controlsHelp} aria-expanded={!!point}
+				aria-describedby={point ? id : undefined}
+				onClick={event => {
+					const rect = event.currentTarget.getBoundingClientRect()
+					show({ x: rect.right - 260, y: rect.bottom })
+				}}
+				onBlur={hide}>Управление <span aria-hidden="true">?</span></button>
 		</div>
-		{point && createPortal(<div role="tooltip" className={styles.mouseHint} style={{ left: Math.max(8, Math.min(point.x + 18, window.innerWidth - 248)), top: Math.max(8, Math.min(point.y + 18, window.innerHeight - 130)) }}>
+		{point && createPortal(<div id={id} role="tooltip" className={styles.mouseHint}
+			style={{ left: Math.max(8, Math.min(point.x + 18, window.innerWidth - 248)), top: Math.max(8, Math.min(point.y + 18, window.innerHeight - 140)) }}>
 			<p>Управление 3D</p>
 			<dl><div><dt>ЛКМ</dt><dd>Осмотр</dd></div><div><dt>СКМ / ПКМ</dt><dd>Перемещение</dd></div><div><dt>Колесо</dt><dd>Масштаб</dd></div></dl>
 		</div>, document.body)}

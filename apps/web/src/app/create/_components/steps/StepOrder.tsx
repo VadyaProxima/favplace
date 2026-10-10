@@ -3,6 +3,7 @@
 import { useAppStore } from '@/store/useAppStore'
 import {
 	MATERIALS,
+	RING_PRODUCTION_DEFAULTS,
 	RELIEF_DETAIL_LABELS,
 	calcPrice,
 	formatPrice,
@@ -64,10 +65,10 @@ export function StepOrder() {
 
 	const price = calcPrice({
 		ringForm: state.ringForm,
-		material: state.material,
+		material: RING_PRODUCTION_DEFAULTS.material,
 		reliefDetail: state.reliefDetail,
 		// engraving: state.engraving, // Временно отключена.
-		twoTone: state.mountainTwoTone,
+		twoTone: RING_PRODUCTION_DEFAULTS.twoTone,
 	})
 
 	const validate = (): Errors => {
@@ -90,11 +91,11 @@ export function StepOrder() {
 			const payload: CheckoutRequest = {
 				config: {
 					ringForm: state.ringForm,
-					material: state.material,
-					surfaceFinish: state.surfaceFinish,
+					material: RING_PRODUCTION_DEFAULTS.material,
+					surfaceFinish: RING_PRODUCTION_DEFAULTS.surfaceFinish,
 					reliefDetail: state.reliefDetail,
 					reliefHeight: state.reliefHeight,
-					twoTone: state.mountainTwoTone,
+					twoTone: RING_PRODUCTION_DEFAULTS.twoTone,
 					ringSize: state.ringSize,
 					// engraving: state.engraving,
 					engraving: '', // Временно отключена; сохраняем совместимость формата заявки.
@@ -150,7 +151,7 @@ export function StepOrder() {
 				<div className="border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-600">
 					<p>
 						{formLabel} · ⌀ {fmtSize(state.ringSize)} мм ·{' '}
-						{MATERIALS[state.material].label}
+						{MATERIALS[RING_PRODUCTION_DEFAULTS.material].label}
 					</p>
 					<p className="mt-1 font-medium text-zinc-900">
 						{formatPrice(done.totalPrice)}
@@ -199,11 +200,7 @@ export function StepOrder() {
 								: 'не выбрано'
 						}
 					/>
-					<Row label="Металл" value={MATERIALS[state.material].label} />
-					<Row
-						label="Поверхность"
-						value={state.surfaceFinish === 'polished' ? 'Полированная' : 'Матовая'}
-					/>
+					<Row label="Металл" value={MATERIALS[RING_PRODUCTION_DEFAULTS.material].label} />
 					<Row
 						label="Рельеф"
 						value={`${state.reliefHeight.toFixed(1).replace('.', ',')} мм · ${RELIEF_DETAIL_LABELS[state.reliefDetail].toLowerCase()} детализация`}

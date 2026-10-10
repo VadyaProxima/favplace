@@ -69,7 +69,7 @@ export default function Home() {
 					<div>
 						{[
 							['Найдите ландшафт', 'Выберите точку, масштаб и направление на карте. Рассмотрите, как её рельеф ложится на кольцо.'],
-							['Придайте ему форму', 'Настройте профиль и массу кольца, выберите металл, отделку и свой размер.'],
+							['Придайте ему форму', 'Настройте профиль и массу кольца, укажите свой размер.'],
 							['Передайте нам', 'Проверьте изделие и оставьте контакты. Мы свяжемся с вами перед изготовлением и оплатой.'],
 						].map(([title, description], index) => <div key={title} className="flex gap-5 border-b border-zinc-200 py-6 first:pt-0 last:border-0 last:pb-0 md:gap-8"><span className="pt-1 text-xs text-zinc-400">0{index + 1}</span><div><h3 className="font-display text-2xl font-semibold md:text-3xl">{title}</h3><p className="mt-2 max-w-md text-sm leading-relaxed text-zinc-500">{description}</p></div></div>)}
 					</div>
@@ -80,7 +80,7 @@ export default function Home() {
 				<div><p className="text-[10px] uppercase tracking-wider text-zinc-500">Горное кольцо</p><h2 className="font-display mt-4 text-4xl font-medium leading-tight md:text-5xl">Ландшафт —<br />часть самого кольца.</h2><p className="mt-5 max-w-sm text-sm leading-relaxed text-zinc-500">Рельеф продолжает металл обруча. Без отдельной вставки: поверхность выбранного места становится поверхностью изделия.</p></div>
 				<div className="flex flex-col justify-between">
 					<dl className="grid grid-cols-2 gap-x-8 gap-y-6 border-y border-zinc-200 py-6">
-						{[['Металлы', 'Серебро, золото, платина'], ['Поверхность', 'Полированная или матовая'], ['Размеры', 'От 15 до 23 мм'], ['Характер', 'От лёгкого до массивного']].map(([label, value]) => <div key={label}><dt className="text-[10px] uppercase tracking-wider text-zinc-400">{label}</dt><dd className="mt-2 text-sm leading-relaxed">{value}</dd></div>)}
+						{[['Материал', 'Серебро'], ['Изготовление', 'Отливка и ручная полировка'], ['Размеры', 'От 15 до 23 мм'], ['Характер', 'От лёгкого до массивного']].map(([label, value]) => <div key={label}><dt className="text-[10px] uppercase tracking-wider text-zinc-400">{label}</dt><dd className="mt-2 text-sm leading-relaxed">{value}</dd></div>)}
 					</dl>
 					<div className="mt-8 flex flex-wrap items-center justify-between gap-5"><div><p className="text-xs text-zinc-500">Серебро, базовая детализация</p><p className="font-display mt-1 text-3xl font-semibold">от {formatPrice(formFromPrice('mountain'))}</p></div><Link href="/create" className="inline-flex min-h-12 items-center gap-8 rounded-xl border border-zinc-900 px-5 text-sm">Собрать своё <span aria-hidden="true">→</span></Link></div>
 				</div>

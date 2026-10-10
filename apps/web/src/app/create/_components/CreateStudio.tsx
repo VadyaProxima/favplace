@@ -13,7 +13,6 @@ import { useCallback, useEffect, useState } from 'react'
 import { StudioLayout } from './StudioLayout'
 import type { FlyTarget } from './TerrainMap'
 import { StepForm } from './steps/StepForm'
-import { StepMaterial } from './steps/StepMaterial'
 import { StepOrder } from './steps/StepOrder'
 import { StepPlace } from './steps/StepPlace'
 import { StepRelief } from './steps/StepRelief'
@@ -103,7 +102,6 @@ export function CreateStudio() {
 			{step === 'place' && <StepPlace flyTarget={flyTarget} flyTo={flyTo} fetching={fetching} />}
 			{step === 'relief' && <StepRelief />}
 			{step === 'form' && <StepForm />}
-			{step === 'material' && <StepMaterial />}
 			{step === 'size' && <StepSize />}
 			{step === 'order' && <StepOrder />}
 		</StudioLayout>
