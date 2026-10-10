@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { MATERIALS, calcPrice, formatPrice } from '@favplace/shared'
 import { STEPS, useAppStore } from '@/store/useAppStore'
 import { FormRingViewer } from './FormRingViewer'
+import { CanvasMouseHint } from './CanvasMouseHint'
+import { ResizableWorkspace } from './ResizableWorkspace'
 import { StepProgress } from './StepProgress'
 import { StlExportButton } from './StlExportButton'
 import { STUDIO_SECTIONS, STUDIO_STEP_TITLES } from './studioSections'
@@ -68,14 +70,14 @@ export function StudioLayout({ children, isAdmin, fetching, shared, onShare }: {
 
 			<div className={styles.navigation}><StepProgress /></div>
 
-			<main className={styles.workspace}>
-				<section className={styles.result} aria-label="Предпросмотр и параметры кольца">
+			<ResizableWorkspace>
+				<section id="studio-result" className={styles.result} aria-label="Предпросмотр и параметры кольца">
 					<div className={styles.resultHeading}>
 						<div><p className={styles.eyebrow}>Ваше изделие</p><h1 className="font-display text-2xl font-semibold">Горное кольцо</h1></div>
 						<span className={styles.modelHint}>Вращайте, чтобы рассмотреть</span>
 					</div>
 					<section id="ring-preview" aria-label="3D-превью кольца" className={styles.preview} data-expanded={previewExpanded} data-preview-mode={previewOverride === null ? 'auto' : 'manual'}>
-						<FormRingViewer className="h-full w-full" />
+						<CanvasMouseHint><FormRingViewer className="h-full w-full" /></CanvasMouseHint>
 						{fetching && <div role="status" className={styles.loading}><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-zinc-900" />Уточняем высоты</div>}
 						<p className={styles.previewHint}>Вращайте кольцо пальцем · приближайте двумя</p>
 					</section>
@@ -86,7 +88,7 @@ export function StudioLayout({ children, isAdmin, fetching, shared, onShare }: {
 					</dl>
 				</section>
 
-				<section aria-label="Настройки кольца" className={styles.panel}>
+				<section id="studio-settings" aria-label="Настройки кольца" className={styles.panel}>
 					<div className={styles.panelHeading}>
 						<p className={styles.eyebrow}>0{sectionIndex + 1} / {section.title}</p>
 						{section.steps.length > 1 && <nav aria-label="Параметры раздела" className={styles.subNavigation}>
@@ -95,7 +97,7 @@ export function StudioLayout({ children, isAdmin, fetching, shared, onShare }: {
 					</div>
 					<div ref={contentRef} className={styles.content}>{children}</div>
 				</section>
-			</main>
+			</ResizableWorkspace>
 
 			<footer className={styles.footer}>
 				<div className={styles.footerInner}>

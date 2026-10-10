@@ -13,7 +13,20 @@
 [aria-current] > .chapterNumber { border-color: #18181b; background: #18181b; color: white; }
 .chapters strong { display: block; font-weight: 500; font-size: 14px; }
 .chapterDescription { display: block; margin-top: 3px; font-size: 11px; color: #71717a; }
-.workspace { display: grid; grid-template-columns: minmax(360px, .9fr) minmax(0, 1.1fr); grid-template-areas: 'editor result'; gap: 24px; flex: 1; min-height: 0; width: 100%; padding: 24px 32px; }
+.workspace { display: grid; grid-template-columns: clamp(360px, calc((100% - 24px) * var(--studio-split, .45)), calc(100% - 344px)) 24px minmax(0, 1fr); grid-template-areas: 'editor divider result'; flex: 1; min-height: 0; width: 100%; padding: 24px 32px; }
+.workspace[data-resizing='true'], .workspace[data-resizing='true'] * { cursor: col-resize !important; }
+.splitter { grid-area: divider; position: relative; display: flex; align-items: center; justify-content: center; min-height: 0; cursor: col-resize; touch-action: none; }
+.splitter::before { content: ''; position: absolute; top: 0; bottom: 0; width: 1px; background: #d4d4d8; transition: background .15s; }
+.splitter > span { z-index: 1; display: flex; align-items: center; justify-content: center; width: 14px; height: 40px; border: 1px solid #d4d4d8; border-radius: 999px; background: white; color: #71717a; }
+.splitter:hover::before, .splitter:focus-visible::before { background: #18181b; }
+.splitter:focus-visible { outline: none; }
+.splitter:focus-visible > span { outline: 2px solid #18181b; outline-offset: 2px; }
+.mouseHintArea { position: absolute; inset: 0; }
+.mouseHint { position: fixed; z-index: 100; width: 240px; padding: 12px 14px; border: 1px solid #e4e4e7; border-radius: 12px; background: rgba(255,255,255,.96); box-shadow: 0 8px 24px rgba(0,0,0,.08); color: #18181b; pointer-events: none; }
+.mouseHint > p { margin-bottom: 8px; font-size: 10px; color: #71717a; }
+.mouseHint dl > div { display: flex; justify-content: space-between; gap: 16px; margin-top: 4px; font-size: 11px; }
+.mouseHint dt { font-weight: 600; }
+.mouseHint dd { color: #71717a; }
 .panel { grid-area: editor; display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden; border: 1px solid #e4e4e7; border-radius: 16px; background: white; }
 .panelHeading { flex-shrink: 0; padding: 20px 24px 0; }
 .eyebrow { font-size: 10px; text-transform: uppercase; letter-spacing: .12em; color: #71717a; }
@@ -56,6 +69,7 @@
 	.chapterNumber { width: 24px; height: 24px; font-size: 9px; }
 	.chapters strong { font-size: 12px; }
 	.workspace { display: flex; flex-direction: column; gap: 10px; width: 100%; padding: 0 max(12px, env(safe-area-inset-right)) 10px max(12px, env(safe-area-inset-left)); }
+	.splitter { display: none; }
 	.result { flex-shrink: 0; }
 	.preview { flex: none; min-height: 0; height: clamp(144px, 27svh, 300px); border-radius: 12px; }
 	.preview[data-expanded='false'] { height: 0; visibility: hidden; border: 0; }
