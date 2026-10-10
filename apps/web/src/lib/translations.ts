@@ -1,5 +1,13 @@
 /** Russian is the source language; arbitrary user-entered place names stay untouched. */
 export const EN: Record<string, string> = {
+	'Имя — не больше 80 символов': 'Name must be no longer than 80 characters',
+	'Имя должно содержать минимум две буквы, без цифр и спецсимволов': 'Use at least two letters for your name, without numbers or special characters',
+	'Введите полный номер с кодом страны: от 8 до 15 цифр': 'Enter a complete phone number with its country code: 8 to 15 digits',
+	'Можно указать номер любой страны — начните с + и кода страны.': 'Numbers from any country are welcome. Start with + and the country code.',
+	'Промокод: только буквы, цифры, дефис и подчёркивание': 'Promo code: letters, numbers, hyphens and underscores only',
+	'Промокод: до 40 символов, только буквы, цифры, дефис и подчёркивание': 'Promo code: up to 40 characters, using letters, numbers, hyphens and underscores',
+	'Проверьте комментарий': 'Check your comment',
+	'Комментарий — не больше 2000 символов': 'Comment must be no longer than 2000 characters',
 	'В сцене нет геометрии для экспорта': 'The scene has no geometry to export',
 	'Не удалось измерить посадочное отверстие — масштаб неизвестен': 'Could not measure the ring opening. The scale is unknown.',
 	'Толщину замерить не удалось — вероятно, нормали вывернуты наружу.': 'Could not measure thickness. The normals may be facing outwards.',

@@ -7,11 +7,11 @@ import {
   RING_SIZES_MM,
   calcPrice,
   formatPrice,
+  normalizeCheckoutCustomer,
+  validateCheckoutCustomer,
   type CheckoutRequest,
   type CheckoutResponse,
 } from "@favplace/shared";
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 @Injectable()
 export class OrdersService {
@@ -38,15 +38,10 @@ export class OrdersService {
       throw new BadRequestException("Не выбрано место для рельефа");
     }
 
-    const name = (customer.name ?? "").trim();
-    const phone = (customer.phone ?? "").trim();
-    const email = (customer.email ?? "").trim();
-    const delivery = (customer.delivery ?? "").trim();
-
-    if (name.length < 2) throw new BadRequestException("Укажите имя");
-    if (phone.replace(/\D/g, "").length < 10) throw new BadRequestException("Укажите телефон");
-    if (!EMAIL_RE.test(email)) throw new BadRequestException("Проверьте email");
-    if (delivery.length < 4) throw new BadRequestException("Укажите пункт выдачи");
+    const errors = validateCheckoutCustomer(customer);
+    const firstError = Object.values(errors)[0];
+    if (firstError) throw new BadRequestException({ message: firstError, errors });
+    const { name, phone, email, delivery, comment, promo } = normalizeCheckoutCustomer(customer);
 
     // Цену берём только из собственного расчёта — присланной с клиента не верим.
     const { total } = calcPrice({
@@ -68,8 +63,8 @@ export class OrdersService {
         customerPhone: phone,
         customerEmail: email,
         delivery,
-        comment: (customer.comment ?? "").trim() || null,
-        promo: (customer.promo ?? "").trim() || null,
+        comment: comment || null,
+        promo: promo || null,
       },
     });
 

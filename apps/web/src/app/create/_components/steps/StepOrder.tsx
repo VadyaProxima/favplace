@@ -8,14 +8,20 @@ import {
 	RING_PRODUCTION_DEFAULTS,
 	RELIEF_DETAIL_LABELS,
 	calcPrice,
+	CHECKOUT_LIMITS,
+	normalizeCheckoutCustomer,
+	validateCheckoutCustomer,
+	type CheckoutErrors,
+	type CheckoutField,
 	type CheckoutRequest,
 	type CheckoutResponse,
 } from '@favplace/shared'
 import Link from 'next/link'
-import { useEffect, useRef, useState } from 'react'
+import { useId, useRef, useState, type FormEvent } from 'react'
 import { RING_FORM_OPTIONS } from '../FormRingViewer'
 import { buildShareUrl } from '../useConfigUrl'
 import { StepHeading, TextField } from '../ui'
+import { PhoneField } from '../PhoneField'
 
 const STAGES = [
 	{
@@ -35,32 +41,35 @@ const STAGES = [
 	},
 ]
 
-type Errors = Partial<Record<'name' | 'phone' | 'email' | 'delivery', string>>
-
 export function StepOrder() {
 	const t = useT()
 	const formatPrice = usePriceFormatter()
 	const fmtSize = useNumberFormatter()
 	const state = useAppStore()
 
-	const [name, setName] = useState('')
-	const [phone, setPhone] = useState('')
-	const [email, setEmail] = useState('')
+	const [values, setValues] = useState({ name: '', phone: '', email: '', comment: '', promo: '' })
+	const { name, phone, email, comment, promo } = values
 	const [delivery, setDelivery] = useState('')
-	const [comment, setComment] = useState('')
-	const [promo, setPromo] = useState('')
-
-	const [errors, setErrors] = useState<Errors>({})
+	const [touched, setTouched] = useState<Partial<Record<CheckoutField, boolean>>>({})
+	const errors: CheckoutErrors = validateCheckoutCustomer(values)
+	const errorFor = (field: CheckoutField) => touched[field] ? errors[field] : undefined
+	const update = (field: CheckoutField, value: string) => {
+		setValues(previous => ({ ...previous, [field]: value }))
+		setFailed(null)
+	}
+	const blur = (field: CheckoutField) => {
+		if (field === 'name' || field === 'email' || field === 'promo') {
+			const normalized = normalizeCheckoutCustomer(values)
+			update(field, normalized[field] ?? '')
+		}
+		setTouched(previous => ({ ...previous, [field]: true }))
+	}
 	const [submitting, setSubmitting] = useState(false)
 	const [failed, setFailed] = useState<string | null>(null)
 	const [done, setDone] = useState<CheckoutResponse | null>(null)
-	const orderRef = useRef<HTMLDivElement>(null)
-
-	useEffect(() => {
-		const firstInvalid = orderRef.current?.querySelector<HTMLInputElement>('input[aria-invalid="true"]')
-		firstInvalid?.focus({ preventScroll: true })
-		firstInvalid?.scrollIntoView({ block: 'center' })
-	}, [errors])
+	const orderRef = useRef<HTMLFormElement>(null)
+	const sendingRef = useRef(false)
+	const commentId = useId()
 
 	const formLabel =
 		RING_FORM_OPTIONS.find(o => o.id === state.ringForm)?.label ?? state.ringForm
@@ -73,20 +82,20 @@ export function StepOrder() {
 		twoTone: RING_PRODUCTION_DEFAULTS.twoTone,
 	})
 
-	const validate = (): Errors => {
-		const e: Errors = {}
-		if (name.trim().length < 2) e.name = 'Укажите имя'
-		if (phone.replace(/\D/g, '').length < 10) e.phone = 'Укажите телефон'
-		if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) e.email = 'Проверьте email'
-		if (delivery.trim().length < 4) e.delivery = 'Укажите город и пункт выдачи'
-		return e
-	}
+	const submit = async (event: FormEvent<HTMLFormElement>) => {
+		event.preventDefault()
+		if (sendingRef.current) return
+		setTouched({ name: true, phone: true, email: true, promo: true, comment: true })
+		if (Object.keys(errors).length > 0) {
+			requestAnimationFrame(() => {
+				const firstInvalid = orderRef.current?.querySelector<HTMLInputElement | HTMLTextAreaElement>('[aria-invalid="true"]')
+				firstInvalid?.focus({ preventScroll: true })
+				firstInvalid?.scrollIntoView({ block: 'center' })
+			})
+			return
+		}
 
-	const submit = async () => {
-		const e = validate()
-		setErrors(e)
-		if (Object.keys(e).length > 0) return
-
+		sendingRef.current = true
 		setSubmitting(true)
 		setFailed(null)
 		try {
@@ -112,14 +121,7 @@ export function StepOrder() {
 						: null,
 					shareUrl: buildShareUrl(),
 				},
-				customer: {
-					name: name.trim(),
-					phone: phone.trim(),
-					email: email.trim(),
-					delivery: delivery.trim(),
-					comment: comment.trim() || undefined,
-					promo: promo.trim() || undefined,
-				},
+				customer: normalizeCheckoutCustomer({ ...values, delivery }),
 			}
 
 			const res = await fetch('/api/orders/checkout', {
@@ -139,6 +141,7 @@ export function StepOrder() {
 					: t('Не удалось отправить заявку. Попробуйте ещё раз.'),
 			)
 		} finally {
+			sendingRef.current = false
 			setSubmitting(false)
 		}
 	}
@@ -184,7 +187,7 @@ export function StepOrder() {
 	}
 
 	return (
-		<div ref={orderRef} className="space-y-6">
+		<form ref={orderRef} noValidate onSubmit={submit} className="space-y-6">
 			<StepHeading title={t("Оформление заказа")} />
 
 			<div className="border border-zinc-200">
@@ -237,52 +240,70 @@ export function StepOrder() {
 					autoComplete="name"
 					required
 					value={name}
-					onChange={setName}
+					onChange={value => update('name', value)}
+					onBlur={() => blur('name')}
+					maxLength={CHECKOUT_LIMITS.name}
 					placeholder={t("Как к вам обращаться")}
-					error={errors.name}
+					error={errorFor('name')}
 				/>
-				<TextField
-					label={t("Телефон")}
-					required
-					type="tel"
-					autoComplete="tel"
+				<PhoneField
 					value={phone}
-					onChange={setPhone}
-					placeholder="+7 900 000-00-00"
-					error={errors.phone}
+					onChange={value => update('phone', value)}
+					onBlur={() => blur('phone')}
+					error={errorFor('phone')}
 				/>
+				<p className="!mt-1 text-xs text-zinc-400">{t('Можно указать номер любой страны — начните с + и кода страны.')}</p>
 				<TextField
 					label="Email"
 					required
 					type="email"
 					autoComplete="email"
 					value={email}
-					onChange={setEmail}
+					onChange={value => update('email', value)}
+					onBlur={() => blur('email')}
+					inputMode="email"
+					autoCapitalize="none"
+					spellCheck={false}
+					maxLength={CHECKOUT_LIMITS.email}
 					placeholder="you@example.com"
-					error={errors.email}
+					error={errorFor('email')}
 				/>
 				<TextField
 					label={t("Пункт выдачи СДЭК")}
-					required
 					value={delivery}
 					onChange={setDelivery}
 					placeholder={t("Город и адрес ближайшего пункта выдачи")}
-					error={errors.delivery}
 				/>
 
 				<label className="block">
 					<span className="text-[11px] uppercase tracking-wider text-zinc-400">
 						{t("Комментарий")}</span>
 					<textarea
+						id={commentId}
 						value={comment}
-						onChange={e => setComment(e.target.value)}
+						onChange={e => update('comment', e.target.value)}
+						onBlur={() => blur('comment')}
+						maxLength={CHECKOUT_LIMITS.comment}
+						aria-invalid={errorFor('comment') ? true : undefined}
+						aria-describedby={`${commentId}-count${errorFor('comment') ? ` ${commentId}-error` : ''}`}
 						rows={3}
 						placeholder={t("Пожелания к изделию, срокам, упаковке")}
 						className="mt-1.5 w-full resize-none border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 placeholder:text-zinc-300 focus:border-zinc-400 focus:outline-none lg:text-sm"
 					/>
+					<span id={`${commentId}-count`} className="mt-1 block text-right text-xs tabular-nums text-zinc-400">{comment.length} / {CHECKOUT_LIMITS.comment}</span>
+					{errorFor('comment') && <span id={`${commentId}-error`} className="mt-1 block text-xs text-red-500">{t(errors.comment!)}</span>}
 				</label>
 
-				<TextField label={t("Промокод")} value={promo} onChange={setPromo} />
+				<TextField
+					label={t('Промокод')}
+					value={promo}
+					onChange={value => update('promo', value.toUpperCase())}
+					onBlur={() => blur('promo')}
+					maxLength={CHECKOUT_LIMITS.promo}
+					autoCapitalize="characters"
+					spellCheck={false}
+					error={errorFor('promo')}
+				/>
 			</div>
 
 			{failed && (
@@ -292,8 +313,7 @@ export function StepOrder() {
 			)}
 
 			<button
-				type="button"
-				onClick={submit}
+				type="submit"
 				disabled={submitting}
 				className="w-full bg-zinc-900 py-3.5 text-sm font-medium tracking-wide text-white transition hover:bg-zinc-700 disabled:opacity-40"
 			>
@@ -316,7 +336,7 @@ export function StepOrder() {
 
 			<p className="pb-2 text-[11px] leading-relaxed text-zinc-400">
 				{t("Каждое изделие отливается вручную и по отдельности — готовая вещь может немного отличаться от цифрового превью.")}</p>
-		</div>
+		</form>
 	)
 }
 
