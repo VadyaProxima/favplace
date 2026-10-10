@@ -1,12 +1,13 @@
 'use client'
 
+import { useT, usePriceFormatter, useNumberFormatter } from '@/lib/preferences'
+
 import { useAppStore } from '@/store/useAppStore'
 import {
 	MATERIALS,
 	RING_PRODUCTION_DEFAULTS,
 	RELIEF_DETAIL_LABELS,
 	calcPrice,
-	formatPrice,
 	type CheckoutRequest,
 	type CheckoutResponse,
 } from '@favplace/shared'
@@ -34,11 +35,12 @@ const STAGES = [
 	},
 ]
 
-const fmtSize = (n: number) => n.toFixed(1).replace('.', ',').replace(',0', '')
-
 type Errors = Partial<Record<'name' | 'phone' | 'email' | 'delivery', string>>
 
 export function StepOrder() {
+	const t = useT()
+	const formatPrice = usePriceFormatter()
+	const fmtSize = useNumberFormatter()
 	const state = useAppStore()
 
 	const [name, setName] = useState('')
@@ -127,14 +129,14 @@ export function StepOrder() {
 			})
 			if (!res.ok) {
 				const detail = await res.json().catch(() => null)
-				throw new Error(detail?.message ?? `Сервер ответил ${res.status}`)
+				throw new Error(detail?.message ?? `${t("Сервер ответил")} ${res.status}`)
 			}
 			setDone((await res.json()) as CheckoutResponse)
 		} catch (err) {
 			setFailed(
 				err instanceof Error
 					? err.message
-					: 'Не удалось отправить заявку. Попробуйте ещё раз.',
+					: t('Не удалось отправить заявку. Попробуйте ещё раз.'),
 			)
 		} finally {
 			setSubmitting(false)
@@ -145,13 +147,13 @@ export function StepOrder() {
 		return (
 			<div className="space-y-6">
 				<StepHeading
-					title="Заявка принята"
-					hint={`Номер ${done.number}. Мы напишем на ${email} и позвоним, чтобы подтвердить заказ.`}
+					title={t("Заявка принята")}
+					hint={`${t("Номер")} ${done.number}. ${t("Мы напишем на")} ${email} ${t("и позвоним, чтобы подтвердить заказ.")}`}
 				/>
 				<div className="border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-600">
 					<p>
-						{formLabel} · ⌀ {fmtSize(state.ringSize)} мм ·{' '}
-						{MATERIALS[RING_PRODUCTION_DEFAULTS.material].label}
+						{t(formLabel)} · ⌀ {fmtSize(state.ringSize)} {t("мм ·")}{' '}
+						{t(MATERIALS[RING_PRODUCTION_DEFAULTS.material].label)}
 					</p>
 					<p className="mt-1 font-medium text-zinc-900">
 						{formatPrice(done.totalPrice)}
@@ -163,10 +165,10 @@ export function StepOrder() {
 							<span className="text-xs tabular-nums text-zinc-300">{s.n}</span>
 							<span>
 								<span className="block text-sm font-medium text-zinc-800">
-									{s.title}
+									{t(s.title)}
 								</span>
 								<span className="mt-0.5 block text-xs leading-relaxed text-zinc-400">
-									{s.text}
+									{t(s.text)}
 								</span>
 							</span>
 						</div>
@@ -176,36 +178,34 @@ export function StepOrder() {
 					href="/"
 					className="block border border-zinc-300 py-2.5 text-center text-sm font-medium text-zinc-800 transition hover:bg-zinc-50"
 				>
-					На главную
-				</Link>
+					{t("На главную")}</Link>
 			</div>
 		)
 	}
 
 	return (
 		<div ref={orderRef} className="space-y-6">
-			<StepHeading title="Оформление заказа" />
+			<StepHeading title={t("Оформление заказа")} />
 
 			<div className="border border-zinc-200">
 				<div className="border-b border-zinc-200 px-4 py-2.5 text-[11px] uppercase tracking-wider text-zinc-400">
-					Ваше кольцо
-				</div>
+					{t("Ваше кольцо")}</div>
 				<dl className="divide-y divide-zinc-100 text-sm">
-					<Row label="Форма" value={formLabel} />
+					<Row label={t("Форма")} value={t(formLabel)} />
 					<Row
-						label="Место"
+						label={t("Место")}
 						value={
 							state.location
-								? `${state.location.name} · ${state.location.coordinates.lat.toFixed(4)}° N, ${state.location.coordinates.lng.toFixed(4)}° E`
-								: 'не выбрано'
+								? `${t(state.location.name)} · ${state.location.coordinates.lat.toFixed(4)}° N, ${state.location.coordinates.lng.toFixed(4)}° E`
+								: t('не выбрано')
 						}
 					/>
-					<Row label="Металл" value={MATERIALS[RING_PRODUCTION_DEFAULTS.material].label} />
+					<Row label={t("Металл")} value={t(MATERIALS[RING_PRODUCTION_DEFAULTS.material].label)} />
 					<Row
-						label="Рельеф"
-						value={`${state.reliefHeight.toFixed(1).replace('.', ',')} мм · ${RELIEF_DETAIL_LABELS[state.reliefDetail].toLowerCase()} детализация`}
+						label={t("Рельеф")}
+						value={`${fmtSize(state.reliefHeight)} ${t("мм")} · ${t(RELIEF_DETAIL_LABELS[state.reliefDetail]).toLowerCase()} ${t("детализация")}`}
 					/>
-					<Row label="Размер" value={`⌀ ${fmtSize(state.ringSize)} мм`} />
+					<Row label={t("Размер")} value={`⌀ ${fmtSize(state.ringSize)} ${t("мм")}`} />
 					{/* Гравировка временно отключена.
 					{state.engraving.trim() && (
 						<Row label="Гравировка" value={`«${state.engraving.trim()}»`} />
@@ -217,11 +217,11 @@ export function StepOrder() {
 			<div className="border border-zinc-200">
 				<dl className="divide-y divide-zinc-100 text-sm">
 					{price.lines.map(line => (
-						<Row key={line.label} label={line.label} value={formatPrice(line.amount)} />
+						<Row key={t(line.label)} label={t(line.label)} value={formatPrice(line.amount)} />
 					))}
 				</dl>
 				<div className="flex items-baseline justify-between border-t border-zinc-200 px-4 py-3">
-					<span className="text-sm text-zinc-500">Итого</span>
+					<span className="text-sm text-zinc-500">{t("Итого")}</span>
 					<span className="font-display text-xl font-semibold text-zinc-900">
 						{formatPrice(price.total)}
 					</span>
@@ -229,22 +229,20 @@ export function StepOrder() {
 			</div>
 
 			<p className="text-xs leading-relaxed text-zinc-400">
-				Изготовление 7–14 дней, дальше доставка СДЭК до вашего пункта выдачи. Оплата
-				не списывается сейчас — мы свяжемся с вами, чтобы подтвердить заказ.
-			</p>
+				{t("Изготовление 7–14 дней, дальше доставка СДЭК до вашего пункта выдачи. Оплата не списывается сейчас — мы свяжемся с вами, чтобы подтвердить заказ.")}</p>
 
 			<div className="space-y-4">
 				<TextField
-					label="Имя"
+					label={t("Имя")}
 					autoComplete="name"
 					required
 					value={name}
 					onChange={setName}
-					placeholder="Как к вам обращаться"
+					placeholder={t("Как к вам обращаться")}
 					error={errors.name}
 				/>
 				<TextField
-					label="Телефон"
+					label={t("Телефон")}
 					required
 					type="tel"
 					autoComplete="tel"
@@ -264,33 +262,32 @@ export function StepOrder() {
 					error={errors.email}
 				/>
 				<TextField
-					label="Пункт выдачи СДЭК"
+					label={t("Пункт выдачи СДЭК")}
 					required
 					value={delivery}
 					onChange={setDelivery}
-					placeholder="Город и адрес ближайшего пункта выдачи"
+					placeholder={t("Город и адрес ближайшего пункта выдачи")}
 					error={errors.delivery}
 				/>
 
 				<label className="block">
 					<span className="text-[11px] uppercase tracking-wider text-zinc-400">
-						Комментарий
-					</span>
+						{t("Комментарий")}</span>
 					<textarea
 						value={comment}
 						onChange={e => setComment(e.target.value)}
 						rows={3}
-						placeholder="Пожелания к изделию, срокам, упаковке"
+						placeholder={t("Пожелания к изделию, срокам, упаковке")}
 						className="mt-1.5 w-full resize-none border border-zinc-200 bg-white px-3 py-2.5 text-base text-zinc-900 placeholder:text-zinc-300 focus:border-zinc-400 focus:outline-none lg:text-sm"
 					/>
 				</label>
 
-				<TextField label="Промокод" value={promo} onChange={setPromo} />
+				<TextField label={t("Промокод")} value={promo} onChange={setPromo} />
 			</div>
 
 			{failed && (
 				<p className="border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-600">
-					{failed}
+					{t(failed)}
 				</p>
 			)}
 
@@ -300,7 +297,7 @@ export function StepOrder() {
 				disabled={submitting}
 				className="w-full bg-zinc-900 py-3.5 text-sm font-medium tracking-wide text-white transition hover:bg-zinc-700 disabled:opacity-40"
 			>
-				{submitting ? 'Отправляем…' : `Отправить заявку · ${formatPrice(price.total)}`}
+				{submitting ? t('Отправляем…') : `${t("Отправить заявку")} · ${formatPrice(price.total)}`}
 			</button>
 
 			<div className="space-y-2 border-t border-zinc-200 pt-5">
@@ -308,9 +305,9 @@ export function StepOrder() {
 					<div key={s.n} className="flex gap-3 py-2">
 						<span className="text-xs tabular-nums text-zinc-300">{s.n}</span>
 						<span>
-							<span className="block text-sm font-medium text-zinc-800">{s.title}</span>
+							<span className="block text-sm font-medium text-zinc-800">{t(s.title)}</span>
 							<span className="mt-0.5 block text-xs leading-relaxed text-zinc-400">
-								{s.text}
+								{t(s.text)}
 							</span>
 						</span>
 					</div>
@@ -318,9 +315,7 @@ export function StepOrder() {
 			</div>
 
 			<p className="pb-2 text-[11px] leading-relaxed text-zinc-400">
-				Каждое изделие отливается вручную и по отдельности — готовая вещь может
-				немного отличаться от цифрового превью.
-			</p>
+				{t("Каждое изделие отливается вручную и по отдельности — готовая вещь может немного отличаться от цифрового превью.")}</p>
 		</div>
 	)
 }

@@ -1,6 +1,7 @@
 'use client'
 
 import type { ReactNode } from 'react'
+import { useT } from '@/lib/preferences'
 
 export function StepHeading({
 	title,
@@ -88,6 +89,7 @@ export function TextField({
 	maxLength?: number
 	autoComplete?: string
 }) {
+	const t = useT()
 	return (
 		<label className="block">
 			<span className="text-[11px] uppercase tracking-wider text-zinc-400">
@@ -109,7 +111,7 @@ export function TextField({
 						: 'border-zinc-200 focus:border-zinc-400'
 				}`}
 			/>
-			{error && <span className="mt-1 block text-xs text-red-500">{error}</span>}
+			{error && <span className="mt-1 block text-xs text-red-500">{t(error)}</span>}
 		</label>
 	)
 }

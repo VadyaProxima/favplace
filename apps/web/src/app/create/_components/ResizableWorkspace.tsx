@@ -1,5 +1,7 @@
 'use client'
 
+import { useT } from '@/lib/preferences'
+
 import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent, type ReactNode } from 'react'
 import styles from './CreateStudio.module.css'
 
@@ -8,6 +10,7 @@ const DEFAULT_SPLIT = 45
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value))
 
 export function ResizableWorkspace({ children }: { children: ReactNode }) {
+	const t = useT()
 	const workspace = useRef<HTMLElement>(null)
 	const [split, setSplit] = useState(DEFAULT_SPLIT)
 	const splitRef = useRef(DEFAULT_SPLIT)
@@ -92,7 +95,7 @@ export function ResizableWorkspace({ children }: { children: ReactNode }) {
 	return (
 		<main ref={workspace} className={styles.workspace} data-resizing={resizing} style={{ '--studio-split': split / 100 } as CSSProperties}>
 			{children}
-			<div role="separator" aria-label="Ширина панелей" aria-orientation="vertical" aria-controls="studio-settings studio-result" aria-valuemin={Math.round(limits.min)} aria-valuemax={Math.round(limits.max)} aria-valuenow={Math.round(split)} aria-valuetext={`Настройки ${Math.round(split)}%, превью ${100 - Math.round(split)}%`} tabIndex={0} className={styles.splitter}
+			<div role="separator" aria-label={t("Ширина панелей")} aria-orientation="vertical" aria-controls="studio-settings studio-result" aria-valuemin={Math.round(limits.min)} aria-valuemax={Math.round(limits.max)} aria-valuenow={Math.round(split)} aria-valuetext={`${t("Настройки")} ${Math.round(split)}%, ${t("превью")} ${100 - Math.round(split)}%`} tabIndex={0} className={styles.splitter}
 				onPointerDown={event => {
 					if (event.button !== 0 || !measure()) return
 					event.preventDefault()
@@ -103,7 +106,7 @@ export function ResizableWorkspace({ children }: { children: ReactNode }) {
 				}}
 				onPointerMove={move} onPointerUp={finish} onPointerCancel={finish} onLostPointerCapture={finish} onKeyDown={onKeyDown}
 				onDoubleClick={() => { const bounds = measure(); if (bounds) { updateSplit(DEFAULT_SPLIT, bounds.min, bounds.max); save() } }}
-				title="Перетащите для изменения ширины. Двойной щелчок — сброс.">
+				title={t("Перетащите для изменения ширины. Двойной щелчок — сброс.")}>
 				<span aria-hidden="true">⋮</span>
 			</div>
 		</main>

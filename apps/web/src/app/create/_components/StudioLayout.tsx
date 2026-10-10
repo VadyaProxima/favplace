@@ -1,9 +1,12 @@
 'use client'
 
+import { useT, usePriceFormatter, useNumberFormatter } from '@/lib/preferences'
+
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import Link from 'next/link'
+import { HeaderPreferences } from '../../_ui/HeaderPreferences'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import { RING_PRODUCTION_DEFAULTS, calcPrice, formatPrice } from '@favplace/shared'
+import { RING_PRODUCTION_DEFAULTS, calcPrice } from '@favplace/shared'
 import { STEPS, useAppStore } from '@/store/useAppStore'
 import { FormRingViewer } from './FormRingViewer'
 import { CanvasMouseHint } from './CanvasMouseHint'
@@ -13,8 +16,6 @@ import { StlExportButton } from './StlExportButton'
 import { STUDIO_SECTIONS, STUDIO_STEP_TITLES } from './studioSections'
 import styles from './CreateStudio.module.css'
 
-const fmtSize = (n: number) => n.toFixed(1).replace('.', ',').replace(',0', '')
-
 export function StudioLayout({ children, isAdmin, fetching, shared, onShare }: {
 	children: ReactNode
 	isAdmin: boolean
@@ -22,6 +23,9 @@ export function StudioLayout({ children, isAdmin, fetching, shared, onShare }: {
 	shared: boolean
 	onShare: () => void
 }) {
+	const t = useT()
+	const formatPrice = usePriceFormatter()
+	const fmtSize = useNumberFormatter()
 	const step = useAppStore(s => s.step)
 	const setStep = useAppStore(s => s.setStep)
 	const ringForm = useAppStore(s => s.ringForm)
@@ -54,16 +58,17 @@ export function StudioLayout({ children, isAdmin, fetching, shared, onShare }: {
 
 	return (
 		<div className={styles.studio}>
-			<header className={styles.header}>
-				<Link href="/" className="font-display text-2xl font-semibold tracking-tight">Favplace<span className="sr-only"> — на главную</span></Link>
-				<span className={styles.headerTitle}>Создать своё кольцо</span>
+			<header className={styles.header} data-admin={isAdmin}>
+				<Link href="/" className="font-display text-2xl font-semibold tracking-tight">Favplace<span className="sr-only"> {t("— на главную")}</span></Link>
+				<span className={styles.headerTitle}>{t("Создать своё кольцо")}</span>
 				<div className={styles.headerActions}>
+					<HeaderPreferences />
 					{isAdmin && <StlExportButton />}
 					<button type="button" onClick={() => setPreviewOverride(!previewExpanded)} aria-expanded={previewExpanded} aria-controls="ring-preview" className={styles.previewToggle}>
-						<span className="sr-only">{previewExpanded ? 'Скрыть' : 'Показать'} </span>3D {previewExpanded ? '↑' : '↓'}
+						<span className="sr-only">{previewExpanded ? t('Скрыть') : t('Показать')} </span>3D {previewExpanded ? '↑' : '↓'}
 					</button>
-					<button type="button" onClick={onShare} className={styles.share} aria-live="polite" aria-label={shared ? 'Ссылка скопирована' : 'Поделиться'}>
-						<span aria-hidden="true">{shared ? '✓' : '↗'}</span><span className={styles.shareLabel}>{shared ? 'Скопировано' : 'Поделиться'}</span>
+					<button type="button" onClick={onShare} className={styles.share} aria-live="polite" aria-label={shared ? t('Ссылка скопирована') : t('Поделиться')}>
+						<span aria-hidden="true">{shared ? '✓' : '↗'}</span><span className={styles.shareLabel}>{shared ? t('Скопировано') : t('Поделиться')}</span>
 					</button>
 				</div>
 			</header>
@@ -71,28 +76,28 @@ export function StudioLayout({ children, isAdmin, fetching, shared, onShare }: {
 			<div className={styles.navigation}><StepProgress /></div>
 
 			<ResizableWorkspace>
-				<section id="studio-result" className={styles.result} aria-label="Предпросмотр и параметры кольца">
+				<section id="studio-result" className={styles.result} aria-label={t("Предпросмотр и параметры кольца")}>
 					<div className={styles.resultHeading}>
-						<h1 className="font-display text-xl font-semibold">Горное кольцо</h1>
-						<span className={styles.modelHint}>Вращайте, чтобы рассмотреть</span>
+						<h1 className="font-display text-xl font-semibold">{t("Горное кольцо")}</h1>
+						<span className={styles.modelHint}>{t("Вращайте, чтобы рассмотреть")}</span>
 					</div>
-					<section id="ring-preview" aria-label="3D-превью кольца" className={styles.preview} data-expanded={previewExpanded} data-preview-mode={previewOverride === null ? 'auto' : 'manual'}>
+					<section id="ring-preview" aria-label={t("3D-превью кольца")} className={styles.preview} data-expanded={previewExpanded} data-preview-mode={previewOverride === null ? 'auto' : 'manual'}>
 						<CanvasMouseHint><FormRingViewer className="h-full w-full" /></CanvasMouseHint>
-						{fetching && <div role="status" className={styles.loading}><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-zinc-900" />Уточняем высоты</div>}
-						<p className={styles.previewHint}>Вращайте кольцо пальцем · приближайте двумя</p>
+						{fetching && <div role="status" className={styles.loading}><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-zinc-900" />{t("Уточняем высоты")}</div>}
+						<p className={styles.previewHint}>{t("Вращайте кольцо пальцем · приближайте двумя")}</p>
 					</section>
 					<dl className={styles.summary}>
-						<div className={styles.summaryPlace}><dt>Место</dt><dd>{location?.name ?? 'Выберите точку на карте'}</dd></div>
-						<div><dt>Изделие</dt><dd>Серебряное кольцо</dd></div>
-						<div><dt>Размер</dt><dd>⌀ {fmtSize(ringSize)} мм</dd></div>
+						<div className={styles.summaryPlace}><dt>{t("Место")}</dt><dd>{location ? t(location.name) : t('Выберите точку на карте')}</dd></div>
+						<div><dt>{t("Изделие")}</dt><dd>{t("Серебряное кольцо")}</dd></div>
+						<div><dt>{t("Размер")}</dt><dd>⌀ {fmtSize(ringSize)} {t("мм")}</dd></div>
 					</dl>
 				</section>
 
-				<section id="studio-settings" aria-label="Настройки кольца" className={styles.panel}>
+				<section id="studio-settings" aria-label={t("Настройки кольца")} className={styles.panel}>
 					<div className={styles.panelHeading}>
-						<p className={styles.eyebrow}>0{sectionIndex + 1} / {section.title}</p>
-						{section.steps.length > 1 && <nav aria-label="Параметры раздела" className={styles.subNavigation}>
-							{section.steps.map(id => <button key={id} type="button" onClick={() => setStep(id)} aria-current={id === step ? 'step' : undefined}>{STUDIO_STEP_TITLES[id]}</button>)}
+						<p className={styles.eyebrow}>0{sectionIndex + 1} / {t(section.title)}</p>
+						{section.steps.length > 1 && <nav aria-label={t("Параметры раздела")} className={styles.subNavigation}>
+							{section.steps.map(id => <button key={id} type="button" onClick={() => setStep(id)} aria-current={id === step ? 'step' : undefined}>{t(STUDIO_STEP_TITLES[id])}</button>)}
 						</nav>}
 					</div>
 					<div ref={contentRef} className={styles.content}>
@@ -110,11 +115,11 @@ export function StudioLayout({ children, isAdmin, fetching, shared, onShare }: {
 
 			<footer className={styles.footer}>
 				<div className={styles.footerInner}>
-					<div className={styles.price}><span>Стоимость кольца</span><strong className="font-display">{formatPrice(price.total)}</strong></div>
+					<div className={styles.price}><span>{t("Стоимость кольца")}</span><strong className="font-display">{formatPrice(price.total)}</strong></div>
 					<div className={styles.footerControls}>
-						{stepIndex > 0 && <button type="button" onClick={() => setStep(STEPS[stepIndex - 1])} aria-label="Предыдущий шаг" className={styles.back}><span aria-hidden="true">←</span><span className={styles.backLabel}>Назад</span></button>}
-						{!isLast && <button type="button" onClick={() => setStep(next)} className={styles.next}>{next === 'order' ? 'Проверить и оформить' : STUDIO_STEP_TITLES[next]} <span aria-hidden="true">→</span></button>}
-						{isLast && <span className={styles.orderHint}>Без оплаты сейчас</span>}
+						{stepIndex > 0 && <button type="button" onClick={() => setStep(STEPS[stepIndex - 1])} aria-label={t("Предыдущий шаг")} className={styles.back}><span aria-hidden="true">←</span><span className={styles.backLabel}>{t("Назад")}</span></button>}
+						{!isLast && <button type="button" onClick={() => setStep(next)} className={styles.next}>{next === 'order' ? t('Проверить и оформить') : t(STUDIO_STEP_TITLES[next])} <span aria-hidden="true">→</span></button>}
+						{isLast && <span className={styles.orderHint}>{t("Без оплаты сейчас")}</span>}
 					</div>
 				</div>
 			</footer>

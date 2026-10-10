@@ -1,5 +1,7 @@
 'use client'
 
+import { useT } from '@/lib/preferences'
+
 import { useAdminSession } from '@/lib/adminSession'
 import {
 	createTerrainRequestPlan,
@@ -20,6 +22,7 @@ import { StepSize } from './steps/StepSize'
 import { buildShareUrl, useConfigUrl } from './useConfigUrl'
 
 export function CreateStudio() {
+	const t = useT()
 	// Экспорт STL — служебная операция, покупателю она не нужна.
 	// Вход: /admin. Гейт косметический: сама сборка файла живёт в браузере.
 	const { isAdmin } = useAdminSession()
@@ -88,7 +91,7 @@ export function CreateStudio() {
 			setShared(true)
 			setTimeout(() => setShared(false), 2000)
 		} catch {
-			window.prompt('Скопируйте ссылку на конфигурацию:', url)
+			window.prompt(t('Скопируйте ссылку на конфигурацию:'), url)
 		}
 	}
 
@@ -96,8 +99,7 @@ export function CreateStudio() {
 		<StudioLayout isAdmin={Boolean(isAdmin)} fetching={fetching} shared={shared} onShare={share}>
 			{terrainError && step === 'place' && (
 				<p role="alert" className="mb-4 border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
-					Не удалось загрузить высоты. Выберите место ещё раз.
-				</p>
+					{t("Не удалось загрузить высоты. Выберите место ещё раз.")}</p>
 			)}
 			{step === 'place' && <StepPlace flyTarget={flyTarget} flyTo={flyTo} fetching={fetching} />}
 			{step === 'relief' && <StepRelief />}

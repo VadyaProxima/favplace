@@ -1,5 +1,7 @@
 'use client'
 
+import { useT } from '@/lib/preferences'
+
 import { useEffect, useId, useRef, useState, type PointerEvent, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import styles from './CreateStudio.module.css'
@@ -7,6 +9,7 @@ import styles from './CreateStudio.module.css'
 type Point = { x: number; y: number }
 
 export function CanvasMouseHint({ children }: { children: ReactNode }) {
+	const t = useT()
 	const id = useId()
 	const seen = useRef(false)
 	const visible = useRef(false)
@@ -58,12 +61,12 @@ export function CanvasMouseHint({ children }: { children: ReactNode }) {
 					const rect = event.currentTarget.getBoundingClientRect()
 					show({ x: rect.right - 260, y: rect.bottom })
 				}}
-				onBlur={hide}>Управление <span aria-hidden="true">?</span></button>
+				onBlur={hide}>{t("Управление ")}<span aria-hidden="true">?</span></button>
 		</div>
 		{point && createPortal(<div id={id} role="tooltip" className={styles.mouseHint}
 			style={{ left: Math.max(8, Math.min(point.x + 18, window.innerWidth - 248)), top: Math.max(8, Math.min(point.y + 18, window.innerHeight - 140)) }}>
-			<p>Управление 3D</p>
-			<dl><div><dt>ЛКМ</dt><dd>Осмотр</dd></div><div><dt>СКМ / ПКМ</dt><dd>Перемещение</dd></div><div><dt>Колесо</dt><dd>Масштаб</dd></div></dl>
+			<p>{t("Управление 3D")}</p>
+			<dl><div><dt>{t("ЛКМ")}</dt><dd>{t("Осмотр")}</dd></div><div><dt>{t("СКМ / ПКМ")}</dt><dd>{t("Перемещение")}</dd></div><div><dt>{t("Колесо")}</dt><dd>{t("Масштаб")}</dd></div></dl>
 		</div>, document.body)}
 	</>
 }

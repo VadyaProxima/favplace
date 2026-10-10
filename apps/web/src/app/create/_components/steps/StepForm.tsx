@@ -1,5 +1,7 @@
 'use client'
 
+import { useT } from '@/lib/preferences'
+
 import { useAppStore } from '@/store/useAppStore'
 import { ChoiceButton, FieldLabel, Hint, StepHeading } from '../ui'
 
@@ -23,6 +25,7 @@ const SHOULDERS = [
 
 /** Параметры единственной доступной модели — горного кольца. */
 export function StepForm() {
+	const t = useT()
 	const ringForm = useAppStore(s => s.ringForm)
 	const ringWeight = useAppStore(s => s.ringWeight)
 	const setRingWeight = useAppStore(s => s.setRingWeight)
@@ -34,14 +37,14 @@ export function StepForm() {
 	return (
 		<div>
 			<StepHeading
-				title="Характер кольца"
-				hint="Настройте массу, профиль и посадку горного кольца."
+				title={t("Характер кольца")}
+				hint={t("Настройте массу, профиль и посадку горного кольца.")}
 			/>
 
 			{ringForm === 'mountain' && (
 				<div className="space-y-6">
 					<div>
-						<FieldLabel>Масса</FieldLabel>
+						<FieldLabel>{t("Масса")}</FieldLabel>
 						<div className="mt-2 grid grid-cols-3 gap-2">
 							{WEIGHTS.map(([value, label]) => (
 								<ChoiceButton
@@ -49,15 +52,15 @@ export function StepForm() {
 									selected={ringWeight === value}
 									onClick={() => setRingWeight(value)}
 								>
-									{label}
+									{t(label)}
 								</ChoiceButton>
 							))}
 						</div>
-						<Hint>Ширина шинки и размер площадки под рельеф.</Hint>
+						<Hint>{t("Ширина шинки и размер площадки под рельеф.")}</Hint>
 					</div>
 
 					<div>
-						<FieldLabel>Профиль шинки</FieldLabel>
+						<FieldLabel>{t("Профиль шинки")}</FieldLabel>
 						<div className="mt-2 grid grid-cols-3 gap-2">
 							{PROFILES.map(([value, label]) => (
 								<ChoiceButton
@@ -65,14 +68,14 @@ export function StepForm() {
 									selected={bandProfile === value}
 									onClick={() => setBandProfile(value)}
 								>
-									{label}
+									{t(label)}
 								</ChoiceButton>
 							))}
 						</div>
 					</div>
 
 					<div>
-						<FieldLabel>Плечи</FieldLabel>
+						<FieldLabel>{t("Плечи")}</FieldLabel>
 						<div className="mt-2 grid grid-cols-3 gap-2">
 							{SHOULDERS.map(([value, label]) => (
 								<ChoiceButton
@@ -80,11 +83,11 @@ export function StepForm() {
 									selected={shoulderStyle === value}
 									onClick={() => setShoulderStyle(value)}
 								>
-									{label}
+									{t(label)}
 								</ChoiceButton>
 							))}
 						</div>
-						<Hint>Как площадка переходит в шинку по бокам.</Hint>
+						<Hint>{t("Как площадка переходит в шинку по бокам.")}</Hint>
 					</div>
 				</div>
 			)}

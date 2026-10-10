@@ -1,5 +1,7 @@
 'use client'
 
+import { useT, usePreferences, translate } from '@/lib/preferences'
+
 import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useEffect, useRef, useState } from 'react'
@@ -139,7 +141,7 @@ function buildStyle(type: MapStyleType) {
 }
 
 function formatSide(meters: number) {
-	return meters < 1000 ? `${Math.round(meters)} м` : `${(meters / 1000).toFixed(1)} км`
+	return meters < 1000 ? `${Math.round(meters)} ${translate("м", usePreferences.getState().language)}` : `${(meters / 1000).toFixed(1)} ${translate("км", usePreferences.getState().language)}`
 }
 
 /**
@@ -156,6 +158,8 @@ export function TerrainMap({
 	bearing = 0,
 	onInteractingChange,
 }: TerrainMapProps) {
+	const t = useT()
+	const language = usePreferences(s => s.language)
 	const containerRef = useRef<HTMLDivElement>(null)
 	const mapRef = useRef<maplibregl.Map | null>(null)
 	const frameElRef = useRef<HTMLDivElement>(null)
@@ -307,9 +311,9 @@ export function TerrainMap({
 			attributionControl: false,
 			cooperativeGestures: window.matchMedia('(pointer: coarse)').matches,
 			locale: {
-				'NavigationControl.ZoomIn': 'Приблизить карту',
-				'NavigationControl.ZoomOut': 'Отдалить карту',
-				'CooperativeGesturesHandler.MobileHelpText': 'Двигайте карту двумя пальцами',
+				'NavigationControl.ZoomIn': t('Приблизить карту'),
+				'NavigationControl.ZoomOut': t('Отдалить карту'),
+				'CooperativeGesturesHandler.MobileHelpText': t('Двигайте карту двумя пальцами'),
 			},
 		})
 		mapRef.current = map
@@ -415,6 +419,21 @@ export function TerrainMap({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [frameShape])
 
+	// MapLibre owns these controls; update its labels without recreating the map.
+	useEffect(() => {
+		const container = containerRef.current
+		if (!container) return
+		for (const [selector, label] of [['.maplibregl-ctrl-zoom-in', 'Приблизить карту'], ['.maplibregl-ctrl-zoom-out', 'Отдалить карту']]) {
+			const button = container.querySelector<HTMLButtonElement>(selector)
+			button?.setAttribute('aria-label', t(label))
+			button?.setAttribute('title', t(label))
+		}
+		const help = container.querySelector('.maplibregl-cooperative-gesture-screen')
+		if (help) help.textContent = t('Двигайте карту двумя пальцами')
+		applyFrameSize()
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [language, t])
+
 	// Рамку крутим, подпись — обратно, чтобы она осталась читаемой.
 	useEffect(() => {
 		if (frameElRef.current) frameElRef.current.style.rotate = `${bearing}deg`
@@ -427,23 +446,23 @@ export function TerrainMap({
 
 			<div
 				role="group"
-				aria-label="Вид карты"
+				aria-label={t("Вид карты")}
 				className="absolute left-2 right-14 top-2 z-10 grid grid-cols-2 overflow-hidden rounded-md border border-black/10 bg-white/95 shadow-sm backdrop-blur lg:left-3 lg:right-auto lg:top-3 lg:flex lg:max-w-[calc(100%-3.75rem)]"
 			>
-				{(Object.keys(STYLE_TILES) as MapStyleType[]).map(t => (
+				{(Object.keys(STYLE_TILES) as MapStyleType[]).map(styleId => (
 					<button
-						key={t}
+						key={styleId}
 						type="button"
-						title={STYLE_TILES[t].description}
-						aria-pressed={styleType === t}
-						onClick={() => setStyleType(t)}
+						title={t(STYLE_TILES[styleId].description)}
+						aria-pressed={styleType === styleId}
+						onClick={() => setStyleType(styleId)}
 						className={`min-h-11 px-2 py-1.5 text-xs font-medium transition lg:min-h-0 lg:px-2.5 lg:text-[11px] ${
-							styleType === t
+							styleType === styleId
 								? 'bg-zinc-900 text-white'
 								: 'text-zinc-600 hover:bg-zinc-100'
 						}`}
 					>
-						{STYLE_TILES[t].name}
+						{t(STYLE_TILES[styleId].name)}
 					</button>
 				))}
 			</div>
@@ -479,12 +498,12 @@ export function TerrainMap({
 			>
 				<div
 					ref={borderElRef}
-					className="absolute inset-0 border-2 border-white/90 shadow-[0_0_0_1px_rgba(0,0,0,0.45)]"
+					className="absolute inset-0 border-2 border-[#ffffff]/90 shadow-[0_0_0_1px_rgba(0,0,0,0.45)]"
 					style={{ borderRadius: frameRadiusCss(frameShape) }}
 				/>
 
-				<div className="absolute left-1/2 top-1/2 h-3 w-px -translate-x-1/2 -translate-y-1/2 bg-white/70" />
-				<div className="absolute left-1/2 top-1/2 h-px w-3 -translate-x-1/2 -translate-y-1/2 bg-white/70" />
+				<div className="absolute left-1/2 top-1/2 h-3 w-px -translate-x-1/2 -translate-y-1/2 bg-[#ffffff]/70" />
+				<div className="absolute left-1/2 top-1/2 h-px w-3 -translate-x-1/2 -translate-y-1/2 bg-[#ffffff]/70" />
 
 				{/*
 					Содержимое пишет applyFrameSize напрямую в textContent.

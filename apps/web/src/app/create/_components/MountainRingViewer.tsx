@@ -5,6 +5,7 @@ import { buildAcceptedMountainRing } from '@/lib/acceptedMountainRing'
 import { useAcceptedRelief } from '@/lib/useAcceptedRelief'
 import { terrainFrameContains } from '@/lib/liveTerrainAnalysis'
 import { useAppStore } from '@/store/useAppStore'
+import { CANVAS_BACKGROUNDS, usePreferences, useT } from '@/lib/preferences'
 import { MATERIALS } from '@favplace/shared'
 import { ContactShadows } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
@@ -183,9 +184,10 @@ function MountainRing({onStatus}:{onStatus:(status:string)=>void}) {
 }
 
 function Scene({ cameraTarget,onStatus }: { cameraTarget: [number, number, number],onStatus:(status:string)=>void }) {
+	const theme = usePreferences(s => s.theme)
 	return (
 		<>
-			<color attach="background" args={['#f4f4f5']} />
+			<color attach="background" args={[CANVAS_BACKGROUNDS[theme]]} />
 			<JewelleryLighting />
 			<MountainRing onStatus={onStatus}/>
 			<RingOrbitControls
@@ -208,6 +210,8 @@ export function MountainRingViewer({
 	cameraPosition?: [number, number, number]
 	cameraTarget?: [number, number, number]
 }) {
+	const t = useT()
+	const theme = usePreferences(s => s.theme)
 	const [status,setStatus]=useState('')
 	const hasRelief=useAppStore(s=>Boolean(s.terrainFrame))
 	const framedCameraPosition = cameraPosition.map(
@@ -222,6 +226,7 @@ export function MountainRingViewer({
 			data-testid="mountain-ring-viewer"
 			data-model-source="accepted-parametric-v1"
 			data-relief-enabled={String(hasRelief)}
+			data-canvas-background={CANVAS_BACKGROUNDS[theme]}
 		>
 			<Canvas
 				frameloop="demand"
@@ -231,11 +236,11 @@ export function MountainRingViewer({
 					...JEWELLERY_GL,
 					toneMappingExposure: JEWELLERY_ENV.toneMappingExposure,
 				}}
-				onCreated={({ gl }) => gl.setClearColor('#f4f4f5', 1)}
+				onCreated={({ gl }) => gl.setClearColor(CANVAS_BACKGROUNDS[theme], 1)}
 			>
 				<Scene cameraTarget={cameraTarget} onStatus={setStatus}/>
 			</Canvas>
-			{status&&<div role="status" className="pointer-events-none absolute bottom-5 left-5 rounded bg-white/90 px-3 py-2 text-xs text-zinc-600">{status}</div>}
+			{status&&<div role="status" className="pointer-events-none absolute bottom-5 left-5 rounded bg-white/90 px-3 py-2 text-xs text-zinc-600">{t(status)}</div>}
 		</div>
 	)
 }
