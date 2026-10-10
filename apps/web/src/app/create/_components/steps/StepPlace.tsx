@@ -182,8 +182,8 @@ export function StepPlace({
 	return (
 		<div>
 			<StepHeading
-				title="Место"
-				hint="Двигайте и масштабируйте карту — в рамку попадает ровно та площадь, что уйдёт в рельеф. Кольцо пересчитывается само."
+				title="Найдите своё место"
+				hint="Двигайте карту: участок в рамке станет рельефом вашего кольца."
 			/>
 
 			<div className="space-y-3">
@@ -224,6 +224,22 @@ export function StepPlace({
 					</ul>
 				)}
 
+
+				<p className="hidden text-xs leading-relaxed text-zinc-500 [@media(pointer:coarse)]:block">
+					Двигайте карту двумя пальцами. Одним пальцем прокручивайте настройки.
+				</p>
+				<div className="relative h-72 overflow-hidden rounded-lg border border-zinc-200 bg-zinc-100 lg:h-[360px]">
+					<TerrainMap
+						target={flyTarget}
+						radius={radius}
+						frameShape={ringFormToFrameShape(ringForm)}
+						bearing={terrainBearing}
+						onCenterChange={(lng, lat) => setCoordinates(lat, lng)}
+						onRadiusChange={setRadius}
+						onInteractingChange={setInteracting}
+					/>
+				</div>
+
 				<div className="flex flex-wrap gap-1.5">
 					{PRESETS.map(p => (
 						<button
@@ -237,20 +253,6 @@ export function StepPlace({
 					))}
 				</div>
 
-				<p className="hidden text-xs leading-relaxed text-zinc-500 [@media(pointer:coarse)]:block">
-					Двигайте карту двумя пальцами. Одним пальцем прокручивайте настройки.
-				</p>
-				<div className="relative h-72 overflow-hidden border border-zinc-200 bg-zinc-100 lg:h-64">
-					<TerrainMap
-						target={flyTarget}
-						radius={radius}
-						frameShape={ringFormToFrameShape(ringForm)}
-						bearing={terrainBearing}
-						onCenterChange={(lng, lat) => setCoordinates(lat, lng)}
-						onRadiusChange={setRadius}
-						onInteractingChange={setInteracting}
-					/>
-				</div>
 
 				{ringForm === 'duo' && (
 					<div className="space-y-3 border-t border-zinc-200 pt-5">

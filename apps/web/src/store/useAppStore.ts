@@ -26,9 +26,9 @@ export type { BandProfile, RingWeight, ShoulderStyle };
 
 /** Порядок шагов конструктора. Он же порядок в прогресс-баре. */
 export const STEPS = [
-  "form",
   "place",
   "relief",
+  "form",
   "material",
   "size",
   "order",
@@ -162,7 +162,7 @@ const reliefScaleFromMm = (millimetres: number) =>
 const DEFAULT_RELIEF_SCALE = reliefScaleFromMm(reliefMillimeters(0.5) * 1.5);
 
 export const useAppStore = create<AppState>((set) => ({
-  step: "form",
+  step: "place",
   setStep: (step) => set({ step }),
   nextStep: () =>
     set((s) => ({ step: STEPS[Math.min(stepIndex(s.step) + 1, STEPS.length - 1)] })),

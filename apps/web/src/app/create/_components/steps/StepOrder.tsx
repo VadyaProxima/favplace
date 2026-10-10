@@ -39,7 +39,6 @@ type Errors = Partial<Record<'name' | 'phone' | 'email' | 'delivery', string>>
 
 export function StepOrder() {
 	const state = useAppStore()
-	const prevStep = useAppStore(s => s.prevStep)
 
 	const [name, setName] = useState('')
 	const [phone, setPhone] = useState('')
@@ -184,14 +183,6 @@ export function StepOrder() {
 
 	return (
 		<div ref={orderRef} className="space-y-6">
-			<button
-				type="button"
-				onClick={prevStep}
-				className="text-[11px] uppercase tracking-wider text-zinc-400 transition hover:text-zinc-700"
-			>
-				← Назад к дизайну
-			</button>
-
 			<StepHeading title="Оформление заказа" />
 
 			<div className="border border-zinc-200">

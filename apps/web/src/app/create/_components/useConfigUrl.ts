@@ -142,6 +142,7 @@ function readConfigFromUrl(search: string) {
 
 	const step = p.get('s')
 	if (step && (STEPS as readonly string[]).includes(step)) s.setStep(step as Step)
+	else s.setStep(STEPS[0])
 
 	return { lat, lng, hasLocation }
 }
