@@ -20,6 +20,7 @@ jobs:
     env:
       DEPLOY_HOST: 178.212.15.39
       DEPLOY_DOMAIN: mestometal.ru
+      DEPLOY_FALLBACK_DOMAIN: favplace.178.212.15.39.sslip.io
     steps:
       - name: Check out the version being deployed
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
@@ -51,8 +52,12 @@ jobs:
 
       - name: Check the public site
         run: |
-          curl --fail --silent --show-error --retry 5 --retry-all-errors \
-            --retry-delay 3 --max-time 30 "https://$DEPLOY_DOMAIN/api/admin/session"
+          if ! curl --fail --silent --show-error --location --retry 5 --retry-all-errors \
+            --retry-delay 3 --max-time 30 "https://$DEPLOY_DOMAIN/api/admin/session"; then
+            echo 'Checking the existing address while the custom domain is being connected.'
+            curl --fail --silent --show-error --location --retry 5 --retry-all-errors \
+              --retry-delay 3 --max-time 30 "https://$DEPLOY_FALLBACK_DOMAIN/api/admin/session"
+          fi
 
       - name: Remove the local SSH key
         if: always()
