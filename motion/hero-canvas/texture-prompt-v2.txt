@@ -1,0 +1,10 @@
+Tool: built-in image_gen (imagegen skill).
+Edit reference: motion/hero-canvas/beshtau-mountain.png — frontal DEM render
+before photographic texture replacement, camera target Y=11.8, distance32,
+aspect670:549, FOV32, terrain scale(2.25,2.8,2.25), pivotY10.25.
+Output: apps/web/public/hero/beshtau/forest-v2.webp
+Source PNG: motion/hero-canvas/beshtau-photo-v2.png
+Transparent background: true.
+
+Final prompt:
+Use case: precise-object-edit / photorealistic-natural. Edit target: the provided frontal terrain render, a DEM-based view of Beshtau mountain in Russia, for a premium jewellery hero. Replace the crude pale-green procedural material with a convincing photographic mountain: dense dark olive and deep green deciduous woodland with individually readable tree crowns, mottled mature forest, small exposed weathered grey-brown volcanic rock faces and rocky ridgelines near the highest peak. Natural soft directional daylight from upper left, strong readable but soft relief, detailed shadows, rich realistic texture, premium outdoor macro-landscape photography. CRITICAL: exactly preserve the existing overall silhouette, all peak positions, their height/shape, ridge contours, frontal camera and composition; no extra peaks, no snow, no dramatic Alps, no buildings. The lower foreground should read as continuous wooded mountain slopes, not a cut block or vertical artificial wall. Match the source framing and aspect ratio 670:549. The image will be projected onto the same geometry, so preserving topographic alignment matters more than artistic invention. Remove the flat off-white background and return the mountain as a clean cutout on genuinely transparent background. No text, no logos, no border.

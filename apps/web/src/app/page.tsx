@@ -5,33 +5,13 @@ import { useT, usePriceFormatter } from '@/lib/preferences'
 import Link from 'next/link'
 import { HeaderPreferences } from './_ui/HeaderPreferences'
 import { formFromPrice } from '@favplace/shared'
+import { HeroTerrain } from './_components/HeroTerrain'
 
 const PLACES = [
 	{ name: 'Эльбрус', lat: 43.3499, lng: 42.4453 },
 	{ name: 'Фудзи', lat: 35.3628, lng: 138.7307 },
 	{ name: 'Белуха', lat: 49.8073, lng: 86.5895 },
 ]
-
-function Contours() {
-	// A decorative drawing, independent of any DEM or another site's artwork.
-	const paths = Array.from({ length: 19 }, (_, level) => {
-		const radius = 24 + level * 11
-		return Array.from({ length: 121 }, (_, point) => {
-			const a = point / 120 * Math.PI * 2
-			const r = radius * (1 + .09 * Math.sin(a * 3 + level * .08) + .05 * Math.cos(a * 5))
-			const x = 310 + Math.cos(a) * r + Math.sin(a) * r * .22
-			const y = 184 + Math.sin(a) * r * .64
-			return `${point === 0 ? 'M' : 'L'}${x.toFixed(2)},${y.toFixed(2)}`
-		}).join(' ') + ' Z'
-	})
-	return <svg viewBox="0 0 620 370" fill="none" className="h-full w-full" aria-hidden="true">
-		<defs><pattern id="place-grid" width="62" height="62" patternUnits="userSpaceOnUse"><path d="M62 0H0V62" stroke="var(--line)" strokeWidth=".6" /></pattern></defs>
-		<rect width="620" height="370" fill="url(#place-grid)" />
-		{paths.map((d, i) => <path key={i} d={d} stroke={i % 4 === 0 ? 'var(--muted)' : 'var(--line-strong)'} strokeWidth={i % 4 === 0 ? 1.2 : .8} />)}
-		<path d="M310 171V197M297 184H323" stroke="var(--ink)" />
-		<circle cx="310" cy="184" r="4" fill="var(--ink)" />
-	</svg>
-}
 
 export default function Home() {
 	const t = useT()
@@ -57,16 +37,11 @@ export default function Home() {
 					<p className="mt-4 text-xs text-zinc-400">{t("Вы выбираете место и характер кольца. Мы создаём его в металле.")}</p>
 				</div>
 
-				<div className="overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-50">
-					<div className="flex items-center justify-between border-b border-zinc-200 px-5 py-4">
-						<p className="text-xs font-medium">{t("Всё начинается с точки на карте")}</p><span className="text-xs text-zinc-400" aria-hidden="true">↗</span>
-					</div>
-					<div className="aspect-[620/370]"><Contours /></div>
-					<div className="border-t border-zinc-200 bg-white px-5 py-4">
-						<p className="mb-2 text-[10px] uppercase tracking-wider text-zinc-400">{t("Попробуйте знакомый ландшафт")}</p>
-						{PLACES.map((place, index) => <Link key={place.name} href={`/create?s=place&lat=${place.lat}&lng=${place.lng}&p=${encodeURIComponent(place.name)}`} className="group flex min-h-14 items-center gap-4 border-b border-zinc-100 py-3 last:border-0">
-							<span className="text-[10px] tabular-nums text-zinc-400">0{index + 1}</span><span className="text-sm font-medium">{t(place.name)}</span><span className="ml-auto hidden text-[10px] tabular-nums text-zinc-400 sm:block">{place.lat.toFixed(2)}° · {place.lng.toFixed(2)}°</span><span className="text-zinc-400 transition group-hover:translate-x-1 group-hover:text-zinc-900" aria-hidden="true">→</span>
-						</Link>)}
+				<div>
+					<HeroTerrain />
+					<div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 px-1 text-[11px] text-zinc-500">
+						<span className="text-zinc-400">{t("Или начните с другого места")}</span>
+						{PLACES.map(place => <Link key={place.name} href={`/create?s=place&lat=${place.lat}&lng=${place.lng}&p=${encodeURIComponent(place.name)}`} className="min-h-8 content-center transition hover:text-zinc-900">{t(place.name)} ↗</Link>)}
 					</div>
 				</div>
 			</section>
@@ -96,7 +71,7 @@ export default function Home() {
 
 			<footer className="border-t border-zinc-200 px-5 py-8 md:px-8">
 				<div className="w-full">
-					<div className="flex flex-wrap items-start justify-between gap-8"><div><p className="font-display text-4xl font-semibold tracking-tight">Favplace</p><p className="mt-2 text-xs text-zinc-500">{t("Ваше место. Ваша форма.")}</p></div><div className="flex flex-col gap-3 text-sm text-zinc-600 sm:flex-row sm:gap-8"><a href="mailto:hello@favplace.ru" className="hover:text-zinc-900">hello@favplace.ru</a><a href="https://t.me/favplace" target="_blank" rel="noreferrer" className="hover:text-zinc-900">Telegram ↗</a><Link href="/create" className="hover:text-zinc-900">{t("Мастерская ↗")}</Link></div></div>
+					<div className="flex flex-wrap items-start justify-between gap-8"><div><p className="font-display text-4xl font-semibold tracking-tight">Favplace</p><p className="mt-2 text-xs text-zinc-500">{t("Ваше место. Ваша форма.")}</p></div><div className="flex flex-col gap-3 text-sm text-zinc-600 sm:flex-row sm:gap-8"><a href="mailto:hello@favplace.ru" className="hover:text-zinc-900">hello@favplace.ru</a><a href="https://t.me/vadyaProxima" target="_blank" rel="noreferrer" className="hover:text-zinc-900">Telegram ↗</a><Link href="/create" className="hover:text-zinc-900">{t("Мастерская ↗")}</Link></div></div>
 					<div className="mt-10 flex flex-wrap justify-between gap-3 border-t border-zinc-100 pt-5 text-[10px] text-zinc-400"><p>© {new Date().getFullYear()} Favplace</p>{/* Keep the licensed material attribution accessible. */}<Link href="/credits" className="hover:text-zinc-700">{t("Использованные материалы")}</Link></div>
 				</div>
 			</footer>

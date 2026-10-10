@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "place": "Бештау",
+  "frame": {
+    "lat": 44.09865,
+    "lng": 43.02519,
+    "radiusKm": 2.179,
+    "bearing": -90
+  },
+  "configuration": {
+    "height": 3.77,
+    "size": 17,
+    "material": "silver",
+    "finish": "polished",
+    "detail": "high",
+    "weight": "classic",
+    "bandProfile": "classic",
+    "shoulders": "classic"
+  },
+  "source": "AWS Terrain Tiles / Terrarium",
+  "minElevation": 611.8244601570896,
+  "maxElevation": 1385.5495625434708,
+  "encoding": "quantized-u16-i16-delta-v1",
+  "positionBytes": 1496196,
+  "normalBytes": 1496196,
+  "indexBytes": 2746836,
+  "vertexCount": 249366,
+  "indexCount": 1481814,
+  "bodyIndexCount": 516450,
+  "bounds": {
+    "min": [
+      -10.054948806762695,
+      -10.057380676269531,
+      -5.101936340332031
+    ],
+    "max": [
+      10.06308364868164,
+      12.977787971496582,
+      5.101936340332031
+    ]
+  },
+  "stats": {
+    "reliefVertexCount": 149753,
+    "maximumLift": 2.727037275947338,
+    "boundaryMaximumLift": 0.9966039657592773,
+    "grid": [
+      384,
+      392
+    ],
+    "minElevation": 0,
+    "maxElevation": 1
+  }
+}

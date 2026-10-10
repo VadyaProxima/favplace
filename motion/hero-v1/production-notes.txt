@@ -1,0 +1,47 @@
+FAVPLACE / HERO V1
+
+Duration: 10 seconds. Resolution: 1920 x 1080. Frame rate: 30 fps.
+Sound: none (muted background video for a website hero).
+Location: Elbrus, using the preset in StepPlace.tsx (43.3499, 42.4453).
+Terrain: a real 8 km crop from AWS Terrain Tiles / Terrarium.
+Ring: the project's buildAcceptedReliefModel generator, not a substitute ring.
+
+FILES
+favplace-hero-v1.mp4       Web-ready H.264 video.
+favplace-hero-v1.webm      VP9 alternative.
+Favplace-Hero-v1.aep      After Effects 2021 project.
+review.html              Local video preview with the existing hero copy.
+scene.html / scene.mjs    Editable 3D scene and animation curves.
+assets/                  Generated geometry, source terrain and metadata.
+frames/                  Imported PNG sequences; keep these next to the AEP.
+build-ae.jsx             Rebuild the AE project and its native effects.
+generate-assets.mjs      Regenerate the terrain and ring geometry.
+render.mjs               Render the scene or serve the interactive 3D preview.
+encode.ps1               Convert the AE master to MP4 and WebM.
+
+TIMELINE
+0.00-1.60  Mountain view.
+1.60-5.15  Scale and align the same terrain onto the ring.
+3.65-5.55  Depth-guided material scan and power warp.
+5.55-8.25  Hold the finished silver ring.
+8.25-10.0 Return to the mountain, with matching loop endpoints.
+
+AE CONTROLS
+Select the CONTROLS layer. Sliders adjust warp displacement, scan intensity,
+glow radius, chromatic split/intensity and micro shake. No paid plugin is required.
+The 3D movement is rendered into sequences. Change the geometry, camera and
+scaling in scene.mjs, then render again; these are not native AE 3D mesh layers.
+
+REBUILD (from this directory)
+node --experimental-strip-types generate-assets.mjs
+node render.mjs --preview
+node render.mjs --passes
+Run build-ae.jsx with After Effects File > Scripts > Run Script File.
+Render the main composition from its prepared render queue, then run encode.ps1.
+
+INTERACTIVE 3D PREVIEW
+node render.mjs --serve
+Open http://127.0.0.1:4387/scene.html?width=1600&height=900
+
+The YouTube reference could not be played directly. The depth scan, warp,
+chromatic split and shake are based on the user's supplied summary.

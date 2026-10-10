@@ -1,6 +1,6 @@
 'use client'
 
-import { JEWELLERY_ENV } from '@/lib/jewelleryMaterial'
+import { JEWELLERY_ENV, JEWELLERY_LIGHTS } from '@/lib/jewelleryMaterial'
 import { Environment } from '@react-three/drei'
 
 /**
@@ -9,17 +9,9 @@ import { Environment } from '@react-three/drei'
 export function JewelleryLighting() {
 	return (
 		<>
-			<hemisphereLight args={['#fff8ee', '#d5d8dc', 0.85]} />
-			<ambientLight intensity={0.45} />
-			<directionalLight
-				position={[1.5, 14, 2]}
-				intensity={2.8}
-				color="#fff6e0"
-				castShadow
-			/>
-			<directionalLight position={[7, 5, 5]} intensity={1.2} color="#ffe8c4" />
-			<directionalLight position={[-6, 4, -3]} intensity={0.55} color="#eef1ff" />
-			<directionalLight position={[0, 2, -8]} intensity={0.45} color="#ffffff" />
+			<hemisphereLight args={[JEWELLERY_LIGHTS.hemisphere.sky, JEWELLERY_LIGHTS.hemisphere.ground, JEWELLERY_LIGHTS.hemisphere.intensity]} />
+			<ambientLight intensity={JEWELLERY_LIGHTS.ambient} />
+			{JEWELLERY_LIGHTS.directional.map((light, index) => <directionalLight key={index} {...light} />)}
 
 			<Environment
 				files={JEWELLERY_ENV.files}
