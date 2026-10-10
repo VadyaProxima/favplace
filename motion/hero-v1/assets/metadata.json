@@ -1,0 +1,49 @@
+{
+  "place": "Elbrus",
+  "source": "AWS Terrain Tiles / Terrarium",
+  "frame": {
+    "lat": 43.3499,
+    "lng": 42.4453,
+    "radiusKm": 4,
+    "bearing": 0
+  },
+  "minElevation": 3313.284326711421,
+  "maxElevation": 5628.668304590026,
+  "groups": [
+    {
+      "start": 0,
+      "count": 516450,
+      "materialIndex": 0
+    },
+    {
+      "start": 516450,
+      "count": 965364,
+      "materialIndex": 1
+    }
+  ],
+  "bounds": {
+    "min": [
+      -10.054948806762695,
+      -10.057380676269531,
+      -5.101936340332031
+    ],
+    "max": [
+      10.06308364868164,
+      13.086458206176758,
+      5.101936340332031
+    ]
+  },
+  "stats": {
+    "reliefVertexCount": 149753,
+    "maximumLift": 2.8357076999243453,
+    "boundaryMaximumLift": 1.7895240783691406,
+    "grid": [
+      384,
+      392
+    ],
+    "minElevation": 0,
+    "maxElevation": 1
+  },
+  "vertexCount": 249366,
+  "triangleCount": 493938
+}

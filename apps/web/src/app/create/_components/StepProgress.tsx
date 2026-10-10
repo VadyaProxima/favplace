@@ -1,48 +1,25 @@
 'use client'
 
-import { STEPS, STEP_LABELS, useAppStore } from '@/store/useAppStore'
+import { useT } from '@/lib/preferences'
 
-/** Нижняя лента шагов: сегмент-индикатор + кликабельный переход. */
+import { useAppStore } from '@/store/useAppStore'
+import { STUDIO_SECTIONS } from './studioSections'
+import styles from './CreateStudio.module.css'
+
+/** Three chapters; individual parameters are tabs within the current chapter. */
 export function StepProgress() {
+	const t = useT()
 	const step = useAppStore(s => s.step)
 	const setStep = useAppStore(s => s.setStep)
-	const current = STEPS.indexOf(step)
-
+	const current = STUDIO_SECTIONS.findIndex(section => section.steps.includes(step))
 	return (
-		<div className="flex min-w-0 flex-1 items-end gap-2">
-			{STEPS.map((id, i) => {
-				const active = i === current
-				const passed = i < current
-				return (
-					<button
-						key={id}
-						type="button"
-						onClick={() => setStep(id)}
-						aria-current={active ? 'step' : undefined}
-						aria-label={`Шаг: ${STEP_LABELS[id]}`}
-						className="group flex min-w-0 flex-1 flex-col gap-2"
-					>
-						<span
-							className={`h-[3px] w-full transition-colors ${
-								active
-									? 'bg-zinc-900'
-									: passed
-										? 'bg-zinc-400'
-										: 'bg-zinc-200 group-hover:bg-zinc-300'
-							}`}
-						/>
-						<span
-							className={`truncate text-[11px] tracking-wide transition-colors ${
-								active
-									? 'font-medium text-zinc-900'
-									: 'text-zinc-400 group-hover:text-zinc-600'
-							}`}
-						>
-							{STEP_LABELS[id]}
-						</span>
-					</button>
-				)
-			})}
-		</div>
+		<nav aria-label={t("Разделы конструктора")} className={styles.chapters}>
+			{STUDIO_SECTIONS.map((section, index) => (
+				<button key={t(section.title)} type="button" onClick={() => setStep(section.steps[0])} aria-current={index === current ? 'step' : undefined}>
+					<span className={styles.chapterNumber} aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
+					<span><strong>{t(section.title)}</strong><span className={styles.chapterDescription}>{t(section.description)}</span></span>
+				</button>
+			))}
+		</nav>
 	)
 }

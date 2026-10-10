@@ -30,6 +30,7 @@ start-*.log
 
 # Мусор разработки
 screenshots
+motion
 .claude
 .qwen
 apps/web/.qa-mountain

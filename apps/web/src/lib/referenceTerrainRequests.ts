@@ -9,7 +9,7 @@ export interface TerrainRequestSelection {
 
 export interface TerrainRequestStage extends TerrainRequestSelection {
 	resolution: 256 | 512 | 1024
-	zoomOffset: -4 | -2 | 0
+	zoomOffset: -4 | -2 | 0 | 1 | 2
 	final: boolean
 	delayMs: number
 }
@@ -58,7 +58,7 @@ export function waitForTerrainStageDelay(milliseconds: number, signal: AbortSign
 	})
 }
 
-export function terrainRequestUrl(stage: TerrainRequestStage) {
+export function terrainRequestUrl(stage: TerrainRequestStage, binary = false) {
 	const params = new URLSearchParams({
 		lat: String(stage.lat),
 		lng: String(stage.lng),
@@ -67,7 +67,28 @@ export function terrainRequestUrl(stage: TerrainRequestStage) {
 		bearing: String(stage.bearing),
 		zoomOffset: String(stage.zoomOffset),
 	})
+	if (binary) params.set('format', 'f32')
 	return `/api/terrain/heightmap?${params.toString()}`
+}
+
+export async function readTerrainResponse(response: Response): Promise<TerrainApiResponse> {
+	if (!response.ok) throw new Error(`Terrain API ${response.status}`)
+	if (!response.headers.get('content-type')?.includes('application/octet-stream')) {
+		return response.json() as Promise<TerrainApiResponse>
+	}
+	const metadata = response.headers.get('X-Terrain-Metadata')
+	if (!metadata) throw new Error('Terrain metadata is missing')
+	const info = JSON.parse(metadata) as Omit<TerrainApiResponse, 'data'>
+	if (!Number.isInteger(info.width) || info.width < 64 || info.width > 1024 || info.height !== info.width) {
+		throw new Error('Invalid terrain dimensions')
+	}
+	const buffer = await response.arrayBuffer()
+	if (buffer.byteLength !== info.width * info.height * 4) throw new Error('Incomplete terrain data')
+	const values = new DataView(buffer)
+	const data = Array.from({ length: info.height }, (_, y) =>
+		Array.from({ length: info.width }, (_, x) => values.getFloat32((y * info.width + x) * 4, true)),
+	)
+	return { ...info, data }
 }
 
 export interface TerrainApiResponse {

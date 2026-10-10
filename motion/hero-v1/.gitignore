@@ -1,0 +1,10 @@
+frames/
+ae-render/
+assets/*-heightmap.json
+*.log
+*.aep Logs/
+*.aep
+*.mov
+*.mp4
+*.webm
+*.png

@@ -11,7 +11,8 @@ const data = Array.from({ length: size }, (_, r) =>
 const fine = { size, frame, minElev: 5286, maxElev: 5632, final: true, data }
 
 const time = (label, fn, runs = 3) => {
-	fn() // прогрев
+	const warmup = fn() // прогрев
+	warmup?.geometry?.dispose?.()
 	const marks = []
 	for (let i = 0; i < runs; i++) {
 		const t = performance.now()
@@ -47,3 +48,13 @@ const fine256={size:small,frame,minElev:5286,maxElev:5632,final:false,
 console.log("\nпромежуточный кадр 256 (увеличение):")
 for(const detail of ["low","medium","high"])
  time(`detail=${detail}`,()=>buildAcceptedReliefModel({...ACCEPTED_MOUNTAIN_DEFAULTS,fine:fine256,relief:0.5,detail}))
+
+console.log('\nживое движение внутри загруженной области:')
+const regionSize = 512
+const region = { ...fine, size: regionSize, final: false, frame: { ...frame, radiusKm: frame.radiusKm * 3 },
+	data: Array.from({ length: regionSize }, (_, y) => Array.from({ length: regionSize }, (_, x) => .5 + .3 * Math.sin(x / 70) * Math.cos(y / 90))) }
+for (const preview of [false, true]) {
+	time(preview ? 'live crown 96, geometry normals' : 'exact crown 384, analytic normals', () =>
+		buildAcceptedReliefModel({ ...ACCEPTED_MOUNTAIN_DEFAULTS, fine: region, view: frame, relief: .5, detail: 'high', preview }), 5)
+}
+console.log(`  Binary Float32 ${size}x${size}: ${(size * size * 4 / 1048576).toFixed(1)} МБ`)

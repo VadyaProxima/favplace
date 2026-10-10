@@ -1,5 +1,7 @@
 'use client'
 
+import { useT, usePreferences, type Language } from '@/lib/preferences'
+
 import { useAppStore } from '@/store/useAppStore'
 import { useState } from 'react'
 import { TerrainMap, ringFormToFrameShape, type FlyTarget } from '../TerrainMap'
@@ -30,9 +32,9 @@ interface SearchResult {
 	country?: string
 }
 
-async function searchNominatim(query: string): Promise<SearchResult[]> {
+async function searchNominatim(query: string, language: Language): Promise<SearchResult[]> {
 	const res = await fetch(
-		`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=jsonv2&limit=6&accept-language=ru`,
+		`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=jsonv2&limit=6&accept-language=${language}`,
 		{ signal: AbortSignal.timeout(8000) },
 	)
 	if (!res.ok) throw new Error(`Nominatim ${res.status}`)
@@ -50,9 +52,9 @@ async function searchNominatim(query: string): Promise<SearchResult[]> {
 	}))
 }
 
-async function searchEsri(query: string): Promise<SearchResult[]> {
+async function searchEsri(query: string, language: Language): Promise<SearchResult[]> {
 	const res = await fetch(
-		`https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates?singleLine=${encodeURIComponent(query)}&maxLocations=6&f=json&langCode=ru&outFields=PlaceName,Place_addr,City,Region,Country`,
+		`https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates?singleLine=${encodeURIComponent(query)}&maxLocations=6&f=json&langCode=${language}&outFields=PlaceName,Place_addr,City,Region,Country`,
 		{ signal: AbortSignal.timeout(8000) },
 	)
 	if (!res.ok) throw new Error(`Esri ${res.status}`)
@@ -99,6 +101,8 @@ export function StepPlace({
 	flyTo: (lat: number, lng: number) => void
 	fetching: boolean
 }) {
+	const t = useT()
+	const language = usePreferences(s => s.language)
 	const {
 		ringForm,
 		location,
@@ -150,13 +154,13 @@ export function StepPlace({
 		try {
 			let found: SearchResult[] = []
 			try {
-				found = await searchNominatim(query)
+				found = await searchNominatim(query, language)
 			} catch {
 				/* fallback */
 			}
 			if (found.length === 0) {
 				try {
-					found = await searchEsri(query)
+					found = await searchEsri(query, language)
 				} catch {
 					/* ignore */
 				}
@@ -182,18 +186,21 @@ export function StepPlace({
 	return (
 		<div>
 			<StepHeading
-				title="Место"
-				hint="Двигайте и масштабируйте карту — в рамку попадает ровно та площадь, что уйдёт в рельеф. Кольцо пересчитывается само."
+				title={t("Найдите своё место")}
+				hint={t("Двигайте карту: участок в рамке станет рельефом вашего кольца.")}
 			/>
 
 			<div className="space-y-3">
 				<div className="flex gap-2">
 					<input
+						aria-label={t("Поиск места")}
+						type="search"
+						enterKeyHint="search"
 						value={query}
 						onChange={e => setQuery(e.target.value)}
 						onKeyDown={e => e.key === 'Enter' && handleSearch()}
-						placeholder="Гора, город, место…"
-						className="min-w-0 flex-1 border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none"
+						placeholder={t("Гора, город, место…")}
+						className="min-h-11 min-w-0 flex-1 border border-zinc-200 bg-white px-3 py-2 text-base text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none lg:text-sm"
 					/>
 					<button
 						type="button"
@@ -201,7 +208,7 @@ export function StepPlace({
 						disabled={searching}
 						className="shrink-0 bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-zinc-700 disabled:opacity-40"
 					>
-						{searching ? '…' : 'Найти'}
+						{searching ? '…' : t('Найти')}
 					</button>
 				</div>
 
@@ -221,20 +228,10 @@ export function StepPlace({
 					</ul>
 				)}
 
-				<div className="flex flex-wrap gap-1.5">
-					{PRESETS.map(p => (
-						<button
-							key={p.name}
-							type="button"
-							onClick={() => pick(p.name, p.lat, p.lng)}
-							className="border border-zinc-200 px-2.5 py-1 text-xs text-zinc-500 transition hover:border-zinc-400 hover:text-zinc-800"
-						>
-							{p.name}
-						</button>
-					))}
-				</div>
 
-				<div className="relative h-64 overflow-hidden border border-zinc-200 bg-zinc-100">
+				<p className="hidden text-xs leading-relaxed text-zinc-500 [@media(pointer:coarse)]:block">
+					{t("Двигайте карту двумя пальцами. Одним пальцем прокручивайте настройки.")}</p>
+				<div className="relative h-72 overflow-hidden rounded-lg border border-zinc-200 bg-zinc-100 lg:h-[360px]">
 					<TerrainMap
 						target={flyTarget}
 						radius={radius}
@@ -246,20 +243,32 @@ export function StepPlace({
 					/>
 				</div>
 
+				<div className="flex flex-wrap gap-1.5">
+					{PRESETS.map(p => (
+						<button
+							key={t(p.name)}
+							type="button"
+							onClick={() => pick(p.name, p.lat, p.lng)}
+							className="min-h-11 border border-zinc-200 px-3 py-2 text-xs text-zinc-500 transition hover:border-zinc-400 hover:text-zinc-800"
+						>
+							{t(p.name)}
+						</button>
+					))}
+				</div>
+
+
 				{ringForm === 'duo' && (
 					<div className="space-y-3 border-t border-zinc-200 pt-5">
 						<div>
-							<FieldLabel>Вторая местность — по краям площадки</FieldLabel>
+							<FieldLabel>{t("Вторая местность — по краям площадки")}</FieldLabel>
 							<Hint>
-								Ложится двумя полосами со стороны скосов. Высоты нормируются
-								отдельно, поэтому равнина рядом с горой не потеряет рельеф.
-							</Hint>
+								{t("Ложится двумя полосами со стороны скосов. Высоты нормируются отдельно, поэтому равнина рядом с горой не потеряет рельеф.")}</Hint>
 						</div>
 
 						<div className="flex flex-wrap gap-1.5">
 							{PRESETS.map(p => (
 								<button
-									key={`edge-${p.name}`}
+									key={`edge-${t(p.name)}`}
 									type="button"
 									onClick={() => pickEdge(p.name, p.lat, p.lng)}
 									className={`border px-2.5 py-1 text-xs transition ${
@@ -268,7 +277,7 @@ export function StepPlace({
 											: 'border-zinc-300 text-zinc-600 hover:bg-zinc-50'
 									}`}
 								>
-									{p.name}
+									{t(p.name)}
 								</button>
 							))}
 						</div>
@@ -285,8 +294,7 @@ export function StepPlace({
 
 						<div>
 							<FieldLabel aside={`${Math.round(edgeStart * 100)}%`}>
-								Доля основной местности
-							</FieldLabel>
+								{t("Доля основной местности")}</FieldLabel>
 							<input
 								type="range"
 								min={0.2}
@@ -296,15 +304,14 @@ export function StepPlace({
 								onChange={e => setEdgeStart(parseFloat(e.target.value))}
 								className="mt-2 w-full accent-zinc-900"
 							/>
-							<Hint>Сколько ширины площадки занимает центральное место.</Hint>
+							<Hint>{t("Сколько ширины площадки занимает центральное место.")}</Hint>
 						</div>
 					</div>
 				)}
 
 				<div>
 					<FieldLabel aside={`${Math.round(terrainBearing)}°`}>
-						Поворот рамки
-					</FieldLabel>
+						{t("Поворот рамки")}</FieldLabel>
 					<input
 						type="range"
 						min={-180}
@@ -313,9 +320,9 @@ export function StepPlace({
 						value={terrainBearing}
 						onChange={e => setTerrainBearing(parseFloat(e.target.value))}
 						className="mt-3 w-full"
-						aria-label="Поворот рамки"
+						aria-label={t("Поворот рамки")}
 					/>
-					<Hint>Разворачивает выбранный участок — гребень можно поставить вдоль кольца.</Hint>
+					<Hint>{t("Разворачивает выбранный участок — гребень можно поставить вдоль кольца.")}</Hint>
 				</div>
 
 				<div className="flex flex-wrap gap-1">
@@ -324,20 +331,21 @@ export function StepPlace({
 							key={opt.value}
 							type="button"
 							onClick={() => setRadius(opt.value)}
-							className={`px-2.5 py-1.5 text-xs font-medium transition ${
+							aria-pressed={radius === opt.value}
+							className={`min-h-11 px-3 py-2 text-xs font-medium transition ${
 								radius === opt.value
 									? 'bg-zinc-900 text-white'
 									: 'text-zinc-500 hover:bg-zinc-100'
 							}`}
 						>
-							{opt.label}
+							{t(opt.label)}
 						</button>
 					))}
 				</div>
 
 				{location && (
 					<p className="text-xs text-zinc-500">
-						{location.name}{' '}
+						{t(location.name)}{' '}
 						<span className="text-zinc-400">
 							{location.coordinates.lat.toFixed(4)}° ·{' '}
 							{location.coordinates.lng.toFixed(4)}°
@@ -348,15 +356,12 @@ export function StepPlace({
 				{fetching ? (
 					<p className="flex items-center gap-2 text-xs text-zinc-500">
 						<span className="h-1.5 w-1.5 animate-pulse rounded-full bg-zinc-900" />
-						Считаем рельеф…
-					</p>
+						{t("Считаем рельеф…")}</p>
 				) : (
 					elevationMeta &&
 					heightMap && (
 						<p className="text-xs text-zinc-400">
-							Перепад высот: {Math.round(elevationMeta.max - elevationMeta.min)} м (
-							{Math.round(elevationMeta.min)}–{Math.round(elevationMeta.max)} м)
-						</p>
+							{t("Перепад высот: ")}{Math.round(elevationMeta.max - elevationMeta.min)} {t("м (")}{Math.round(elevationMeta.min)}–{Math.round(elevationMeta.max)} {t("м)")}</p>
 					)
 				)}
 			</div>

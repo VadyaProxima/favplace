@@ -179,6 +179,7 @@ export async function fetchTilesLimited(
 }
 
 const tileCache = new Map<string, Buffer>();
+const tileInflight = new Map<string, Promise<Buffer>>();
 const TILE_CACHE_MAX = 256;
 
 function cacheKey(provider: DemProvider, tile: TileCoord) {
@@ -198,6 +199,20 @@ function sleep(ms: number) {
 }
 
 export async function fetchTile(
+	tile: TileCoord,
+	provider: DemProvider = getDemProvider(),
+): Promise<Buffer> {
+	const key = cacheKey(provider, tile);
+	const cached = tileCache.get(key);
+	if (cached) return cached;
+	const active = tileInflight.get(key);
+	if (active) return active;
+	const request = fetchTileUncached(tile, provider).finally(() => tileInflight.delete(key));
+	tileInflight.set(key, request);
+	return request;
+}
+
+async function fetchTileUncached(
   tile: TileCoord,
   provider: DemProvider = getDemProvider(),
 ): Promise<Buffer> {
@@ -228,7 +243,7 @@ export async function fetchTile(
         return buf;
       }
       // Невалидный токен — ретраи бессмысленны
-      if (res.status === 401 || res.status === 403) {
+      if (res.status === 401 || res.status === 403 || res.status === 404) {
         throw new Error(`HTTP ${res.status}`);
       }
       lastErr = new Error(`HTTP ${res.status}`);
@@ -240,7 +255,7 @@ export async function fetchTile(
     } catch (err) {
       lastErr = err;
       const msg = (err as Error)?.message ?? "";
-      if (msg.includes("HTTP 401") || msg.includes("HTTP 403")) {
+      if (/HTTP 401|HTTP 403|HTTP 404/.test(msg)) {
         break;
       }
       // Network blips (fetch failed / abort) — retry with backoff
@@ -289,13 +304,20 @@ export function decodeMapboxDem(pngBuffer: Buffer): {
   return { data: elevations, width, height, logicalWidth };
 }
 
+const decodedTiles = new WeakMap<Buffer, Map<DemProvider, { data: Float32Array; width: number; height: number; logicalWidth: number }>>();
+
 export function decodeDemTile(
   pngBuffer: Buffer,
   provider: DemProvider,
 ): { data: Float32Array; width: number; height: number; logicalWidth: number } {
-  if (provider === "mapbox") {
-    return decodeMapboxDem(pngBuffer);
-  }
-  const decoded = decodeTerrarium(pngBuffer);
-  return { ...decoded, logicalWidth: decoded.width };
+  const cached = decodedTiles.get(pngBuffer)?.get(provider);
+  if (cached) return cached;
+  const result = provider === 'mapbox' ? decodeMapboxDem(pngBuffer) : (() => {
+    const decoded = decodeTerrarium(pngBuffer);
+    return { ...decoded, logicalWidth: decoded.width };
+  })();
+  const providers = decodedTiles.get(pngBuffer) ?? new Map();
+  providers.set(provider, result);
+  decodedTiles.set(pngBuffer, providers);
+  return result;
 }

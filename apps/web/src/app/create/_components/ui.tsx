@@ -1,6 +1,7 @@
 'use client'
 
-import type { ReactNode } from 'react'
+import { useId, type ReactNode, type Ref, type ChangeEvent, type KeyboardEventHandler, type HTMLAttributes } from 'react'
+import { useT } from '@/lib/preferences'
 
 export function StepHeading({
 	title,
@@ -31,7 +32,7 @@ export function FieldLabel({
 			<span className="text-[11px] uppercase tracking-wider text-zinc-400">
 				{children}
 			</span>
-			{aside && <span className="text-sm tabular-nums text-zinc-700">{aside}</span>}
+			{aside && <span className="shrink-0 text-sm tabular-nums text-zinc-700">{aside}</span>}
 		</div>
 	)
 }
@@ -56,7 +57,7 @@ export function ChoiceButton({
 			type="button"
 			onClick={onClick}
 			aria-pressed={selected}
-			className={`border px-3 py-2.5 text-sm font-medium transition ${
+			className={`min-h-11 min-w-0 border px-2 py-2.5 text-xs font-medium transition sm:px-3 sm:text-sm ${
 				selected
 					? 'border-zinc-900 bg-zinc-50 text-zinc-900'
 					: 'border-zinc-200 text-zinc-500 hover:border-zinc-400'
@@ -76,16 +77,32 @@ export function TextField({
 	required,
 	error,
 	maxLength,
+	autoComplete,
+	onBlur,
+	onKeyDown,
+	inputRef,
+	inputMode,
+	autoCapitalize,
+	spellCheck,
 }: {
 	label: string
 	value: string
-	onChange: (v: string) => void
+	onChange: (v: string, event: ChangeEvent<HTMLInputElement>) => void
 	placeholder?: string
 	type?: 'text' | 'tel' | 'email'
 	required?: boolean
 	error?: string
 	maxLength?: number
+	autoComplete?: string
+	onBlur?: () => void
+	onKeyDown?: KeyboardEventHandler<HTMLInputElement>
+	inputRef?: Ref<HTMLInputElement>
+	inputMode?: HTMLAttributes<HTMLInputElement>['inputMode']
+	autoCapitalize?: string
+	spellCheck?: boolean
 }) {
+	const t = useT()
+	const id = useId()
 	return (
 		<label className="block">
 			<span className="text-[11px] uppercase tracking-wider text-zinc-400">
@@ -93,19 +110,29 @@ export function TextField({
 				{required && <span className="text-zinc-400"> *</span>}
 			</span>
 			<input
+				ref={inputRef}
+				id={id}
 				type={type}
 				value={value}
-				onChange={e => onChange(e.target.value)}
+				onChange={e => onChange(e.target.value, e)}
+				onBlur={onBlur}
+				onKeyDown={onKeyDown}
+				inputMode={inputMode}
+				autoCapitalize={autoCapitalize}
+				spellCheck={spellCheck}
 				placeholder={placeholder}
 				maxLength={maxLength}
+				autoComplete={autoComplete}
+				aria-required={required || undefined}
 				aria-invalid={error ? true : undefined}
-				className={`mt-1.5 w-full border bg-white px-3 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-300 focus:outline-none ${
+				aria-describedby={error ? `${id}-error` : undefined}
+				className={`mt-1.5 min-h-11 w-full border bg-white px-3 py-2.5 text-base text-zinc-900 placeholder:text-zinc-300 focus:outline-none lg:text-sm ${
 					error
 						? 'border-red-400 focus:border-red-500'
 						: 'border-zinc-200 focus:border-zinc-400'
 				}`}
 			/>
-			{error && <span className="mt-1 block text-xs text-red-500">{error}</span>}
+			{error && <span id={`${id}-error`} className="mt-1 block text-xs text-red-500">{t(error)}</span>}
 		</label>
 	)
 }

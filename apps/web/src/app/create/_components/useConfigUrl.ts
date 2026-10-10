@@ -3,14 +3,11 @@
 import { MAX_RELIEF_MM, MIN_RELIEF_MM } from '@/lib/referenceSignetTerrain'
 import { STEPS, useAppStore, type Step } from '@/store/useAppStore'
 import {
-	ENGRAVING_MAX_LENGTH,
-	MATERIALS,
+	// ENGRAVING_MAX_LENGTH,
 	RING_FORMS,
 	RING_SIZES_MM,
-	type MaterialType,
 	type ReliefDetail,
 	type RingForm,
-	type SurfaceFinish,
 } from '@favplace/shared'
 import { useEffect, useRef } from 'react'
 
@@ -25,8 +22,6 @@ export function buildConfigParams(): URLSearchParams {
 	const p = new URLSearchParams()
 
 	p.set('form', s.ringForm)
-	p.set('m', s.material)
-	p.set('sf', s.surfaceFinish)
 	p.set('d', s.reliefDetail)
 	p.set('h', s.reliefHeight.toFixed(2))
 	p.set('sz', String(s.ringSize))
@@ -35,8 +30,7 @@ export function buildConfigParams(): URLSearchParams {
 	p.set('bp', s.bandProfile)
 	p.set('sh', s.shoulderStyle)
 	if (s.terrainBearing !== 0) p.set('b', String(Math.round(s.terrainBearing)))
-	if (s.mountainTwoTone) p.set('tt', '1')
-	if (s.engraving.trim()) p.set('e', s.engraving.trim())
+	// if (s.engraving.trim()) p.set('e', s.engraving.trim()) // Временно отключена.
 	if (s.location) {
 		p.set('lat', s.location.coordinates.lat.toFixed(5))
 		p.set('lng', s.location.coordinates.lng.toFixed(5))
@@ -63,14 +57,6 @@ function readConfigFromUrl(search: string) {
 		s.setRingForm(form as RingForm)
 	} else {
 		s.setRingForm('mountain')
-	}
-
-	const material = p.get('m')
-	if (material && material in MATERIALS) s.setMaterial(material as MaterialType)
-
-	const finish = p.get('sf')
-	if (finish === 'polished' || finish === 'matte') {
-		s.setSurfaceFinish(finish as SurfaceFinish)
 	}
 
 	const detail = p.get('d')
@@ -115,10 +101,10 @@ function readConfigFromUrl(search: string) {
 		s.setTerrainBearing(bearing)
 	}
 
-	s.setMountainTwoTone(p.get('tt') === '1')
-
-	const engraving = p.get('e')
-	if (engraving) s.setEngraving(engraving.slice(0, ENGRAVING_MAX_LENGTH))
+	// Гравировка временно отключена, включая старые ссылки с ?e=.
+	// const engraving = p.get('e')
+	// if (engraving) s.setEngraving(engraving.slice(0, ENGRAVING_MAX_LENGTH))
+	s.setEngraving('')
 
 	// Number(null) === 0, поэтому проверяем именно наличие параметров,
 	// иначе пустой URL читается как «выбрано место 0,0».
@@ -140,6 +126,7 @@ function readConfigFromUrl(search: string) {
 
 	const step = p.get('s')
 	if (step && (STEPS as readonly string[]).includes(step)) s.setStep(step as Step)
+	else s.setStep(step === 'material' ? 'form' : STEPS[0])
 
 	return { lat, lng, hasLocation }
 }

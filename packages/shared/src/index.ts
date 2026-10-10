@@ -1,4 +1,5 @@
 export * from "./pricing";
+export * from "./checkoutValidation";
 
 import type { ReliefDetail, RingForm } from "./pricing";
 
@@ -24,6 +25,13 @@ export interface Location {
 export type MaterialType = "gold" | "silver" | "platinum";
 
 export type SurfaceFinish = "polished" | "matte";
+
+/** The constructor currently produces one silver, polished finish. */
+export const RING_PRODUCTION_DEFAULTS = {
+  material: "silver",
+  surfaceFinish: "polished",
+  twoTone: false,
+} as const;
 
 export interface RingConfig {
   size: number;
@@ -111,7 +119,7 @@ export const DEFAULT_RING_CONFIG: RingConfig = {
   size: 17,
   width: 4,
   thickness: 2,
-  material: "gold",
+  material: RING_PRODUCTION_DEFAULTS.material,
   surfaceFinish: "polished",
   reliefHeight: 1.5,
   areaRadius: 500,

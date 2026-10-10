@@ -91,3 +91,15 @@ export const JEWELLERY_ENV = {
 	blur: 0.15,
 	toneMappingExposure: JEWELLERY_GL.toneMappingExposure,
 }
+
+/** Shared studio rig; positions use the configurator's 0.15 display scale. */
+export const JEWELLERY_LIGHTS = {
+	hemisphere: { sky: '#fff8ee', ground: '#d5d8dc', intensity: 0.85 },
+	ambient: 0.45,
+	directional: [
+		{ position: [1.5, 14, 2] as [number, number, number], intensity: 2.8, color: '#fff6e0', castShadow: true },
+		{ position: [7, 5, 5] as [number, number, number], intensity: 1.2, color: '#ffe8c4', castShadow: false },
+		{ position: [-6, 4, -3] as [number, number, number], intensity: 0.55, color: '#eef1ff', castShadow: false },
+		{ position: [0, 2, -8] as [number, number, number], intensity: 0.45, color: '#ffffff', castShadow: false },
+	],
+}

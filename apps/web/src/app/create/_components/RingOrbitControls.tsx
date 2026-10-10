@@ -14,7 +14,7 @@ type Props = {
 }
 
 /**
- * Orbit + Figma-style grab pan:
+ * Orbit rotation and grab pan:
  * - Space + drag → pan
  * - Middle mouse drag → pan
  * - Right mouse drag → pan
@@ -33,24 +33,18 @@ export function RingOrbitControls({
 	useEffect(() => {
 		const el = gl.domElement
 		let spaceDown = false
-		let middleDown = false
-		let panning = false
+		let heldButtons = 0
 
 		const syncButtons = () => {
 			const c = controlsRef.current
 			if (!c) return
 			c.mouseButtons.MIDDLE = THREE.MOUSE.PAN
-			if (spaceDown) {
-				c.mouseButtons.LEFT = THREE.MOUSE.PAN
-				c.mouseButtons.RIGHT = THREE.MOUSE.ROTATE
-			} else {
-				c.mouseButtons.LEFT = THREE.MOUSE.ROTATE
-				c.mouseButtons.RIGHT = THREE.MOUSE.PAN
-			}
+			c.mouseButtons.LEFT = spaceDown ? THREE.MOUSE.PAN : THREE.MOUSE.ROTATE
+			c.mouseButtons.RIGHT = THREE.MOUSE.PAN
 		}
 
 		const syncCursor = () => {
-			if (panning) {
+			if ((heldButtons & 6) || (spaceDown && (heldButtons & 1))) {
 				el.style.cursor = 'grabbing'
 			} else if (spaceDown) {
 				el.style.cursor = 'grab'
@@ -80,31 +74,20 @@ export function RingOrbitControls({
 		const onKeyUp = (e: KeyboardEvent) => {
 			if (e.code !== 'Space') return
 			spaceDown = false
-			if (!middleDown) panning = false
 			syncButtons()
 			syncCursor()
 		}
 
 		const onPointerDown = (e: PointerEvent) => {
-			if (e.button === 1) {
-				middleDown = true
-				panning = true
-				syncCursor()
-				return
-			}
-			if (spaceDown && e.button === 0) {
-				panning = true
-				syncCursor()
-			}
+			heldButtons = e.buttons
+			syncCursor()
 		}
 
 		const onPointerUp = (e: PointerEvent) => {
-			if (e.button === 1) middleDown = false
-			if (e.button === 0 || e.button === 1) {
-				panning = middleDown || (spaceDown && e.buttons > 0)
-				syncCursor()
-			}
+			heldButtons = e.buttons
+			syncCursor()
 		}
+		const reset = () => { heldButtons = 0; spaceDown = false; syncButtons(); syncCursor() }
 
 		const onMouseDown = (e: MouseEvent) => {
 			if (e.button === 1) e.preventDefault()
@@ -119,6 +102,8 @@ export function RingOrbitControls({
 		window.addEventListener('keyup', onKeyUp)
 		el.addEventListener('pointerdown', onPointerDown)
 		window.addEventListener('pointerup', onPointerUp)
+		window.addEventListener('pointercancel', reset)
+		window.addEventListener('blur', reset)
 		el.addEventListener('mousedown', onMouseDown)
 		el.addEventListener('auxclick', onAuxClick)
 
@@ -127,6 +112,8 @@ export function RingOrbitControls({
 			window.removeEventListener('keyup', onKeyUp)
 			el.removeEventListener('pointerdown', onPointerDown)
 			window.removeEventListener('pointerup', onPointerUp)
+			window.removeEventListener('pointercancel', reset)
+			window.removeEventListener('blur', reset)
 			el.removeEventListener('mousedown', onMouseDown)
 			el.removeEventListener('auxclick', onAuxClick)
 			el.style.cursor = ''

@@ -1,5 +1,7 @@
 'use client'
 
+import { useT, useNumberFormatter } from '@/lib/preferences'
+
 import { getExportTarget } from '@/lib/exportTarget'
 import {
 	MIN_CASTABLE_WALL_MM,
@@ -13,9 +15,10 @@ import { useAppStore } from '@/store/useAppStore'
 import { useState } from 'react'
 import { RING_FORM_OPTIONS } from './FormRingViewer'
 
-const mm = (v: number) => `${v.toFixed(1).replace('.', ',')} мм`
-
 export function StlExportButton() {
+	const t = useT()
+	const formatNumber = useNumberFormatter()
+	const mm = (value: number) => `${formatNumber(value)} ${t('мм')}`
 	const ringForm = useAppStore(s => s.ringForm)
 	const ringSize = useAppStore(s => s.ringSize)
 	const location = useAppStore(s => s.location)
@@ -53,7 +56,7 @@ export function StlExportButton() {
 	 */
 	const exportMountain = () => {
 		if (!terrainFrame) {
-			throw new Error('Рельеф ещё считается — подождите пару секунд')
+			throw new Error(t('Рельеф ещё считается — подождите пару секунд'))
 		}
 		const model = buildAcceptedReliefModel({
 			ringDiameter: ringSize,
@@ -91,7 +94,7 @@ export function StlExportButton() {
 	const exportViewerMesh = () => {
 		const root = getExportTarget()
 		if (!root) {
-			throw new Error('Модель ещё не загрузилась — подождите, пока появится превью')
+			throw new Error(t('Модель ещё не загрузилась — подождите, пока появится превью'))
 		}
 		return buildStlExport(root, {
 			ringSizeMm: ringSize,
@@ -110,7 +113,7 @@ export function StlExportButton() {
 			setAudit(result.audit)
 			downloadBlob(result.blob, result.filename)
 		} catch (err) {
-			setError(err instanceof Error ? err.message : 'Не удалось собрать STL')
+			setError(err instanceof Error ? err.message : t('Не удалось собрать STL'))
 		} finally {
 			setBusy(false)
 		}
@@ -125,17 +128,17 @@ export function StlExportButton() {
 				type="button"
 				onClick={run}
 				disabled={busy}
-				className="border border-zinc-300 bg-white/80 px-3.5 py-2 text-xs font-medium text-zinc-700 backdrop-blur transition hover:bg-white disabled:opacity-40"
+				aria-label={busy ? t('Считаем…') : t('Скачать STL')}
+				className="min-h-11 min-w-11 border border-zinc-300 bg-white/80 px-2 py-2 text-xs font-medium text-zinc-700 backdrop-blur transition hover:bg-white disabled:opacity-40 lg:min-h-0 lg:px-3.5"
 			>
-				{busy ? 'Считаем…' : 'Скачать STL'}
+				<span className="hidden lg:inline">{busy ? t('Считаем…') : t('Скачать STL')}</span><span className="lg:hidden" aria-hidden="true">{busy ? '…' : 'STL'}</span>
 			</button>
 
 			{(audit || error) && (
-				<div className="absolute bottom-16 right-0 w-80 border border-zinc-200 bg-white/95 p-4 text-left shadow-sm backdrop-blur">
+				<div className="absolute right-0 top-full mt-2 max-h-[60dvh] w-[min(20rem,calc(100vw-2rem))] overflow-y-auto border border-zinc-200 bg-white/95 p-4 text-left shadow-sm backdrop-blur lg:bottom-16 lg:top-auto lg:mt-0">
 					<div className="flex items-start justify-between gap-3">
 						<span className="text-[11px] uppercase tracking-wider text-zinc-400">
-							Проверка файла
-						</span>
+							{t("Проверка файла")}</span>
 						<button
 							type="button"
 							onClick={() => {
@@ -143,34 +146,34 @@ export function StlExportButton() {
 								setError(null)
 							}}
 							className="text-zinc-400 transition hover:text-zinc-800"
-							aria-label="Закрыть"
+							aria-label={t("Закрыть")}
 						>
 							×
 						</button>
 					</div>
 
-					{error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+					{error && <p className="mt-2 text-sm text-red-600">{t(error)}</p>}
 
 					{audit && (
 						<>
 							<dl className="mt-3 space-y-1 text-xs">
-								<Row label="Форма" value={`${formLabel}, ⌀ ${ringSize} мм`} />
+								<Row label={t("Форма")} value={`${t(formLabel)}, ⌀ ${ringSize} ${t("мм")}`} />
 								<Row
-									label="Габариты"
+									label={t("Габариты")}
 									value={`${mm(audit.size.x)} × ${mm(audit.size.y)} × ${mm(audit.size.z)}`}
 								/>
-								<Row label="Треугольников" value={audit.triangles.toLocaleString('ru-RU')} />
+								<Row label={t("Треугольников")} value={formatNumber(audit.triangles, 0)} />
 								<Row
-									label="Замкнутость"
-									value={audit.watertight ? 'да' : 'нет'}
+									label={t("Замкнутость")}
+									value={audit.watertight ? t('да') : t('нет')}
 									bad={!audit.watertight}
 								/>
 								<Row
-									label="Тоньше всего"
+									label={t("Тоньше всего")}
 									value={
 										audit.p1Thickness !== null
-											? `${audit.p1Thickness.toFixed(2)} мм (порог ${MIN_CASTABLE_WALL_MM})`
-											: 'замерить не удалось'
+											? `${formatNumber(audit.p1Thickness, 2)} ${t('мм')} (${t('порог')} ${MIN_CASTABLE_WALL_MM})`
+											: t('замерить не удалось')
 									}
 									bad={
 										audit.p1Thickness === null ||
@@ -183,14 +186,13 @@ export function StlExportButton() {
 								<ul className="mt-3 space-y-2 border-t border-zinc-200 pt-3">
 									{warnings.map((w, i) => (
 										<li key={i} className="text-xs leading-relaxed text-amber-700">
-											{w}
+											{t(w)}
 										</li>
 									))}
 								</ul>
 							) : (
 								<p className="mt-3 border-t border-zinc-200 pt-3 text-xs leading-relaxed text-emerald-700">
-									Замечаний нет. Файл можно отдавать на печать восковки.
-								</p>
+									{t("Замечаний нет. Файл можно отдавать на печать восковки.")}</p>
 							)}
 						</>
 					)}
@@ -209,9 +211,10 @@ function Row({
 	value: string
 	bad?: boolean
 }) {
+	const t = useT()
 	return (
 		<div className="flex items-baseline justify-between gap-3">
-			<dt className="shrink-0 text-zinc-400">{label}</dt>
+			<dt className="shrink-0 text-zinc-400">{t(label)}</dt>
 			<dd className={`text-right ${bad ? 'font-medium text-amber-700' : 'text-zinc-800'}`}>
 				{value}
 			</dd>

@@ -7,7 +7,7 @@ import type {
   RingForm,
   SurfaceFinish,
 } from "@favplace/shared";
-import { RING_FORMS } from "@favplace/shared";
+import { RING_FORMS, RING_PRODUCTION_DEFAULTS } from "@favplace/shared";
 import {
   MAX_RELIEF_MM,
   MIN_RELIEF_MM,
@@ -26,10 +26,9 @@ export type { BandProfile, RingWeight, ShoulderStyle };
 
 /** Порядок шагов конструктора. Он же порядок в прогресс-баре. */
 export const STEPS = [
-  "form",
   "place",
   "relief",
-  "material",
+  "form",
   "size",
   "order",
 ] as const;
@@ -40,7 +39,6 @@ export const STEP_LABELS: Record<Step, string> = {
   form: "форма",
   place: "место",
   relief: "рельеф",
-  material: "металл",
   size: "размер",
   order: "заказ",
 };
@@ -63,7 +61,6 @@ interface AppState {
 
   /** Two-tone mountain/disc: polished band + light terrain */
   mountainTwoTone: boolean;
-  setMountainTwoTone: (v: boolean) => void;
 
   location: Location | null;
   setLocation: (location: Location) => void;
@@ -73,10 +70,8 @@ interface AppState {
   setRadius: (radius: number) => void;
 
   material: MaterialType;
-  setMaterial: (material: MaterialType) => void;
 
   surfaceFinish: SurfaceFinish;
-  setSurfaceFinish: (finish: SurfaceFinish) => void;
 
   ringSize: number;
   setRingSize: (size: number) => void;
@@ -108,6 +103,7 @@ interface AppState {
   terrainFrame: TerrainFrame | null;
   coarseTerrainFrame: TerrainFrame | null;
   terrainViewFrame: TerrainGeoFrame | null;
+  setTerrainViewFrame: (frame: TerrainGeoFrame) => void;
   setReferenceTerrainFrames: (
     fine: TerrainFrame,
     coarse: TerrainFrame | null,
@@ -161,7 +157,7 @@ const reliefScaleFromMm = (millimetres: number) =>
 const DEFAULT_RELIEF_SCALE = reliefScaleFromMm(reliefMillimeters(0.5) * 1.5);
 
 export const useAppStore = create<AppState>((set) => ({
-  step: "form",
+  step: "place",
   setStep: (step) => set({ step }),
   nextStep: () =>
     set((s) => ({ step: STEPS[Math.min(stepIndex(s.step) + 1, STEPS.length - 1)] })),
@@ -174,8 +170,7 @@ export const useAppStore = create<AppState>((set) => ({
   interacting: false,
   setInteracting: (interacting) => set({ interacting }),
 
-  mountainTwoTone: false,
-  setMountainTwoTone: (mountainTwoTone) => set({ mountainTwoTone }),
+  mountainTwoTone: RING_PRODUCTION_DEFAULTS.twoTone,
 
   location: null,
   setLocation: (location) => set({ location }),
@@ -189,11 +184,9 @@ export const useAppStore = create<AppState>((set) => ({
   radius: 500,
   setRadius: (radius) => set({ radius }),
 
-  material: "silver",
-  setMaterial: (material) => set({ material }),
+  material: RING_PRODUCTION_DEFAULTS.material,
 
-  surfaceFinish: "polished",
-  setSurfaceFinish: (surfaceFinish) => set({ surfaceFinish }),
+  surfaceFinish: RING_PRODUCTION_DEFAULTS.surfaceFinish,
 
   ringSize: 17,
   setRingSize: (ringSize) => set({ ringSize }),
@@ -254,6 +247,7 @@ export const useAppStore = create<AppState>((set) => ({
   terrainFrame: null,
   coarseTerrainFrame: null,
   terrainViewFrame: null,
+  setTerrainViewFrame: (terrainViewFrame) => set({ terrainViewFrame }),
   setReferenceTerrainFrames: (terrainFrame, coarseTerrainFrame, terrainViewFrame) =>
     set({
       terrainFrame,

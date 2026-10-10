@@ -36,6 +36,7 @@ export class TerrainService {
 			const raw = await fetchHeightMap(lat, lng, clampedRadius, {
 				bearing,
 				zoomOffset,
+				resolution: clampedRes,
 			})
 			const heightMap = resampleHeightMap(raw, clampedRes)
 

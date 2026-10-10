@@ -28,6 +28,7 @@ export interface HeightMap {
 export interface HeightMapRequestOptions {
 	bearing?: number
 	zoomOffset?: number
+	resolution?: number
 }
 
 /** meters-per-degree latitude is constant; longitude shrinks by cos(lat). */
@@ -85,7 +86,9 @@ function sampleBicubic(data: Float32Array, w: number, h: number, px: number, py:
 }
 
 /** Intermediate crop before client resample — higher = sharper ridges on the ring. */
-const CROP_SIZE = 1024
+function cropSize(options: HeightMapRequestOptions) {
+	return Math.min(1024, Math.max(64, Math.round(options.resolution ?? 1024)))
+}
 
 const heightMapMemo = new Map<string, HeightMap>()
 const HEIGHTMAP_MEMO_MAX = 24
@@ -100,7 +103,7 @@ function memoKey(
 	// v3 = Terrarium z15 for small crops; avoids reusing the coarser z14 memo.
 	return `v4:${lat.toFixed(5)},${lng.toFixed(5)},${Math.round(radiusMeters)},${(
 		options.bearing ?? 0
-	).toFixed(2)},${clampZoomOffset(options.zoomOffset ?? 0)}`
+	).toFixed(2)},${clampZoomOffset(options.zoomOffset ?? 0)},${cropSize(options)},${getDemProvider()}`
 }
 
 async function fetchHeightMapUncached(
@@ -110,6 +113,7 @@ async function fetchHeightMapUncached(
 	options: HeightMapRequestOptions,
 ): Promise<HeightMap> {
 	const provider = getDemProvider()
+	const CROP_SIZE = cropSize(options)
 	const bearing = options.bearing ?? 0
 	const preferredZoom = Math.min(
 		15,

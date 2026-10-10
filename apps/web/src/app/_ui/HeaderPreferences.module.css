@@ -1,0 +1,6 @@
+.controls { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.button { display: flex; align-items: center; justify-content: center; gap: 6px; min-width: 44px; min-height: 44px; padding: 0 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink); font-size: 11px; transition: background .2s, border-color .2s, color .2s; }
+.button:hover { background: var(--page-bg); border-color: var(--muted); }
+.button:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+@media (max-width: 359px) { .button { padding-inline: 7px; gap: 4px; } .button svg:first-child:not(:only-child) { display: none; } }
+@media (prefers-reduced-motion: reduce) { .button { transition: none; } }

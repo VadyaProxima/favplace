@@ -1,6 +1,7 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Cormorant_Garamond, Manrope } from 'next/font/google'
 import './globals.css'
+import { PreferencesProvider } from './_ui/PreferencesProvider'
 
 const display = Cormorant_Garamond({
 	subsets: ['latin', 'cyrillic'],
@@ -22,11 +23,14 @@ export const metadata: Metadata = {
 		'Создайте уникальное кольцо с топографическим рельефом места, которое вам дорого',
 }
 
+export const viewport: Viewport = { viewportFit: 'cover' }
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
 	return (
-		<html lang="ru" className={`${display.variable} ${sans.variable}`}>
+		<html lang="ru" suppressHydrationWarning className={`${display.variable} ${sans.variable}`}>
+			<head><script dangerouslySetInnerHTML={{ __html: `(function(){try{var p=JSON.parse(localStorage.getItem('favplace:preferences')||'{}');document.documentElement.dataset.theme=p.theme==='dark'?'dark':'light';document.documentElement.lang=p.language==='en'?'en':'ru';}catch(e){}})();` }} /></head>
 			<body className="min-h-screen bg-white font-sans text-zinc-900 antialiased">
-				{children}
+				<PreferencesProvider>{children}</PreferencesProvider>
 			</body>
 		</html>
 	)

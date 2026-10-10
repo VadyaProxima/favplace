@@ -141,9 +141,10 @@ export function calcPrice(input: PriceInput): PriceBreakdown {
     lines.push({ label: "Двухцветная отделка", amount: TWO_TONE_PRICE });
   }
 
-  if (input.engraving && input.engraving.trim().length > 0) {
-    lines.push({ label: "Гравировка", amount: ENGRAVING_PRICE });
-  }
+  // Гравировка временно отключена, доплату не включаем ни на клиенте, ни на сервере.
+  // if (input.engraving && input.engraving.trim().length > 0) {
+  //   lines.push({ label: "Гравировка", amount: ENGRAVING_PRICE });
+  // }
 
   return {
     lines,
