@@ -233,7 +233,7 @@ export function StepPlace({
 					{t("Двигайте карту двумя пальцами. Одним пальцем прокручивайте настройки.")}</p>
 				<div className="relative h-72 overflow-hidden rounded-lg border border-zinc-200 bg-zinc-100 lg:h-[360px]">
 					<TerrainMap
-						target={flyTarget}
+						target={{ ...flyTarget, ...location?.coordinates }}
 						radius={radius}
 						frameShape={ringFormToFrameShape(ringForm)}
 						bearing={terrainBearing}
