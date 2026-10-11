@@ -9,9 +9,15 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
 	const pathname = usePathname()
 	useEffect(() => {
 		const english = language === 'en'
-		document.title = pathname === '/credits' ? (english ? 'Credits — Favplace' : 'Использованные материалы — Favplace')
-			: pathname === '/admin' ? (english ? 'Admin sign-in — Favplace' : 'Служебный вход — Favplace')
-			: english ? 'Favplace — A ring with the landscape of your favourite place' : 'Favplace — Кольцо с рельефом любимого места'
+		const title = pathname === '/credits' ? (english ? 'Credits — Mesto Metal' : 'Использованные материалы — Место Металл')
+			: pathname === '/admin' ? (english ? 'Admin sign-in — Mesto Metal' : 'Служебный вход — Место Металл')
+			: english ? 'Mesto Metal — A ring with the landscape of your favourite place' : 'Место Металл — Кольцо с рельефом любимого места'
+		const syncTitle = () => { if (document.title !== title) document.title = title }
+		syncTitle()
+		// Next can insert server metadata after the stored language is restored.
+		const observer = new MutationObserver(syncTitle)
+		observer.observe(document.head, { childList: true, subtree: true, characterData: true })
+		return () => observer.disconnect()
 	}, [language, pathname])
 	useEffect(() => {
 		const restore = () => {
