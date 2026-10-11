@@ -22,6 +22,11 @@ import { StepSize } from './steps/StepSize'
 import { buildShareUrl, useConfigUrl } from './useConfigUrl'
 
 export function CreateStudio() {
+	const configRevision = useConfigUrl()
+	return configRevision ? <HydratedStudio key={configRevision} /> : null
+}
+
+function HydratedStudio() {
 	const t = useT()
 	// Экспорт STL — служебная операция, покупателю она не нужна.
 	// Вход: /admin. Гейт косметический: сама сборка файла живёт в браузере.
@@ -33,11 +38,9 @@ export function CreateStudio() {
 
 	const { fetching, error: terrainError } = useTerrainAnalysis()
 	const [shared, setShared] = useState(false)
-	const [flyTarget, setFlyTarget] = useState<FlyTarget>({
-		lng: 138.7307,
-		lat: 35.3628,
-		key: 0,
-	})
+	const [flyTarget, setFlyTarget] = useState<FlyTarget>(() => ({
+		...(useAppStore.getState().location?.coordinates ?? { lng: 138.7307, lat: 35.3628 }), key: 0,
+	}))
 
 	// Вторая местность формы «duo». Отдельный лёгкий запрос: она ложится
 	// узкими полосами по краям площадки, и разрешение 512 там избыточно.
@@ -76,13 +79,6 @@ export function CreateStudio() {
 	const flyTo = useCallback((lat: number, lng: number) => {
 		setFlyTarget(prev => ({ lat, lng, key: prev.key + 1 }))
 	}, [])
-
-	// Ссылка-конфигурация: подхватываем место. Рельеф построит эффект выше.
-	const onHydrated = useCallback(
-		(hLat: number, hLng: number) => flyTo(hLat, hLng),
-		[flyTo],
-	)
-	useConfigUrl(onHydrated)
 
 	const share = async () => {
 		const url = buildShareUrl()

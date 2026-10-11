@@ -6,6 +6,7 @@ import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useEffect, useRef, useState } from 'react'
 import type { RingForm } from '@/store/useAppStore'
+import { MIN_SELECTION_RADIUS, MAX_SELECTION_RADIUS } from '@/lib/configUrl'
 
 export interface FlyTarget {
 	lng: number
@@ -120,9 +121,10 @@ const STYLE_TILES: Record<
 	},
 }
 
-const MIN_RADIUS = 100
-const MAX_RADIUS = 20000
+const MIN_RADIUS = MIN_SELECTION_RADIUS
+const MAX_RADIUS = MAX_SELECTION_RADIUS
 const FIT_FRACTION = 0.45
+const CONFIG_SYNC_EVENT = { configSync: true }
 
 function buildStyle(type: MapStyleType) {
 	return {
@@ -183,11 +185,12 @@ export function TerrainMap({
 	const rafRef = useRef<number | null>(null)
 	const initialFitDoneRef = useRef(false)
 	const lastLiveEmitRef = useRef(0)
+	const fittingCenterRef = useRef<[number, number] | null>(null)
 
-	const pxPer1000m = () => {
+	const pxPer1000m = (center?: [number, number]) => {
 		const map = mapRef.current
 		if (!map) return 1
-		const c = map.getCenter()
+		const c = center ? { lng: center[0], lat: center[1] } : map.getCenter()
 		const p1 = map.project([c.lng, c.lat])
 		const p2 = map.project([c.lng, c.lat + 1000 / 111_320])
 		return Math.abs(p1.y - p2.y) || 1
@@ -244,13 +247,9 @@ export function TerrainMap({
 	 */
 	const emitViewport = () => {
 		const map = mapRef.current
-		if (!map) return
+		if (!map || !initialFitDoneRef.current) return
 		const c = map.getCenter()
 		onCenterChangeRef.current(c.lng, c.lat)
-
-		// До первой подгонки зум ещё стартовый, и вычисленная из него площадь
-		// затёрла бы radius, пришедший из ссылки.
-		if (!initialFitDoneRef.current) return
 
 		const r = currentRadius()
 		// Допуск: после подгонки зума под пресет обратный пересчёт даёт
@@ -289,11 +288,12 @@ export function TerrainMap({
 			// Source maxzoom limits tile requests; the camera can still overzoom
 			// those tiles to keep a small selection at the requested size.
 			map.getMaxZoom(),
-			Math.max(2, map.getZoom() + Math.log2(neededPxPer1000m / pxPer1000m())),
+			Math.max(2, map.getZoom() + Math.log2(neededPxPer1000m / pxPer1000m(center))),
 		)
 		const opts = { center: center ?? map.getCenter(), zoom }
-		if (jump) map.jumpTo(opts)
-		else map.easeTo({ ...opts, duration: 350 })
+		fittingCenterRef.current = center ?? [map.getCenter().lng, map.getCenter().lat]
+		if (jump) map.jumpTo(opts, CONFIG_SYNC_EVENT)
+		else map.easeTo({ ...opts, duration: 350 }, CONFIG_SYNC_EVENT)
 	}
 
 	useEffect(() => {
@@ -308,6 +308,7 @@ export function TerrainMap({
 			zoom: 12,
 			minZoom: 2,
 			maxZoom: 19,
+			trackResize: false,
 			attributionControl: false,
 			cooperativeGestures: window.matchMedia('(pointer: coarse)').matches,
 			locale: {
@@ -321,9 +322,12 @@ export function TerrainMap({
 
 		// Рельеф должен обновляться прямо во время перетаскивания, но писать в
 		// The worker keeps one active job and the latest view, without a backlog.
-		map.on('movestart', () => onInteractingChangeRef.current?.(true))
-		map.on('move', () => {
+		map.on('movestart', e => {
+			if (!('configSync' in e && e.configSync)) onInteractingChangeRef.current?.(true)
+		})
+		map.on('move', e => {
 			scheduleFrameSize()
+			if ('configSync' in e && e.configSync) return
 			const now = performance.now()
 			if (now - lastLiveEmitRef.current < 50) return
 			lastLiveEmitRef.current = now
@@ -332,9 +336,10 @@ export function TerrainMap({
 		})
 		// На остановке — точное финальное значение без throttle,
 		// и переход на точную сетку рельефа
-		map.on('moveend', () => {
+		map.on('moveend', e => {
+			fittingCenterRef.current = null
 			lastLiveEmitRef.current = 0
-			emitViewport()
+			if (!('configSync' in e && e.configSync)) emitViewport()
 			onInteractingChangeRef.current?.(false)
 		})
 
@@ -346,7 +351,7 @@ export function TerrainMap({
 		const pump = () => {
 			attempts++
 			try {
-				map.resize()
+				map.resize(CONFIG_SYNC_EVENT)
 			} catch {
 				/* стиль ещё не готов — не повод бросать инициализацию */
 			}
@@ -365,14 +370,15 @@ export function TerrainMap({
 		})
 
 		const ro = new ResizeObserver(() => {
+			const center = fittingCenterRef.current
 			try {
-				map.resize()
+				map.resize(CONFIG_SYNC_EVENT)
 			} catch {
 				/* см. pump выше */
 			}
 			scheduleFrameSize()
-			// Рамка привязана к размеру окна, значит площадь съёмки изменилась
-			emitViewport()
+			// Keep the same geographic crop when the window or studio split changes.
+			if (initialFitDoneRef.current) fitZoomToFrame(center ?? undefined, true)
 		})
 		ro.observe(containerRef.current)
 
@@ -393,31 +399,23 @@ export function TerrainMap({
 	}, [styleType])
 
 	const lastTargetKeyRef = useRef(target.key)
+	const lastFrameShapeRef = useRef(frameShape)
 	useEffect(() => {
-		if (target.key === lastTargetKeyRef.current) return
+		const targetChanged = target.key !== lastTargetKeyRef.current
+		const radiusChanged = radius !== lastEmittedRadiusRef.current
+		const shapeChanged = frameShape !== lastFrameShapeRef.current
 		lastTargetKeyRef.current = target.key
-		fitZoomToFrame([target.lng, target.lat])
-		scheduleFrameSize()
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [target.key])
-
-	useEffect(() => {
+		lastFrameShapeRef.current = frameShape
 		radiusRef.current = radius
-		if (radius !== lastEmittedRadiusRef.current) {
-			lastEmittedRadiusRef.current = radius
-			fitZoomToFrame()
+		lastEmittedRadiusRef.current = radius
+		if (initialFitDoneRef.current) {
+			if (targetChanged) fitZoomToFrame([target.lng, target.lat])
+			else if (radiusChanged) fitZoomToFrame()
+			else if (shapeChanged) fitZoomToFrame(undefined, true)
 		}
 		scheduleFrameSize()
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [radius])
-
-	useEffect(() => {
-		frameShapeRef.current = frameShape
-		scheduleFrameSize()
-		// Другая пропорция рамки — другая площадь в кадре
-		emitViewport()
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [frameShape])
+	}, [target.key, radius, frameShape])
 
 	// MapLibre owns these controls; update its labels without recreating the map.
 	useEffect(() => {
