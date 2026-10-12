@@ -45,3 +45,51 @@ test('terrain tile downloads are shared, decoded once and reused by different cr
 		assert.equal(calls, count + 1, 'a missing tile should fall back without six pointless retries')
 	} finally { globalThis.fetch = originalFetch }
 })
+
+test('parallel Mapbox and Terrarium crops at identical coordinates keep separate data and caches', async () => {
+	const originalFetch = globalThis.fetch
+	const originalToken = process.env.MAPBOX_ACCESS_TOKEN
+	const defaultProvider = process.env.TERRAIN_DEM_PROVIDER
+	process.env.MAPBOX_ACCESS_TOKEN = 'test-only-token'
+	const bytes = elevation => {
+		const png = new PNG({ width: 256, height: 256 })
+		for (let i = 0; i < png.data.length; i += 4) {
+			if (elevation === 100) {
+				const value = (elevation + 10000) * 10
+				png.data[i] = value >> 16; png.data[i + 1] = (value >> 8) & 255; png.data[i + 2] = value & 255
+			} else {
+				png.data[i] = Math.floor((elevation + 32768) / 256)
+				png.data[i + 1] = (elevation + 32768) % 256; png.data[i + 2] = 0
+			}
+			png.data[i + 3] = 255
+		}
+		return PNG.sync.write(png)
+	}
+	const mapboxBytes = bytes(100), terrariumBytes = bytes(1000)
+	const calls = []
+	globalThis.fetch = async url => {
+		const mapbox = new URL(url).hostname === 'api.mapbox.com'
+		calls.push(mapbox ? 'mapbox' : 'terrarium')
+		await new Promise(resolve => setTimeout(resolve, 5))
+		return new Response(mapbox ? mapboxBytes : terrariumBytes)
+	}
+	try {
+		const [mapbox, terrarium] = await Promise.all(['mapbox', 'terrarium'].map(provider =>
+			fetchHeightMap(11.123, 21.123, 100, { resolution: 64, provider })))
+		assert.equal(mapbox.demSource, 'mapbox'); assert.equal(terrarium.demSource, 'terrarium')
+		assert.ok(Math.abs(mapbox.minElevation - 100) < 1e-6)
+		assert.ok(Math.abs(mapbox.maxElevation - 100) < 1e-6)
+		assert.ok(Math.abs(terrarium.minElevation - 1000) < 1e-6)
+		assert.ok(Math.abs(terrarium.maxElevation - 1000) < 1e-6)
+		assert.ok(calls.includes('mapbox') && calls.includes('terrarium'))
+		const loaded = calls.length
+		assert.equal(await fetchHeightMap(11.123, 21.123, 100, { resolution: 64, provider: 'mapbox' }), mapbox)
+		assert.equal(await fetchHeightMap(11.123, 21.123, 100, { resolution: 64, provider: 'terrarium' }), terrarium)
+		assert.equal(calls.length, loaded)
+		assert.equal(process.env.TERRAIN_DEM_PROVIDER, defaultProvider)
+	} finally {
+		globalThis.fetch = originalFetch
+		if (originalToken === undefined) delete process.env.MAPBOX_ACCESS_TOKEN
+		else process.env.MAPBOX_ACCESS_TOKEN = originalToken
+	}
+})

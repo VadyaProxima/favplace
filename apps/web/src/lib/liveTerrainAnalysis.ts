@@ -3,6 +3,7 @@ import {
 	terrainFrameFromResponse,
 	terrainRequestUrl,
 	type TerrainRequestStage,
+	type TerrainProvider,
 } from './referenceTerrainRequests.ts'
 import type { TerrainFrame, TerrainGeoFrame } from './referenceSignetTerrain.ts'
 
@@ -31,6 +32,7 @@ function sameFrame(a: TerrainGeoFrame, b: TerrainGeoFrame) {
 }
 
 type Callbacks = {
+	provider?: TerrainProvider
 	onView: (view: TerrainGeoFrame) => void
 	onFrames: (fine: TerrainFrame, coarse: TerrainFrame | null, view: TerrainGeoFrame) => void
 	onBusy: (busy: boolean) => void
@@ -57,7 +59,7 @@ export class LiveTerrainAnalysis {
 	constructor(callbacks: Callbacks) {
 		this.callbacks = callbacks
 		this.fetchFrame = callbacks.fetchFrame ?? (async (stage, signal) => {
-			const response = await fetch(terrainRequestUrl(stage, true), { signal })
+			const response = await fetch(terrainRequestUrl(stage, true, callbacks.provider), { signal })
 			return terrainFrameFromResponse(await readTerrainResponse(response), stage.final)
 		})
 	}

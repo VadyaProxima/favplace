@@ -3,6 +3,26 @@ import test from 'node:test'
 import { LiveTerrainAnalysis, terrainFrameContains } from '../src/lib/liveTerrainAnalysis.ts'
 import { readTerrainResponse } from '../src/lib/referenceTerrainRequests.ts'
 
+test('Mapbox preview requests send their provider on every terrain stage', async () => {
+	const originalFetch = globalThis.fetch, requests = []
+	globalThis.fetch = async url => {
+		const p = new URL(url, 'http://localhost').searchParams
+		requests.push(p)
+		return new Response(JSON.stringify({ data: [], width: Number(p.get('resolution')), height: Number(p.get('resolution')),
+			metadata: { minElevation: 0, maxElevation: 100 },
+			frame: { lat: Number(p.get('lat')), lng: Number(p.get('lng')), radiusKm: Number(p.get('radius')) / 1000, bearing: Number(p.get('bearing')) } }),
+			{ headers: { 'Content-Type': 'application/json' } })
+	}
+	const analysis = new LiveTerrainAnalysis({ provider: 'mapbox', onView() {}, onFrames() {}, onBusy() {} })
+	try {
+		analysis.update({ lat: 35, lng: 138, radiusKm: .5, bearing: 57, interacting: false })
+		await new Promise(resolve => setTimeout(resolve, 240))
+		assert.equal(requests.length, 3)
+		assert.ok(requests.every(p => p.get('provider') === 'mapbox' && p.get('format') === 'f32'))
+		assert.deepEqual(requests.map(p => Number(p.get('resolution'))).sort((a, b) => a - b), [256, 512, 1024])
+	} finally { analysis.dispose(); globalThis.fetch = originalFetch }
+})
+
 const initial = { lat: 35.3628, lng: 138.7307, radiusKm: .5, bearing: 0, interacting: true }
 const settle = () => new Promise(resolve => setImmediate(resolve))
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms))

@@ -3,12 +3,16 @@
 import { useEffect, useState } from 'react'
 import { useAppStore } from '@/store/useAppStore'
 import { LiveTerrainAnalysis } from './liveTerrainAnalysis'
+import type { TerrainProvider } from './referenceTerrainRequests'
 
-export function useTerrainAnalysis() {
+export function useTerrainAnalysis(provider?: TerrainProvider) {
 	const [fetching, setFetching] = useState(false)
 	const [error, setError] = useState<string | null>(null)
 	useEffect(() => {
+		useAppStore.setState({ terrainFrame: null, coarseTerrainFrame: null, terrainViewFrame: null,
+			heightMap: null, contextHeightMap: null, elevationMeta: null })
 		const analysis = new LiveTerrainAnalysis({
+			provider,
 			onView: view => useAppStore.getState().setTerrainViewFrame(view),
 			onFrames: (fine, coarse, view) => {
 				const state = useAppStore.getState()
@@ -29,6 +33,6 @@ export function useTerrainAnalysis() {
 		})
 		update()
 		return () => { unsubscribe(); analysis.dispose() }
-	}, [])
+	}, [provider])
 	return { fetching, error }
 }

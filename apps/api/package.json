@@ -4,6 +4,7 @@
 	"private": true,
 	"scripts": {
 		"dev": "nest start --watch",
+		"dev:terrain": "pnpm --filter @favplace/terrain build && pnpm build && node scripts/terrain-preview.cjs",
 		"build": "nest build",
 		"start": "node dist/main",
 		"lint": "eslint src",

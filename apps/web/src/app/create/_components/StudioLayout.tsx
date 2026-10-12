@@ -17,13 +17,16 @@ import { StepProgress } from './StepProgress'
 import { StlExportButton } from './StlExportButton'
 import { STUDIO_SECTIONS, STUDIO_STEP_TITLES } from './studioSections'
 import styles from './CreateStudio.module.css'
+import type { TerrainProvider } from '@/lib/referenceTerrainRequests'
+import { DevelopmentTerrainSource } from './DevelopmentTerrainSource'
 
-export function StudioLayout({ children, isAdmin, fetching, shared, onShare }: {
+export function StudioLayout({ children, isAdmin, fetching, shared, onShare, terrainProvider }: {
 	children: ReactNode
 	isAdmin: boolean
 	fetching: boolean
 	shared: boolean
 	onShare: () => void
+	terrainProvider?: TerrainProvider
 }) {
 	const t = useT()
 	const formatPrice = usePriceFormatter()
@@ -59,7 +62,7 @@ export function StudioLayout({ children, isAdmin, fetching, shared, onShare }: {
 	}, [step])
 
 	return (
-		<div className={styles.studio}>
+		<div className={styles.studio} data-terrain-provider={terrainProvider}>
 			<header className={styles.header} data-admin={isAdmin}>
 				<Link href="/" className="font-display text-2xl font-semibold tracking-tight"><SiteBrand /><span className="sr-only"> {t("— на главную")}</span></Link>
 				<span className={styles.headerTitle}>{t("Создать своё кольцо")}</span>
@@ -74,6 +77,7 @@ export function StudioLayout({ children, isAdmin, fetching, shared, onShare }: {
 					</button>
 				</div>
 			</header>
+			{process.env.NODE_ENV === 'development' && terrainProvider && <DevelopmentTerrainSource provider={terrainProvider} />}
 
 			<div className={styles.navigation}><StepProgress /></div>
 

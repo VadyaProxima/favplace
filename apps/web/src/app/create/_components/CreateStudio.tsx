@@ -8,6 +8,7 @@ import {
 	terrainFrameFromResponse,
 	terrainRequestUrl,
 	type TerrainApiResponse,
+	type TerrainProvider,
 } from '@/lib/referenceTerrainRequests'
 import { useTerrainAnalysis } from '@/lib/useTerrainAnalysis'
 import { useAppStore } from '@/store/useAppStore'
@@ -21,12 +22,12 @@ import { StepRelief } from './steps/StepRelief'
 import { StepSize } from './steps/StepSize'
 import { buildShareUrl, useConfigUrl } from './useConfigUrl'
 
-export function CreateStudio() {
+export function CreateStudio({ terrainProvider }: { terrainProvider?: TerrainProvider }) {
 	const configRevision = useConfigUrl()
-	return configRevision ? <HydratedStudio key={configRevision} /> : null
+	return configRevision ? <HydratedStudio key={`${configRevision}:${terrainProvider ?? 'default'}`} terrainProvider={terrainProvider} /> : null
 }
 
-function HydratedStudio() {
+function HydratedStudio({ terrainProvider }: { terrainProvider?: TerrainProvider }) {
 	const t = useT()
 	// Экспорт STL — служебная операция, покупателю она не нужна.
 	// Вход: /admin. Гейт косметический: сама сборка файла живёт в браузере.
@@ -36,7 +37,7 @@ function HydratedStudio() {
 
 	const setEdgeTerrainFrames = useAppStore(s => s.setEdgeTerrainFrames)
 
-	const { fetching, error: terrainError } = useTerrainAnalysis()
+	const { fetching, error: terrainError } = useTerrainAnalysis(terrainProvider)
 	const [shared, setShared] = useState(false)
 	const [flyTarget, setFlyTarget] = useState<FlyTarget>(() => ({
 		...(useAppStore.getState().location?.coordinates ?? { lng: 138.7307, lat: 35.3628 }), key: 0,
@@ -61,7 +62,7 @@ function HydratedStudio() {
 					bearing: 0,
 				})
 				const stage = plan.fine[plan.fine.length - 1]
-				const res = await fetch(terrainRequestUrl(stage), { signal: ac.signal })
+				const res = await fetch(terrainRequestUrl(stage, false, terrainProvider), { signal: ac.signal })
 				if (!res.ok) throw new Error(`Terrain API ${res.status}`)
 				const data = (await res.json()) as TerrainApiResponse
 				setEdgeTerrainFrames(terrainFrameFromResponse(data, true), null)
@@ -74,7 +75,7 @@ function HydratedStudio() {
 			clearTimeout(timer)
 			ac.abort()
 		}
-	}, [ringFormForEdge, edgeLat, edgeLng, edgeRadius, setEdgeTerrainFrames])
+	}, [ringFormForEdge, edgeLat, edgeLng, edgeRadius, setEdgeTerrainFrames, terrainProvider])
 
 	const flyTo = useCallback((lat: number, lng: number) => {
 		setFlyTarget(prev => ({ lat, lng, key: prev.key + 1 }))
@@ -92,8 +93,8 @@ function HydratedStudio() {
 	}
 
 	return (
-		<StudioLayout isAdmin={Boolean(isAdmin)} fetching={fetching} shared={shared} onShare={share}>
-			{terrainError && step === 'place' && (
+		<StudioLayout isAdmin={Boolean(isAdmin)} fetching={fetching} shared={shared} onShare={share} terrainProvider={terrainProvider}>
+			{terrainError && (step === 'place' || terrainProvider === 'mapbox') && (
 				<p role="alert" className="mb-4 border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
 					{t("Не удалось загрузить высоты. Выберите место ещё раз.")}</p>
 			)}

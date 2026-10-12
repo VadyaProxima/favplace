@@ -2,6 +2,10 @@
 .header { display: flex; align-items: center; gap: 24px; flex-shrink: 0; padding: max(4px, env(safe-area-inset-top)) 32px 4px; background: var(--surface); border-bottom: 1px solid var(--line); }
 .headerTitle { padding-left: 24px; border-left: 1px solid var(--line); font-size: 13px; color: var(--muted); }
 .headerActions { display: flex; align-items: center; gap: 12px; margin-left: auto; }
+.developmentSource { display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; gap: 12px; padding: 5px 32px; border-bottom: 1px solid var(--line); background: var(--surface); font-size: 11px; color: var(--muted); }
+.developmentSource strong { font-weight: 500; color: var(--ink); }
+.developmentSource a { flex-shrink: 0; text-decoration: underline; text-underline-offset: 3px; }
+@media (max-width: 639px) { .developmentSource { padding-inline: 12px; font-size: 9px; gap: 8px; } }
 .share { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 44px; padding: 0 16px; border: 1px solid var(--line); border-radius: 999px; font-size: 12px; }
 .previewToggle { display: none; }
 .navigation { flex-shrink: 0; padding: 6px 32px; background: var(--surface); }

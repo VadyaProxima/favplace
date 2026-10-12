@@ -2,12 +2,15 @@ import {
 	createTerrainGeoFrame,
 	fetchHeightMap,
 	resampleHeightMap,
+	getDemProvider,
+	type DemProvider,
 } from '@favplace/terrain'
 import {
 	BadGatewayException,
 	BadRequestException,
 	Injectable,
 	Logger,
+	NotFoundException,
 } from '@nestjs/common'
 
 @Injectable()
@@ -21,7 +24,15 @@ export class TerrainService {
 		resolution: number,
 		bearing = 0,
 		zoomOffset = 0,
+		provider?: string,
 	) {
+		if (provider !== undefined) {
+			if (process.env.NODE_ENV === 'production') throw new NotFoundException()
+			if (provider !== 'mapbox' && provider !== 'terrarium') {
+				throw new BadRequestException('provider must be mapbox or terrarium')
+			}
+		}
+		const selectedProvider = provider as DemProvider | undefined
 		if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
 			throw new BadRequestException('lat and lng must be finite numbers')
 		}
@@ -37,6 +48,7 @@ export class TerrainService {
 				bearing,
 				zoomOffset,
 				resolution: clampedRes,
+				provider: selectedProvider,
 			})
 			const heightMap = resampleHeightMap(raw, clampedRes)
 
@@ -48,7 +60,7 @@ export class TerrainService {
 					minElevation: raw.minElevation,
 					maxElevation: raw.maxElevation,
 					elevationRange: raw.maxElevation - raw.minElevation,
-					demSource: raw.demSource ?? 'mapbox',
+					demSource: raw.demSource ?? selectedProvider ?? getDemProvider(),
 					tileZoom: raw.tileZoom ?? 0,
 				},
 				frame: createTerrainGeoFrame(lat, lng, clampedRadius, bearing),

@@ -29,6 +29,7 @@ export interface HeightMapRequestOptions {
 	bearing?: number
 	zoomOffset?: number
 	resolution?: number
+	provider?: DemProvider
 }
 
 /** meters-per-degree latitude is constant; longitude shrinks by cos(lat). */
@@ -103,7 +104,7 @@ function memoKey(
 	// v3 = Terrarium z15 for small crops; avoids reusing the coarser z14 memo.
 	return `v4:${lat.toFixed(5)},${lng.toFixed(5)},${Math.round(radiusMeters)},${(
 		options.bearing ?? 0
-	).toFixed(2)},${clampZoomOffset(options.zoomOffset ?? 0)},${cropSize(options)},${getDemProvider()}`
+	).toFixed(2)},${clampZoomOffset(options.zoomOffset ?? 0)},${cropSize(options)},${options.provider ?? getDemProvider()}`
 }
 
 async function fetchHeightMapUncached(
@@ -112,7 +113,7 @@ async function fetchHeightMapUncached(
 	radiusMeters: number,
 	options: HeightMapRequestOptions,
 ): Promise<HeightMap> {
-	const provider = getDemProvider()
+	const provider = options.provider ?? getDemProvider()
 	const CROP_SIZE = cropSize(options)
 	const bearing = options.bearing ?? 0
 	const preferredZoom = Math.min(
@@ -257,6 +258,8 @@ async function fetchHeightMap(
 	radiusMeters: number,
 	options: HeightMapRequestOptions = {},
 ): Promise<HeightMap> {
+	// Snapshot the source for this request; parallel previews must not change global env.
+	options = { ...options, provider: options.provider ?? getDemProvider() }
 	const key = memoKey(centerLat, centerLng, radiusMeters, options)
 	const hit = heightMapMemo.get(key)
 	if (hit) return hit
