@@ -83,11 +83,11 @@ export const JEWELLERY_GL = {
 
 /**
  * Reflections = Environment HDRI mapped onto metal.
- * Custom nature HDRI from /public/models.
+ * Nature HDRI from the contractor's delivery, prepared in linear HDR space for the web.
  */
 export const JEWELLERY_ENV = {
-	files: '/models/small_empty_room_3_1k.hdr',
-	environmentIntensity: 1.20,
+	files: '/models/priroda_68_1k.hdr',
+	environmentIntensity: 1.15,
 	blur: 0.15,
 	toneMappingExposure: JEWELLERY_GL.toneMappingExposure,
 }

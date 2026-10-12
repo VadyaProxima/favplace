@@ -2,9 +2,9 @@ import type { Metadata } from 'next'
 import { CreditsContent } from './CreditsContent'
 
 export const metadata: Metadata = {
-	title: 'Использованные материалы — Место Металл',
+	title: 'Авторы и материалы — Место Металл',
 	description:
-		'Авторы и лицензии сторонних 3D-моделей, использованных в конструкторе Место Металл.',
+		'3D-визуализация Место Металл: авторы, источники моделей, окружение и лицензии материалов.',
 }
 
 export default function CreditsPage() {

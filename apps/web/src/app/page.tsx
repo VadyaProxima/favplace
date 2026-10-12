@@ -4,6 +4,8 @@ import { useT, usePriceFormatter } from '@/lib/preferences'
 
 import Link from 'next/link'
 import { HeaderPreferences } from './_ui/HeaderPreferences'
+import { CopyrightNotice } from './_ui/CopyrightNotice'
+import { SiteBrand } from './_ui/SiteBrand'
 import { formFromPrice } from '@favplace/shared'
 import { HeroTerrain } from './_components/HeroTerrain'
 
@@ -19,7 +21,7 @@ export default function Home() {
 	return (
 		<main className="w-full bg-white text-zinc-900">
 			<header className="flex w-full items-center justify-between gap-4 px-5 py-5 md:px-8">
-				<Link href="/" className="font-display text-3xl font-semibold tracking-tight">Favplace</Link>
+				<Link href="/" className="font-display text-3xl font-semibold tracking-tight"><SiteBrand /></Link>
 				<nav aria-label={t("Навигация сайта")} className="flex items-center gap-2 text-xs text-zinc-600 md:gap-6">
 					<a href="#how" className="hidden hover:text-zinc-900 sm:block">{t("Как это устроено")}</a>
 					<a href="#ring" className="hidden hover:text-zinc-900 sm:block">{t("О кольце")}</a>
@@ -28,8 +30,8 @@ export default function Home() {
 				</nav>
 			</header>
 
-			<section className="grid w-full gap-10 px-5 pb-16 pt-10 md:px-8 md:pb-24 md:pt-16 lg:grid-cols-[1fr_1.05fr] lg:items-center lg:gap-16">
-				<div>
+			<section className="grid w-full grid-cols-1 gap-10 px-5 pb-16 pt-10 md:px-8 md:pb-24 md:pt-16 lg:grid-cols-[1fr_1.05fr] lg:items-center lg:gap-16">
+				<div className="min-w-0">
 					<p className="text-[10px] uppercase tracking-[.2em] text-zinc-500">{t("Топография в ювелирном металле")}</p>
 					<h1 className="font-display mt-6 text-[clamp(3.5rem,7.8vw,7rem)] font-medium leading-[.92] tracking-tight">{t("Место,")}<br />{t("которое")}<br /><span className="italic">{t("остаётся.")}</span></h1>
 					<p className="mt-7 max-w-sm text-sm leading-relaxed text-zinc-500 md:text-base">{t("Вершина, к которой хочется вернуться. Маршрут, который стал вашим. Перенесите рельеф этого места на кольцо.")}</p>
@@ -37,7 +39,7 @@ export default function Home() {
 					<p className="mt-4 text-xs text-zinc-400">{t("Вы выбираете место и характер кольца. Мы создаём его в металле.")}</p>
 				</div>
 
-				<div>
+				<div className="min-w-0">
 					<HeroTerrain />
 					<div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 px-1 text-[11px] text-zinc-500">
 						<span className="text-zinc-400">{t("Или начните с другого места")}</span>
@@ -71,8 +73,8 @@ export default function Home() {
 
 			<footer className="border-t border-zinc-200 px-5 py-8 md:px-8">
 				<div className="w-full">
-					<div className="flex flex-wrap items-start justify-between gap-8"><div><p className="font-display text-4xl font-semibold tracking-tight">Favplace</p><p className="mt-2 text-xs text-zinc-500">{t("Ваше место. Ваша форма.")}</p></div><div className="flex flex-col gap-3 text-sm text-zinc-600 sm:flex-row sm:gap-8"><a href="mailto:hello@favplace.ru" className="hover:text-zinc-900">hello@favplace.ru</a><a href="https://t.me/vadyaProxima" target="_blank" rel="noreferrer" className="hover:text-zinc-900">Telegram ↗</a><Link href="/create" className="hover:text-zinc-900">{t("Мастерская ↗")}</Link></div></div>
-					<div className="mt-10 flex flex-wrap justify-between gap-3 border-t border-zinc-100 pt-5 text-[10px] text-zinc-400"><p>© {new Date().getFullYear()} Favplace</p>{/* Keep the licensed material attribution accessible. */}<Link href="/credits" className="hover:text-zinc-700">{t("Использованные материалы")}</Link></div>
+					<div className="flex flex-wrap items-start justify-between gap-8"><div><p className="font-display text-4xl font-semibold tracking-tight"><SiteBrand /></p><p className="mt-2 text-xs text-zinc-500">{t("Ваше место. Ваша форма.")}</p></div><div className="flex flex-col gap-3 text-sm text-zinc-600 sm:flex-row sm:gap-8"><a href="mailto:hello@favplace.ru" className="hover:text-zinc-900">hello@favplace.ru</a><a href="https://t.me/vadyaProxima" target="_blank" rel="noreferrer" className="hover:text-zinc-900">Telegram ↗</a><Link href="/create" className="hover:text-zinc-900">{t("Мастерская ↗")}</Link></div></div>
+					<div className="mt-10 flex flex-wrap justify-between gap-3 border-t border-zinc-100 pt-5 text-[11px] text-zinc-500"><p><CopyrightNotice /></p><div className="flex flex-wrap gap-x-5 gap-y-3"><a href="https://kwork.ru/user/xlimbo" target="_blank" rel="noreferrer" className="underline underline-offset-4 transition hover:text-zinc-900">3D · xLIMBO ↗</a><Link href="/credits" className="underline underline-offset-4 transition hover:text-zinc-900">{t("Авторы и материалы")} ↗</Link></div></div>
 				</div>
 			</footer>
 		</main>

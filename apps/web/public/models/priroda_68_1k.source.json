@@ -1,0 +1,13 @@
+{
+  "source": "PrirodaHDRI_68.hdr from the contractor delivery Favplace-client-2026-08-27",
+  "sourceSha256": "ab3e777c8883ececa585c84a0a74dd0700fff7006e36a20cb7d06e7f91279e12",
+  "sourceDimensions": [3000, 1500],
+  "sourceBytes": 18000051,
+  "outputSha256": "1e2653c970a539e267ef2a25c5d49daa25f38aed57983a95c2fb5b58b4f563c7",
+  "outputDimensions": [1024, 512],
+  "outputBytes": 1709226,
+  "preparation": "Area averaging in linear HDR radiance, then Radiance RGBE scanline RLE. No tone mapping.",
+  "rebuild": "node apps/web/scripts/prepare-delivery-hdri.mjs <original-hdr> apps/web/public/models/priroda_68_1k.hdr",
+  "deliveryManifestVerification": { "filesChecked": 122, "mismatches": 0 },
+  "geometry": "The three delivered GLB models are byte-identical to the existing project assets. Current parametric ring and terrain geometry are retained."
+}
