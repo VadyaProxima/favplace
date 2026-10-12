@@ -5,6 +5,8 @@ import { useT, usePriceFormatter, useNumberFormatter } from '@/lib/preferences'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import { HeaderPreferences } from '../../_ui/HeaderPreferences'
+import { CopyrightNotice } from '../../_ui/CopyrightNotice'
+import { SiteBrand } from '../../_ui/SiteBrand'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { RING_PRODUCTION_DEFAULTS, calcPrice } from '@favplace/shared'
 import { STEPS, useAppStore } from '@/store/useAppStore'
@@ -59,7 +61,7 @@ export function StudioLayout({ children, isAdmin, fetching, shared, onShare }: {
 	return (
 		<div className={styles.studio}>
 			<header className={styles.header} data-admin={isAdmin}>
-				<Link href="/" className="font-display text-2xl font-semibold tracking-tight">Favplace<span className="sr-only"> {t("— на главную")}</span></Link>
+				<Link href="/" className="font-display text-2xl font-semibold tracking-tight"><SiteBrand /><span className="sr-only"> {t("— на главную")}</span></Link>
 				<span className={styles.headerTitle}>{t("Создать своё кольцо")}</span>
 				<div className={styles.headerActions}>
 					<HeaderPreferences />
@@ -115,7 +117,10 @@ export function StudioLayout({ children, isAdmin, fetching, shared, onShare }: {
 
 			<footer className={styles.footer}>
 				<div className={styles.footerInner}>
-					<div className={styles.price}><span>{t("Стоимость кольца")}</span><strong className="font-display">{formatPrice(price.total)}</strong></div>
+					<div className={styles.priceBlock}>
+						<div className={styles.price}><span>{t("Стоимость кольца")}</span><strong className="font-display">{formatPrice(price.total)}</strong></div>
+						<Link href="/credits" aria-label={t('Авторы и материалы')} title={t('Авторы и материалы')} className={styles.copyright}><CopyrightNotice compact /></Link>
+					</div>
 					<div className={styles.footerControls}>
 						{stepIndex > 0 && <button type="button" onClick={() => setStep(STEPS[stepIndex - 1])} aria-label={t("Предыдущий шаг")} className={styles.back}><span aria-hidden="true">←</span><span className={styles.backLabel}>{t("Назад")}</span></button>}
 						{!isLast && <button type="button" onClick={() => setStep(next)} className={styles.next}>{next === 'order' ? t('Проверить и оформить') : t(STUDIO_STEP_TITLES[next])} <span aria-hidden="true">→</span></button>}

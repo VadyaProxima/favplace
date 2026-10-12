@@ -72,7 +72,7 @@ export function HeroTerrain() {
 							: ready ? <button type="button" onClick={() => sceneRef.current?.finish()} className="min-h-10 shrink-0 px-2 text-[11px] text-zinc-500 transition hover:text-zinc-900">{t("Смотреть кольцо →")}</button> : null}
 				</div>
 			</div>
-			<figcaption className="flex items-center justify-between gap-4 border-t border-zinc-200 bg-white px-5 py-5">
+			<figcaption className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-t border-zinc-200 bg-white px-5 py-5">
 				<div><p className="font-display text-2xl font-semibold">{t("Бештау")}</p><p className="mt-1 text-[11px] text-zinc-500">{t("Серебро · полировка · ваш рельеф")}</p></div>
 				<Link href={CONFIG} className="inline-flex min-h-11 items-center gap-3 text-xs text-zinc-600 transition hover:text-zinc-900">{t("Открыть в мастерской")}<span aria-hidden="true">↗</span></Link>
 			</figcaption>

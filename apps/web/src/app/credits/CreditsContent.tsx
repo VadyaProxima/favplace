@@ -4,15 +4,7 @@ import { useT } from '@/lib/preferences'
 
 import Link from 'next/link'
 import { HeaderPreferences } from '../_ui/HeaderPreferences'
-
-
-
-/**
- * Требование CC-BY-4.0: имя автора, ссылка на оригинал, ссылка на лицензию
- * и указание, что вносились изменения. Атрибуция должна быть доступна
- * оттуда, где используется материал, — поэтому на страницу ведёт ссылка
- * из футера лендинга и из конструктора.
- */
+import { CopyrightNotice } from '../_ui/CopyrightNotice'
 
 interface Asset {
 	title: string
@@ -34,7 +26,7 @@ const ASSETS: Asset[] = [
 			'https://sketchfab.com/3d-models/basic-ring-ca4ee8dbe18543f78f10aacdc26d10b1',
 		license: 'CC BY 4.0',
 		licenseUrl: 'https://creativecommons.org/licenses/by/4.0/',
-		usedFor: 'Базовая форма кольца в 3D-конструкторе',
+		usedFor: 'Базовая модель из исходного комплекта проекта',
 		changes:
 			'Модель изменена: нормирована по габариту, перестроены материалы, добавлена посадочная площадка под рельеф.',
 	},
@@ -46,16 +38,26 @@ const ASSETS: Asset[] = [
 			'https://sketchfab.com/3d-models/lion-signate-ring-717543dbcdb148f8ad8a91ad88cace02',
 		license: 'CC BY 4.0',
 		licenseUrl: 'https://creativecommons.org/licenses/by/4.0/',
-		usedFor: 'Форма перстня-сигнета в 3D-конструкторе',
+		usedFor: 'Модель перстня из исходного комплекта проекта',
 		changes:
 			'Модель изменена: нормирована по габариту, перестроены материалы, адаптирована под вставку рельефа.',
+	},
+	{
+		title: 'Small Empty Room 3',
+		author: 'Sergej Majboroda',
+		authorUrl: 'https://polyhaven.com/a/small_empty_room_3',
+		source: 'https://polyhaven.com/a/small_empty_room_3',
+		license: 'CC0',
+		licenseUrl: 'https://creativecommons.org/publicdomain/zero/1.0/',
+		usedFor: 'Студийное окружение из предыдущей версии 3D-превью',
+		changes: 'Версия 1K. Использовалась для освещения и отражений металла.',
 	},
 ]
 
 export function CreditsContent() {
 	const t = useT()
 	return (
-		<main className="mx-auto max-w-3xl px-6 py-16 md:py-24">
+		<main className="mx-auto max-w-3xl px-6 pb-10 pt-20 md:pb-14 md:pt-24">
 			<div className="absolute right-5 top-4"><HeaderPreferences /></div>
 			<Link
 				href="/"
@@ -64,13 +66,26 @@ export function CreditsContent() {
 				{t("← На главную")}</Link>
 
 			<h1 className="mt-8 font-display text-4xl font-semibold tracking-tight text-zinc-900">
-				{t("Использованные материалы")}</h1>
+				{t("Авторы и материалы")}</h1>
 			<p className="mt-3 max-w-xl text-sm leading-relaxed text-zinc-500">
-				{t("Часть 3D-моделей в конструкторе основана на работах сторонних авторов, опубликованных под свободной лицензией. Ниже — авторы, источники и условия использования.")}</p>
+				{t("Проект «Место Металл» объединяет ювелирную форму и рельеф настоящих мест. Здесь собраны источники 3D-материалов и сведения о работе над визуализацией.")}</p>
 
-			<ul className="mt-12 space-y-10">
+			<section aria-labelledby="project-assets" className="mt-10 rounded-2xl border border-zinc-200 bg-zinc-50 p-6 sm:p-8">
+				<p className="text-[10px] uppercase tracking-[.15em] text-zinc-500">{t('Создано для проекта')}</p>
+				<h2 id="project-assets" className="font-display mt-3 text-2xl font-semibold">{t('3D-визуализация кольца')}</h2>
+				<p className="mt-3 text-sm"><span className="text-zinc-500">{t('Исполнитель')} · </span><a href="https://kwork.ru/user/xlimbo" target="_blank" rel="noreferrer" className="font-medium underline underline-offset-4 transition hover:text-zinc-500">xLIMBO <span className="text-zinc-500">↗ Kwork</span></a></p>
+				<p className="mt-3 text-sm leading-relaxed text-zinc-600">{t('В основе работы — переданный исполнителем комплект проекта от августа 2026 года. Форма кольца, рельеф и освещение адаптированы для интерактивной мастерской.')}</p>
+				<div className="mt-5 border-t border-zinc-200 pt-5">
+					<h3 className="text-sm font-medium">Priroda 68 · HDRI</h3>
+					<p className="mt-2 text-sm leading-relaxed text-zinc-600">{t('Природное окружение из комплекта исполнителя используется для отражений на металле. Для веб-превью подготовлена компактная HDR-версия; окружение не изменяет геометрию кольца или рельеф.')}</p>
+				</div>
+			</section>
+			<h2 className="font-display mt-12 text-2xl font-semibold">{t('Источники и лицензии')}</h2>
+			<p className="mt-2 text-sm leading-relaxed text-zinc-500">{t('Ниже указаны свободно лицензированные материалы, включая исходные модели и окружение, сохранённые в проекте.')}</p>
+
+			<ul className="mt-6 space-y-5">
 				{ASSETS.map(asset => (
-					<li key={asset.source} className="border-t border-zinc-200 pt-6">
+					<li key={asset.source} className="rounded-2xl border border-zinc-200 p-6 sm:p-8">
 						<h2 className="font-display text-xl font-semibold text-zinc-900">
 							{asset.title}
 						</h2>
@@ -93,7 +108,7 @@ export function CreditsContent() {
 									rel="noreferrer"
 									className="break-all underline underline-offset-2 transition hover:text-zinc-500"
 								>
-									{asset.source}
+									{t('Смотреть оригинал')} ↗
 								</a>
 							</Row>
 							<Row label={t("Лицензия")}>
@@ -113,8 +128,10 @@ export function CreditsContent() {
 				))}
 			</ul>
 
-			<p className="mt-16 border-t border-zinc-200 pt-6 text-xs leading-relaxed text-zinc-400">
-				{t("Лицензия CC BY 4.0 разрешает использование, в том числе коммерческое, и переработку при условии указания авторства. Остальные модели, код и тексты сайта созданы для Favplace.")}</p>
+			<footer className="mt-10 border-t border-zinc-200 pt-6 text-xs leading-relaxed text-zinc-500">
+				<p>{t('Сторонние материалы используются на условиях лицензий, указанных у каждого источника.')}</p>
+				<div className="mt-5 flex flex-wrap items-center justify-between gap-4"><p><CopyrightNotice /></p><Link href="/create" className="underline underline-offset-4 hover:text-zinc-900">{t('Открыть в мастерской')} ↗</Link></div>
+			</footer>
 		</main>
 	)
 }
