@@ -17,13 +17,16 @@ import { StepProgress } from './StepProgress'
 import { StlExportButton } from './StlExportButton'
 import { STUDIO_SECTIONS, STUDIO_STEP_TITLES } from './studioSections'
 import styles from './CreateStudio.module.css'
+import type { TerrainProvider } from '@/lib/referenceTerrainRequests'
+import { DevelopmentTerrainSource } from './DevelopmentTerrainSource'
 
-export function StudioLayout({ children, isAdmin, fetching, shared, onShare }: {
+export function StudioLayout({ children, isAdmin, fetching, shared, onShare, terrainProvider }: {
 	children: ReactNode
 	isAdmin: boolean
 	fetching: boolean
 	shared: boolean
 	onShare: () => void
+	terrainProvider?: TerrainProvider
 }) {
 	const t = useT()
 	const formatPrice = usePriceFormatter()
@@ -34,6 +37,7 @@ export function StudioLayout({ children, isAdmin, fetching, shared, onShare }: {
 	const reliefDetail = useAppStore(s => s.reliefDetail)
 	const ringSize = useAppStore(s => s.ringSize)
 	const location = useAppStore(s => s.location)
+	const demSource = useAppStore(s => s.terrainFrame?.demSource)
 	const [previewOverride, setPreviewOverride] = useState<boolean | null>(null)
 	const [shortScreen, setShortScreen] = useState(false)
 	const contentRef = useRef<HTMLDivElement>(null)
@@ -59,7 +63,7 @@ export function StudioLayout({ children, isAdmin, fetching, shared, onShare }: {
 	}, [step])
 
 	return (
-		<div className={styles.studio}>
+		<div className={styles.studio} data-terrain-provider={terrainProvider}>
 			<header className={styles.header} data-admin={isAdmin}>
 				<Link href="/" className="font-display text-2xl font-semibold tracking-tight"><SiteBrand /><span className="sr-only"> {t("— на главную")}</span></Link>
 				<span className={styles.headerTitle}>{t("Создать своё кольцо")}</span>
@@ -74,6 +78,7 @@ export function StudioLayout({ children, isAdmin, fetching, shared, onShare }: {
 					</button>
 				</div>
 			</header>
+			{process.env.NODE_ENV === 'development' && terrainProvider && <DevelopmentTerrainSource provider={terrainProvider} />}
 
 			<div className={styles.navigation}><StepProgress /></div>
 
@@ -87,6 +92,7 @@ export function StudioLayout({ children, isAdmin, fetching, shared, onShare }: {
 						<CanvasMouseHint><FormRingViewer className="h-full w-full" /></CanvasMouseHint>
 						{fetching && <div role="status" className={styles.loading}><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-zinc-900" />{t("Уточняем высоты")}</div>}
 						<p className={styles.previewHint}>{t("Вращайте кольцо пальцем · приближайте двумя")}</p>
+						{demSource === 'mapbox' && <a className={styles.terrainAttribution} href="https://www.mapbox.com/about/maps/" target="_blank" rel="noreferrer">© Mapbox</a>}
 					</section>
 					<dl className={styles.summary}>
 						<div className={styles.summaryPlace}><dt>{t("Место")}</dt><dd>{location ? t(location.name) : t('Выберите точку на карте')}</dd></div>

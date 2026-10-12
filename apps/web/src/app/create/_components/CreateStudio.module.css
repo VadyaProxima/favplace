@@ -2,6 +2,10 @@
 .header { display: flex; align-items: center; gap: 24px; flex-shrink: 0; padding: max(4px, env(safe-area-inset-top)) 32px 4px; background: var(--surface); border-bottom: 1px solid var(--line); }
 .headerTitle { padding-left: 24px; border-left: 1px solid var(--line); font-size: 13px; color: var(--muted); }
 .headerActions { display: flex; align-items: center; gap: 12px; margin-left: auto; }
+.developmentSource { display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; gap: 12px; padding: 5px 32px; border-bottom: 1px solid var(--line); background: var(--surface); font-size: 11px; color: var(--muted); }
+.developmentSource strong { font-weight: 500; color: var(--ink); }
+.developmentSource a { flex-shrink: 0; text-decoration: underline; text-underline-offset: 3px; }
+@media (max-width: 639px) { .developmentSource { padding-inline: 12px; font-size: 9px; gap: 8px; } }
 .share { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 44px; padding: 0 16px; border: 1px solid var(--line); border-radius: 999px; font-size: 12px; }
 .previewToggle { display: none; }
 .navigation { flex-shrink: 0; padding: 6px 32px; background: var(--surface); }
@@ -40,6 +44,7 @@
 .preview { position: relative; flex: 1; min-width: 0; min-height: 180px; overflow: hidden; border: 1px solid var(--line); border-radius: 16px; }
 .loading { position: absolute; top: 16px; left: 16px; display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 999px; background: var(--overlay); font-size: 11px; color: var(--muted); pointer-events: none; }
 .previewHint { display: none; }
+.terrainAttribution { position: absolute; bottom: 8px; inset-inline-start: 8px; z-index: 1; color: var(--muted); font-size: 9px; }
 .summary { display: grid; grid-template-columns: 1.6fr 1fr 1fr; gap: 16px; flex-shrink: 0; padding: 8px 4px 0; }
 .summary > div { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
 .summary dt { flex-shrink: 0; font-size: 10px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
@@ -78,6 +83,7 @@
 	.preview { flex: none; min-height: 0; height: clamp(144px, 30svh, 330px); transition: height .24s ease; border-radius: 12px; }
 	.preview[data-expanded='false'] { height: 0; visibility: hidden; border: 0; }
 	.previewHint { position: absolute; bottom: 8px; inset-inline: 8px; display: block; font-size: 10px; text-align: center; color: var(--muted); pointer-events: none; }
+	.terrainAttribution { top: 8px; bottom: auto; }
 	.loading { top: 10px; left: 10px; padding: 5px 10px; font-size: 10px; }
 	.panel { flex: 1; border-radius: 12px; }
 	.panelHeading { padding: 0 16px; }

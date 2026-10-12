@@ -16,6 +16,7 @@ export class TerrainController {
 	@Query("zoomOffset") zoomOffset?: string,
 	@Query("format") format?: string,
 	@Res({ passthrough: true }) response?: Response,
+	@Query('provider') provider?: string,
   ) {
     const result = await this.terrainService.getHeightMap(
       parseFloat(lat),
@@ -24,6 +25,7 @@ export class TerrainController {
       resolution ? parseInt(resolution) : 64,
 	  bearing ? parseFloat(bearing) : 0,
 	  zoomOffset ? parseInt(zoomOffset) : 0,
+	  provider,
     );
 	if (format !== 'f32') return result;
 	// Float32 keeps more precision than the DEM while avoiding a ~20 MB JSON grid.

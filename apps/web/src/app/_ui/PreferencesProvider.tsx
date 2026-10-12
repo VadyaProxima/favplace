@@ -10,6 +10,8 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
 	useEffect(() => {
 		const english = language === 'en'
 		const title = pathname === '/credits' ? (english ? 'Authors and assets — Mesto Metal' : 'Авторы и материалы — Место Металл')
+			: pathname === '/create-mapbox' ? (english ? 'Mapbox — Mesto Metal' : 'Mapbox — Место Металл')
+			: pathname === '/create-terrarium' ? (english ? 'Terrarium — Mesto Metal' : 'Terrarium — Место Металл')
 			: pathname === '/admin' ? (english ? 'Admin sign-in — Mesto Metal' : 'Служебный вход — Место Металл')
 			: english ? 'Mesto Metal — A ring with the landscape of your favourite place' : 'Место Металл — Кольцо с рельефом любимого места'
 		const syncTitle = () => { if (document.title !== title) document.title = title }

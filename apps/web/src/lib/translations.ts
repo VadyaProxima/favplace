@@ -1,5 +1,7 @@
 /** Russian is the source language; arbitrary user-entered place names stay untouched. */
 export const EN: Record<string, string> = {
+	'Сравнение рельефа': 'Terrain comparison',
+	'Сравнить с': 'Compare with',
 	'Имя — не больше 80 символов': 'Name must be no longer than 80 characters',
 	'Имя должно содержать минимум две буквы, без цифр и спецсимволов': 'Use at least two letters for your name, without numbers or special characters',
 	'Введите полный номер с кодом страны: от 8 до 15 цифр': 'Enter a complete phone number with its country code: 8 to 15 digits',

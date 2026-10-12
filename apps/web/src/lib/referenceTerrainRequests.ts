@@ -1,5 +1,7 @@
 import type { TerrainFrame } from './referenceSignetTerrain.ts'
 
+export type TerrainProvider = 'terrarium' | 'mapbox'
+
 export interface TerrainRequestSelection {
 	lat: number
 	lng: number
@@ -58,7 +60,7 @@ export function waitForTerrainStageDelay(milliseconds: number, signal: AbortSign
 	})
 }
 
-export function terrainRequestUrl(stage: TerrainRequestStage, binary = false) {
+export function terrainRequestUrl(stage: TerrainRequestStage, binary = false, provider?: TerrainProvider) {
 	const params = new URLSearchParams({
 		lat: String(stage.lat),
 		lng: String(stage.lng),
@@ -68,6 +70,7 @@ export function terrainRequestUrl(stage: TerrainRequestStage, binary = false) {
 		zoomOffset: String(stage.zoomOffset),
 	})
 	if (binary) params.set('format', 'f32')
+	if (provider) params.set('provider', provider)
 	return `/api/terrain/heightmap?${params.toString()}`
 }
 
@@ -98,6 +101,7 @@ export interface TerrainApiResponse {
 	metadata: {
 		minElevation: number
 		maxElevation: number
+		demSource?: TerrainProvider
 	}
 	frame: TerrainFrame['frame']
 }
@@ -111,6 +115,7 @@ export function terrainFrameFromResponse(
 		size: response.width,
 		minElev: response.metadata.minElevation,
 		maxElev: response.metadata.maxElevation,
+		demSource: response.metadata.demSource,
 		frame: response.frame,
 		final,
 	}
