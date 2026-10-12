@@ -73,20 +73,16 @@ export function getTilesForBounds(
 }
 
 /**
- * Default source selection. Mapbox requires explicit TERRAIN_DEM_PROVIDER=mapbox;
+ * Default source selection. TERRAIN_DEM_PROVIDER=terrarium can override Mapbox;
  * development comparisons can override the source on an individual request.
- *
- * Раньше источник выбирало наличие MAPBOX_ACCESS_TOKEN, то есть токен,
- * заведённый для карты и геокодинга, молча подписывал проект ещё и на
- * платный DEM-сервис.
  *
  * Mapbox encodes heights in 0.1 m increments, Terrarium in 1/256 m increments.
  * These encoding steps do not establish the spatial resolution or survey accuracy.
  */
 export function getDemProvider(): DemProvider {
-	return process.env.TERRAIN_DEM_PROVIDER?.trim().toLowerCase() === 'mapbox'
-		? 'mapbox'
-		: 'terrarium'
+	return process.env.TERRAIN_DEM_PROVIDER?.trim().toLowerCase() === 'terrarium'
+		? 'terrarium'
+		: 'mapbox'
 }
 
 export function getMapboxAccessToken(): string {
@@ -148,20 +144,35 @@ async function mapPool<T, R>(
   items: T[],
   concurrency: number,
   fn: (item: T, index: number) => Promise<R>,
+  signal?: AbortSignal,
 ): Promise<R[]> {
   const results = new Array<R>(items.length);
   let next = 0;
+  let failed = false;
   const workers = Array.from(
     { length: Math.min(concurrency, Math.max(1, items.length)) },
     async () => {
       while (true) {
+        if (failed) return;
+        signal?.throwIfAborted();
         const i = next++;
         if (i >= items.length) return;
-        results[i] = await fn(items[i], i);
+        try { results[i] = await fn(items[i], i); }
+        catch (error) { failed = true; throw error; }
       }
     },
   );
-  await Promise.all(workers);
+  const done = Promise.all(workers);
+  if (signal) {
+    let cancel: () => void = () => {};
+    try {
+      await Promise.race([done, new Promise<never>((_, reject) => {
+        cancel = () => { failed = true; reject(signal.reason); };
+        signal.addEventListener('abort', cancel, { once: true });
+        if (signal.aborted) cancel();
+      })]);
+    } finally { signal.removeEventListener('abort', cancel); }
+  } else await done;
   return results;
 }
 
@@ -169,8 +180,9 @@ export async function fetchTilesLimited(
   tiles: TileCoord[],
   provider: DemProvider = getDemProvider(),
   concurrency = 4,
+  signal?: AbortSignal,
 ): Promise<Buffer[]> {
-  return mapPool(tiles, concurrency, (tile) => fetchTile(tile, provider));
+  return mapPool(tiles, concurrency, (tile) => fetchTile(tile, provider), signal);
 }
 
 const tileCache = new Map<string, Buffer>();
@@ -220,16 +232,19 @@ async function fetchTileUncached(
       ? mapboxTileUrl(tile, getMapboxAccessToken())
       : terrariumTileUrl(tile);
 
-  const maxAttempts = 6;
+  // Mapbox failures switch to the backup source instead of prolonged retries.
+  const maxAttempts = provider === 'mapbox' ? 1 : 6;
   let lastErr: unknown;
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
       const res = await fetch(url, {
-        signal: AbortSignal.timeout(25000),
+        signal: AbortSignal.timeout(provider === 'mapbox' ? 6000 : 25000),
         headers: { "User-Agent": "favplace-terrain/1.0" },
       });
       if (res.ok) {
         const buf = Buffer.from(await res.arrayBuffer());
+        // A CDN error page with HTTP 200 must not poison the tile cache.
+        decodeDemTile(buf, provider);
         if (tileCache.size >= TILE_CACHE_MAX) {
           const oldest = tileCache.keys().next().value;
           if (oldest) tileCache.delete(oldest);
@@ -244,6 +259,7 @@ async function fetchTileUncached(
       lastErr = new Error(`HTTP ${res.status}`);
       // Rate limit / transient CDN — backoff
       if (res.status === 429 || res.status >= 500) {
+        if (attempt + 1 >= maxAttempts) break;
         await sleep(400 * Math.pow(2, attempt) + Math.random() * 200);
         continue;
       }
@@ -254,6 +270,7 @@ async function fetchTileUncached(
         break;
       }
       // Network blips (fetch failed / abort) — retry with backoff
+      if (attempt + 1 >= maxAttempts) break;
       await sleep(350 * Math.pow(2, attempt) + Math.random() * 250);
       continue;
     }

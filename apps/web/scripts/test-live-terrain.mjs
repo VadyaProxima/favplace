@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { LiveTerrainAnalysis, terrainFrameContains } from '../src/lib/liveTerrainAnalysis.ts'
 import { readTerrainResponse } from '../src/lib/referenceTerrainRequests.ts'
+import { sampleFramedTerrain } from '../src/lib/referenceSignetTerrain.ts'
 
 test('Mapbox preview requests send their provider on every terrain stage', async () => {
 	const originalFetch = globalThis.fetch, requests = []
@@ -35,12 +36,34 @@ function rig() {
 		onError: error => errors.push(error),
 		fetchFrame: (stage, signal) => new Promise((resolve, reject) => requests.push({ stage, signal, resolve, reject })),
 	})
-	const resolve = request => request.resolve({
+	const resolve = (request, demSource) => request.resolve({
 		frame: { lat: request.stage.lat, lng: request.stage.lng, radiusKm: request.stage.radiusMeters / 1000, bearing: request.stage.bearing },
 		size: request.stage.resolution, data: [], minElev: 0, maxElev: 1000, final: request.stage.final,
+		demSource: typeof demSource === 'string' ? demSource : undefined,
 	})
 	return { analysis, requests, views, results, busy, errors, resolve }
 }
+
+test('a Mapbox crop never blends Terrarium context during failover or recovery', async () => {
+	const r = rig(); r.analysis.update({ ...initial, interacting: false })
+	r.resolve(r.requests.find(request => request.stage.resolution === 256), 'mapbox'); await settle()
+	r.resolve(r.requests.find(request => request.stage.resolution === 512), 'terrarium'); await settle()
+	assert.equal(r.results.at(-1).fine.demSource, 'terrarium')
+	assert.equal(r.results.at(-1).coarse, null)
+	await wait(220)
+	r.resolve(r.requests.find(request => request.stage.resolution === 1024), 'mapbox'); await settle()
+	assert.equal(r.results.at(-1).fine.demSource, 'mapbox')
+	assert.equal(r.results.at(-1).coarse.demSource, 'mapbox')
+	r.analysis.dispose()
+})
+
+test('terrain sampling discards context from a different source outside the fine crop', () => {
+	const fine = { frame: initial, size: 2, data: [[0, 0], [0, 0]], minElev: 200, maxElev: 200, demSource: 'mapbox' }
+	const coarse = { ...fine, frame: { ...initial, radiusKm: 2 }, minElev: 1000, maxElev: 1000, demSource: 'terrarium' }
+	const view = { ...initial, radiusKm: 1 }
+	assert.equal(sampleFramedTerrain(fine, coarse, view, [[0, 0]], 0)[0], 200)
+	assert.equal(sampleFramedTerrain(fine, { ...coarse, demSource: 'mapbox' }, view, [[0, 0]], 0)[0], 1000)
+})
 
 test('a preview appears without waiting for the broad context', async () => {
 	const r = rig(); r.analysis.update(initial)

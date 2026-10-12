@@ -110,7 +110,7 @@ export class LiveTerrainAnalysis {
 		available.sort((a, b) => b.size / b.frame.radiusKm - a.size / a.frame.radiusKm)
 		const fine = available[0]
 		const context = this.context && terrainFrameContains(this.context.frame, view) ? this.context : null
-		if (fine) this.callbacks.onFrames(fine, context, view)
+		if (fine) this.callbacks.onFrames(fine, context?.demSource === fine.demSource ? context : null, view)
 		else if (context) {
 			this.callbacks.onFrames(context, context, view)
 		}

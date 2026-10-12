@@ -114,6 +114,9 @@ async function fetchHeightMapUncached(
 	options: HeightMapRequestOptions,
 ): Promise<HeightMap> {
 	const provider = options.provider ?? getDemProvider()
+	// A shared tile may finish in the background, but this crop stops queuing work
+	// after the deadline so an outage cannot delay the backup indefinitely.
+	const signal = provider === 'mapbox' ? AbortSignal.timeout(8000) : undefined
 	const CROP_SIZE = cropSize(options)
 	const bearing = options.bearing ?? 0
 	const preferredZoom = Math.min(
@@ -145,12 +148,12 @@ async function fetchHeightMapUncached(
 		tiles = getTilesForBounds(swLat, swLng, neLat, neLng, zoom)
 		if (tiles.length === 0) break
 		try {
-			buffers = await fetchTilesLimited(tiles, provider, 4)
+			buffers = await fetchTilesLimited(tiles, provider, 4, signal)
 			break
 		} catch (err) {
 			lastErr = err
 			const msg = err instanceof Error ? err.message : String(err)
-			if (zoom > 1 && /HTTP 404|Failed to fetch tile/.test(msg)) {
+			if (zoom > 1 && /HTTP 404\b/.test(msg)) {
 				zoom -= 1
 				continue
 			}
@@ -252,7 +255,7 @@ async function fetchHeightMapUncached(
 	}
 }
 
-async function fetchHeightMap(
+async function fetchHeightMapForProvider(
 	centerLat: number,
 	centerLng: number,
 	radiusMeters: number,
@@ -282,6 +285,32 @@ async function fetchHeightMap(
 
 	inflight.set(key, promise)
 	return promise
+}
+
+const MAPBOX_RETRY_DELAY_MS = 60_000
+let mapboxRetryAfter = 0
+
+/** Explicit development comparisons stay strict; normal requests fail over as a whole crop. */
+async function fetchHeightMap(
+	centerLat: number,
+	centerLng: number,
+	radiusMeters: number,
+	options: HeightMapRequestOptions = {},
+): Promise<HeightMap> {
+	const provider = options.provider ?? getDemProvider()
+	if (options.provider || provider === 'terrarium') {
+		return fetchHeightMapForProvider(centerLat, centerLng, radiusMeters, { ...options, provider })
+	}
+	if (Date.now() >= mapboxRetryAfter) {
+		try {
+			return await fetchHeightMapForProvider(centerLat, centerLng, radiusMeters, { ...options, provider: 'mapbox' })
+		} catch {
+			mapboxRetryAfter = Date.now() + MAPBOX_RETRY_DELAY_MS
+		}
+	}
+	// This goes into Terrarium's own cache, never into the Mapbox cache. Once the
+	// cooldown expires, the next request can return to the primary source.
+	return fetchHeightMapForProvider(centerLat, centerLng, radiusMeters, { ...options, provider: 'terrarium' })
 }
 
 export { fetchHeightMap }

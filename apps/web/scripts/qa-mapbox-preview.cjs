@@ -55,7 +55,7 @@ const snapshot = page => page.evaluate(keys => {
 		responses.length = 0
 		const terrariumStages = stagesReady('terrarium')
 		await page.getByRole('link', { name: /Сравнить с Terrarium/ }).click()
-		await page.waitForURL(url => url.pathname === '/create')
+		await page.waitForURL(url => url.pathname === '/create-terrarium')
 		await page.waitForFunction(() => window.__favplaceStore?.getState().terrainFrame?.final)
 		await terrariumStages
 		await page.waitForTimeout(300)
@@ -64,7 +64,7 @@ const snapshot = page => page.evaluate(keys => {
 		await page.waitForTimeout(1000)
 		await page.waitForFunction(() => !document.querySelector('[data-testid="mountain-ring-viewer"] [role="status"]'))
 		await page.screenshot({ path: 'screenshots/dev-terrarium-comparison.png' })
-		console.log('PASS: ordinary create uses Terrarium at the identical coordinates and settings')
+		console.log('PASS: Terrarium comparison uses the identical coordinates and settings')
 		responses.length = 0
 		await page.getByRole('link', { name: /Сравнить с Mapbox/ }).click()
 		await page.waitForURL(url => url.pathname === '/create-mapbox')

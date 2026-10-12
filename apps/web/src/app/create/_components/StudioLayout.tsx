@@ -37,6 +37,7 @@ export function StudioLayout({ children, isAdmin, fetching, shared, onShare, ter
 	const reliefDetail = useAppStore(s => s.reliefDetail)
 	const ringSize = useAppStore(s => s.ringSize)
 	const location = useAppStore(s => s.location)
+	const demSource = useAppStore(s => s.terrainFrame?.demSource)
 	const [previewOverride, setPreviewOverride] = useState<boolean | null>(null)
 	const [shortScreen, setShortScreen] = useState(false)
 	const contentRef = useRef<HTMLDivElement>(null)
@@ -91,6 +92,7 @@ export function StudioLayout({ children, isAdmin, fetching, shared, onShare, ter
 						<CanvasMouseHint><FormRingViewer className="h-full w-full" /></CanvasMouseHint>
 						{fetching && <div role="status" className={styles.loading}><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-zinc-900" />{t("Уточняем высоты")}</div>}
 						<p className={styles.previewHint}>{t("Вращайте кольцо пальцем · приближайте двумя")}</p>
+						{demSource === 'mapbox' && <a className={styles.terrainAttribution} href="https://www.mapbox.com/about/maps/" target="_blank" rel="noreferrer">© Mapbox</a>}
 					</section>
 					<dl className={styles.summary}>
 						<div className={styles.summaryPlace}><dt>{t("Место")}</dt><dd>{location ? t(location.name) : t('Выберите точку на карте')}</dd></div>

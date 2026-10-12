@@ -9,7 +9,7 @@ import styles from './CreateStudio.module.css'
 export function DevelopmentTerrainSource({ provider }: { provider: TerrainProvider }) {
 	const t = useT()
 	const params = useAppStore(state => encodeConfigParams(state).toString())
-	const target = provider === 'mapbox' ? '/create' : '/create-mapbox'
+	const target = provider === 'mapbox' ? '/create-terrarium' : '/create-mapbox'
 	const other = provider === 'mapbox' ? 'Terrarium' : 'Mapbox'
 	return <div className={styles.developmentSource}>
 		<span>{t('Сравнение рельефа')} · <strong>{provider === 'mapbox' ? <a href="https://www.mapbox.com/about/maps/" target="_blank" rel="noreferrer">© Mapbox Terrain-RGB</a> : 'Terrarium'}</strong></span>

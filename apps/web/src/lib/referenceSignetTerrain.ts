@@ -21,6 +21,7 @@ export interface TerrainGeoFrame {
 }
 
 export interface TerrainFrame {
+	demSource?: 'mapbox' | 'terrarium'
 	data: number[][]
 	size: number
 	minElev: number
@@ -204,6 +205,7 @@ export function sampleFramedTerrain(
 	smoothing: number,
 ) {
 	const fineTransform = transformFrame(fine.frame, view)
+	if (coarse?.demSource !== fine.demSource) coarse = null
 	const coarseTransform = coarse ? transformFrame(coarse.frame, view) : null
 	const samples = new Float64Array(uvs.length)
 	for (let index = 0; index < uvs.length; index++) {

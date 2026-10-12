@@ -29,14 +29,14 @@ test('terrain tile downloads are shared, decoded once and reused by different cr
 		assert.equal(calls, 1)
 		assert.equal(a, b)
 		assert.equal(decodeDemTile(a, 'terrarium'), decodeDemTile(b, 'terrarium'))
-		const small = await fetchHeightMap(10.123, 20.123, 100, { resolution: 64 })
+		const small = await fetchHeightMap(10.123, 20.123, 100, { resolution: 64, provider: 'terrarium' })
 		const loaded = calls
-		const fine = await fetchHeightMap(10.123, 20.123, 100, { resolution: 1024 })
+		const fine = await fetchHeightMap(10.123, 20.123, 100, { resolution: 1024, provider: 'terrarium' })
 		assert.equal(calls, loaded, 'changing resolution must reuse decoded DEM tiles')
 		assert.equal(small.width, 64); assert.equal(small.data.length, 64)
 		assert.equal(fine.width, 1024); assert.equal(fine.data.length, 1024)
 		assert.ok(fine.maxElevation > fine.minElevation)
-		assert.equal(await fetchHeightMap(10.123, 20.123, 100, { resolution: 64 }), small)
+		assert.equal(await fetchHeightMap(10.123, 20.123, 100, { resolution: 64, provider: 'terrarium' }), small)
 		assert.equal(small.minElevation, fine.minElevation)
 		assert.equal(small.maxElevation, fine.maxElevation)
 		globalThis.fetch = async () => { calls++; return new Response(null, { status: 404 }) }

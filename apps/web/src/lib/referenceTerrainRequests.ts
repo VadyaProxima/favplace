@@ -101,6 +101,7 @@ export interface TerrainApiResponse {
 	metadata: {
 		minElevation: number
 		maxElevation: number
+		demSource?: TerrainProvider
 	}
 	frame: TerrainFrame['frame']
 }
@@ -114,6 +115,7 @@ export function terrainFrameFromResponse(
 		size: response.width,
 		minElev: response.metadata.minElevation,
 		maxElev: response.metadata.maxElevation,
+		demSource: response.metadata.demSource,
 		frame: response.frame,
 		final,
 	}
