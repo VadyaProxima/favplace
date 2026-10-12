@@ -19,30 +19,6 @@ interface Asset {
 
 const ASSETS: Asset[] = [
 	{
-		title: 'Basic ring',
-		author: 'gheopardo',
-		authorUrl: 'https://sketchfab.com/gheopardo',
-		source:
-			'https://sketchfab.com/3d-models/basic-ring-ca4ee8dbe18543f78f10aacdc26d10b1',
-		license: 'CC BY 4.0',
-		licenseUrl: 'https://creativecommons.org/licenses/by/4.0/',
-		usedFor: 'Базовая модель из исходного комплекта проекта',
-		changes:
-			'Модель изменена: нормирована по габариту, перестроены материалы, добавлена посадочная площадка под рельеф.',
-	},
-	{
-		title: 'Lion Signate Ring',
-		author: 'EristoffJewelryDesigns',
-		authorUrl: 'https://sketchfab.com/EristoffJewelryDesigns',
-		source:
-			'https://sketchfab.com/3d-models/lion-signate-ring-717543dbcdb148f8ad8a91ad88cace02',
-		license: 'CC BY 4.0',
-		licenseUrl: 'https://creativecommons.org/licenses/by/4.0/',
-		usedFor: 'Модель перстня из исходного комплекта проекта',
-		changes:
-			'Модель изменена: нормирована по габариту, перестроены материалы, адаптирована под вставку рельефа.',
-	},
-	{
 		title: 'Small Empty Room 3',
 		author: 'Sergej Majboroda',
 		authorUrl: 'https://polyhaven.com/a/small_empty_room_3',
@@ -81,7 +57,7 @@ export function CreditsContent() {
 				</div>
 			</section>
 			<h2 className="font-display mt-12 text-2xl font-semibold">{t('Источники и лицензии')}</h2>
-			<p className="mt-2 text-sm leading-relaxed text-zinc-500">{t('Ниже указаны свободно лицензированные материалы, включая исходные модели и окружение, сохранённые в проекте.')}</p>
+			<p className="mt-2 text-sm leading-relaxed text-zinc-500">{t('Источники и лицензии окружения для 3D-визуализации.')}</p>
 
 			<ul className="mt-6 space-y-5">
 				{ASSETS.map(asset => (
