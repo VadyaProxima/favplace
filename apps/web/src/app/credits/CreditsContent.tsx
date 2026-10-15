@@ -25,8 +25,8 @@ const ASSETS: Asset[] = [
 		source: 'https://polyhaven.com/a/small_empty_room_3',
 		license: 'CC0',
 		licenseUrl: 'https://creativecommons.org/publicdomain/zero/1.0/',
-		usedFor: 'Студийное окружение из предыдущей версии 3D-превью',
-		changes: 'Версия 1K. Использовалась для освещения и отражений металла.',
+		usedFor: 'Освещение и отражения металла в конструкторе и на главной странице',
+		changes: 'Версия 1K. Используется как HDR-окружение.',
 	},
 ]
 
@@ -51,10 +51,6 @@ export function CreditsContent() {
 				<h2 id="project-assets" className="font-display mt-3 text-2xl font-semibold">{t('3D-визуализация кольца')}</h2>
 				<p className="mt-3 text-sm"><span className="text-zinc-500">{t('Исполнитель')} · </span><a href="https://kwork.ru/user/xlimbo" target="_blank" rel="noreferrer" className="font-medium underline underline-offset-4 transition hover:text-zinc-500">xLIMBO <span className="text-zinc-500">↗ Kwork</span></a></p>
 				<p className="mt-3 text-sm leading-relaxed text-zinc-600">{t('В основе работы — переданный исполнителем комплект проекта от августа 2026 года. Форма кольца, рельеф и освещение адаптированы для интерактивной мастерской.')}</p>
-				<div className="mt-5 border-t border-zinc-200 pt-5">
-					<h3 className="text-sm font-medium">Priroda 68 · HDRI</h3>
-					<p className="mt-2 text-sm leading-relaxed text-zinc-600">{t('Природное окружение из комплекта исполнителя используется для отражений на металле. Для веб-превью подготовлена компактная HDR-версия; окружение не изменяет геометрию кольца или рельеф.')}</p>
-				</div>
 			</section>
 			<h2 className="font-display mt-12 text-2xl font-semibold">{t('Источники и лицензии')}</h2>
 			<p className="mt-2 text-sm leading-relaxed text-zinc-500">{t('Источники и лицензии окружения для 3D-визуализации.')}</p>

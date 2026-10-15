@@ -1,6 +1,6 @@
 'use client'
 
-import { useT, usePriceFormatter } from '@/lib/preferences'
+import { useT, usePriceFormatter, usePriceCurrency } from '@/lib/preferences'
 
 import Link from 'next/link'
 import { HeaderPreferences } from './_ui/HeaderPreferences'
@@ -18,6 +18,7 @@ const PLACES = [
 export default function Home() {
 	const t = useT()
 	const formatPrice = usePriceFormatter()
+	const currency = usePriceCurrency()
 	return (
 		<main className="w-full bg-white text-zinc-900">
 			<header className="flex w-full items-center justify-between gap-4 px-5 py-5 md:px-8">
@@ -67,7 +68,7 @@ export default function Home() {
 					<dl className="grid grid-cols-2 gap-x-8 gap-y-6 border-y border-zinc-200 py-6">
 						{[[t('Материал'), t('Серебро')], [t('Изготовление'), t('Отливка и ручная полировка')], [t('Размеры'), t('От 15 до 23 мм')], [t('Характер'), t('От лёгкого до массивного')]].map(([label, value]) => <div key={label}><dt className="text-[10px] uppercase tracking-wider text-zinc-400">{t(label)}</dt><dd className="mt-2 text-sm leading-relaxed">{t(value)}</dd></div>)}
 					</dl>
-					<div className="mt-8 flex flex-wrap items-center justify-between gap-5"><div><p className="text-xs text-zinc-500">{t("Серебро, базовая детализация")}</p><p className="font-display mt-1 text-3xl font-semibold">{t("от ")}{formatPrice(formFromPrice('mountain'))}</p></div><Link href="/create" className="inline-flex min-h-12 items-center gap-8 rounded-xl border border-zinc-900 px-5 text-sm">{t("Собрать своё ")}<span aria-hidden="true">→</span></Link></div>
+					<div className="mt-8 flex flex-wrap items-center justify-between gap-5"><div><p className="text-xs text-zinc-500">{t("Серебро, базовая детализация")}</p><p className="font-display mt-1 text-3xl font-semibold">{t("от ")}{formatPrice(formFromPrice('mountain', currency))}</p></div><Link href="/create" className="inline-flex min-h-12 items-center gap-8 rounded-xl border border-zinc-900 px-5 text-sm">{t("Собрать своё ")}<span aria-hidden="true">→</span></Link></div>
 				</div>
 			</section>
 

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { encodeConfigParams, decodeConfigParams } from '../src/lib/configUrl.ts'
 import { reliefMillimeters } from '../src/lib/referenceSignetTerrain.ts'
+import { DEFAULT_STUDIO_CONFIG, FEATURED_RING_STUDIO_URL } from '../src/lib/featuredRing.ts'
 
 const defaults = {
 	location: null, radius: 500, terrainBearing: 0, reliefScale: .5,
@@ -9,6 +10,20 @@ const defaults = {
 	ringSize: 17, ringWeight: 'classic', bandProfile: 'classic', shoulderStyle: 'classic', step: 'place',
 }
 const withoutId = config => ({ ...config, location: config.location && { ...config.location, id: undefined } })
+
+test('a plain studio entry uses the hero ring, while shared coordinates override it', () => {
+	const initial = decodeConfigParams('', DEFAULT_STUDIO_CONFIG)
+	assert.deepEqual(initial.location.coordinates, { lat: 44.09865, lng: 43.02519 })
+	assert.equal(initial.location.name, 'Бештау')
+	assert.equal(initial.radius, 2179); assert.equal(initial.terrainBearing, -90)
+	assert.equal(initial.reliefHeight, 3.77); assert.equal(initial.reliefDetail, 'high')
+	assert.equal(initial.ringSize, 17); assert.equal(initial.step, 'place')
+	const hero = decodeConfigParams(FEATURED_RING_STUDIO_URL.split('?')[1], DEFAULT_STUDIO_CONFIG)
+	assert.deepEqual(withoutId({ ...hero, step: 'place' }), withoutId(initial))
+	const shared = decodeConfigParams('?lat=0&lng=0&r=100&b=57&h=2.23', DEFAULT_STUDIO_CONFIG)
+	assert.deepEqual(shared.location.coordinates, { lat: 0, lng: 0 })
+	assert.equal(shared.radius, 100); assert.equal(shared.terrainBearing, 57); assert.equal(shared.reliefHeight, 2.23)
+})
 
 test('the reported legacy link restores Patagonia and its ring settings', () => {
 	const restored = decodeConfigParams('?form=mountain&d=high&h=2.23&sz=17&r=20000&w=classic&bp=classic&sh=classic&b=57&lat=-49.37480&lng=-72.79745&p=El+Chalt%C3%A9n&s=relief', defaults)

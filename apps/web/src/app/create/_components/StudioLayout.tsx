@@ -1,6 +1,6 @@
 'use client'
 
-import { useT, usePriceFormatter, useNumberFormatter } from '@/lib/preferences'
+import { useT, usePriceFormatter, useNumberFormatter, usePriceCurrency } from '@/lib/preferences'
 
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import Link from 'next/link'
@@ -30,6 +30,7 @@ export function StudioLayout({ children, isAdmin, fetching, shared, onShare, ter
 }) {
 	const t = useT()
 	const formatPrice = usePriceFormatter()
+	const currency = usePriceCurrency()
 	const fmtSize = useNumberFormatter()
 	const step = useAppStore(s => s.step)
 	const setStep = useAppStore(s => s.setStep)
@@ -47,7 +48,7 @@ export function StudioLayout({ children, isAdmin, fetching, shared, onShare, ter
 	const section = STUDIO_SECTIONS[sectionIndex]
 	const isLast = step === 'order'
 	const previewExpanded = previewOverride ?? (!shortScreen && !isLast)
-	const price = calcPrice({ ringForm, reliefDetail, ...RING_PRODUCTION_DEFAULTS })
+	const price = calcPrice({ ringForm, reliefDetail, ...RING_PRODUCTION_DEFAULTS }, currency)
 	const next = STEPS[stepIndex + 1]
 
 	useEffect(() => {

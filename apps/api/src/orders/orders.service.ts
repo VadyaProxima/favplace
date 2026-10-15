@@ -11,6 +11,7 @@ import {
   validateCheckoutCustomer,
   type CheckoutRequest,
   type CheckoutResponse,
+  type PriceCurrency,
 } from "@favplace/shared";
 
 @Injectable()
@@ -27,6 +28,8 @@ export class OrdersService {
       : undefined;
     const customer = body?.customer;
     if (!config || !customer) throw new BadRequestException("Пустая заявка");
+    const currency = body.currency ?? 'RUB';
+    if (currency !== 'RUB' && currency !== 'USD') throw new BadRequestException('Unsupported currency');
 
     if (!RING_FORMS.includes(config.ringForm)) {
       throw new BadRequestException("Неизвестная форма изделия");
@@ -50,13 +53,14 @@ export class OrdersService {
       reliefDetail: config.reliefDetail,
       // engraving: config.engraving, // Временно отключена.
       twoTone: config.twoTone,
-    });
+    }, currency);
 
     const order = await this.prisma.order.create({
       data: {
         number: await this.nextNumber(),
         status: "pending",
         totalPrice: total,
+        currency,
         configJson: JSON.stringify(config),
         shareUrl: config.shareUrl ?? null,
         customerName: name,
@@ -68,12 +72,13 @@ export class OrdersService {
       },
     });
 
-    void this.notify(order.number, total, config, { name, phone, email, delivery });
+    void this.notify(order.number, total, config, { name, phone, email, delivery }, currency);
 
     return {
       id: order.id,
       number: order.number,
       totalPrice: total,
+      currency,
       status: "pending",
     };
   }
@@ -101,9 +106,10 @@ export class OrdersService {
     total: number,
     config: CheckoutRequest["config"],
     customer: { name: string; phone: string; email: string; delivery: string },
+    currency: PriceCurrency,
   ): Promise<void> {
     const lines = [
-      `Заявка ${number} — ${formatPrice(total)}`,
+      `Заявка ${number} — ${formatPrice(total, currency)}`,
       "",
       `Форма: ${config.ringForm}`,
       `Металл: ${MATERIALS[config.material].label}, ${config.surfaceFinish === "polished" ? "полированная" : "матовая"}`,

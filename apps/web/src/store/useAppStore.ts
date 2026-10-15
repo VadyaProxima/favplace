@@ -8,6 +8,7 @@ import type {
   SurfaceFinish,
 } from "@favplace/shared";
 import { RING_FORMS, RING_PRODUCTION_DEFAULTS } from "@favplace/shared";
+import { DEFAULT_STUDIO_CONFIG } from '../lib/featuredRing.ts';
 import {
   MAX_RELIEF_MM,
   MIN_RELIEF_MM,
@@ -43,7 +44,7 @@ export const STEP_LABELS: Record<Step, string> = {
   order: "заказ",
 };
 
-interface AppState {
+export interface AppState {
   step: Step;
   setStep: (step: Step) => void;
   nextStep: () => void;
@@ -148,22 +149,14 @@ const RELIEF_SPAN_MM = MAX_RELIEF_MM - MIN_RELIEF_MM;
 const reliefScaleFromMm = (millimetres: number) =>
   Math.min(1, Math.max(0, (millimetres - MIN_RELIEF_MM) / RELIEF_SPAN_MM));
 
-/**
- * Рельеф по умолчанию. Прежде это была середина ползунка (2.34 мм по нынешней
- * шкале), но её постоянно хотелось поднять, поэтому берём на 50% больше —
- * 3.50 мм. Считаем от миллиметров, а не от позиции ползунка: «на 50% выше»
- * относится к металлу, а не к делению шкалы.
- */
-const DEFAULT_RELIEF_SCALE = reliefScaleFromMm(reliefMillimeters(0.5) * 1.5);
-
 export const useAppStore = create<AppState>((set) => ({
-  step: "place",
+  step: DEFAULT_STUDIO_CONFIG.step,
   setStep: (step) => set({ step }),
   nextStep: () =>
     set((s) => ({ step: STEPS[Math.min(stepIndex(s.step) + 1, STEPS.length - 1)] })),
   prevStep: () => set((s) => ({ step: STEPS[Math.max(stepIndex(s.step) - 1, 0)] })),
 
-  ringForm: "mountain",
+  ringForm: DEFAULT_STUDIO_CONFIG.ringForm,
   setRingForm: (ringForm) =>
     set({ ringForm: RING_FORMS.includes(ringForm) ? ringForm : "mountain" }),
 
@@ -172,7 +165,7 @@ export const useAppStore = create<AppState>((set) => ({
 
   mountainTwoTone: RING_PRODUCTION_DEFAULTS.twoTone,
 
-  location: null,
+  location: DEFAULT_STUDIO_CONFIG.location,
   setLocation: (location) => set({ location }),
   setCoordinates: (lat, lng) =>
     set((s) => ({
@@ -181,33 +174,33 @@ export const useAppStore = create<AppState>((set) => ({
         : { id: crypto.randomUUID(), name: 'Выбранное место', country: '', coordinates: { lat, lng } },
     })),
 
-  radius: 500,
+  radius: DEFAULT_STUDIO_CONFIG.radius,
   setRadius: (radius) => set({ radius }),
 
   material: RING_PRODUCTION_DEFAULTS.material,
 
   surfaceFinish: RING_PRODUCTION_DEFAULTS.surfaceFinish,
 
-  ringSize: 17,
+  ringSize: DEFAULT_STUDIO_CONFIG.ringSize,
   setRingSize: (ringSize) => set({ ringSize }),
 
   ringWidth: 4,
   setRingWidth: (ringWidth) => set({ ringWidth }),
 
-  reliefHeight: reliefMillimeters(DEFAULT_RELIEF_SCALE),
+  reliefHeight: DEFAULT_STUDIO_CONFIG.reliefHeight,
   setReliefHeight: (reliefHeight) =>
     set({
       reliefHeight,
       reliefScale: reliefScaleFromMm(reliefHeight),
     }),
 
-  reliefScale: DEFAULT_RELIEF_SCALE,
+  reliefScale: DEFAULT_STUDIO_CONFIG.reliefScale,
   setReliefScale: (reliefScale) => {
     const normalized = Math.min(1, Math.max(0, reliefScale));
     set({ reliefScale: normalized, reliefHeight: reliefMillimeters(normalized) });
   },
 
-  reliefDetail: "high",
+  reliefDetail: DEFAULT_STUDIO_CONFIG.reliefDetail,
   setReliefDetail: (reliefDetail) => set({ reliefDetail }),
 
   engraving: "",
@@ -261,16 +254,16 @@ export const useAppStore = create<AppState>((set) => ({
       },
     }),
 
-  ringWeight: "classic",
+  ringWeight: DEFAULT_STUDIO_CONFIG.ringWeight,
   setRingWeight: (ringWeight) => set({ ringWeight }),
 
-  bandProfile: "classic",
+  bandProfile: DEFAULT_STUDIO_CONFIG.bandProfile,
   setBandProfile: (bandProfile) => set({ bandProfile }),
 
-  shoulderStyle: "classic",
+  shoulderStyle: DEFAULT_STUDIO_CONFIG.shoulderStyle,
   setShoulderStyle: (shoulderStyle) => set({ shoulderStyle }),
 
-  terrainBearing: 0,
+  terrainBearing: DEFAULT_STUDIO_CONFIG.terrainBearing,
   setTerrainBearing: (terrainBearing) => set({ terrainBearing }),
 
   elevationMeta: null,

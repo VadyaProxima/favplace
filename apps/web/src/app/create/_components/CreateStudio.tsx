@@ -11,6 +11,7 @@ import {
 	type TerrainProvider,
 } from '@/lib/referenceTerrainRequests'
 import { useTerrainAnalysis } from '@/lib/useTerrainAnalysis'
+import { DEFAULT_STUDIO_CONFIG } from '@/lib/featuredRing'
 import { useAppStore } from '@/store/useAppStore'
 import { useCallback, useEffect, useState } from 'react'
 import { StudioLayout } from './StudioLayout'
@@ -40,7 +41,7 @@ function HydratedStudio({ terrainProvider }: { terrainProvider?: TerrainProvider
 	const { fetching, error: terrainError } = useTerrainAnalysis(terrainProvider)
 	const [shared, setShared] = useState(false)
 	const [flyTarget, setFlyTarget] = useState<FlyTarget>(() => ({
-		...(useAppStore.getState().location?.coordinates ?? { lng: 138.7307, lat: 35.3628 }), key: 0,
+		...(useAppStore.getState().location?.coordinates ?? DEFAULT_STUDIO_CONFIG.location!.coordinates), key: 0,
 	}))
 
 	// Вторая местность формы «duo». Отдельный лёгкий запрос: она ложится

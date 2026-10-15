@@ -5,8 +5,8 @@ import { useT, usePreferences } from '@/lib/preferences'
 import Link from 'next/link'
 import { useEffect, useId, useRef, useState } from 'react'
 import type { HeroPhase, HeroSceneHandle } from '@/lib/heroTerrainScene'
+import { DEFAULT_STUDIO_CONFIG, FEATURED_RING_STUDIO_URL } from '@/lib/featuredRing'
 
-const CONFIG = '/create?form=mountain&m=silver&sf=polished&d=high&h=3.77&sz=17&r=2179&w=classic&bp=classic&sh=classic&b=-90&lat=44.09865&lng=43.02519&p=%D0%91%D0%B5%D1%88%D1%82%D0%B0%D1%83&s=relief'
 type Phase = HeroPhase | 'loading' | 'error'
 
 export function HeroTerrain() {
@@ -57,7 +57,7 @@ export function HeroTerrain() {
 		<figure className="m-0 overflow-hidden rounded-2xl border border-zinc-200 bg-[#f4f3f0]" data-testid="hero-terrain" data-phase={phase}>
 			<div ref={frameRef} className="relative aspect-[1.14] w-full min-h-[280px] overflow-hidden sm:aspect-[1.22]">
 				<div className="pointer-events-none absolute left-5 top-5 z-10 flex items-center gap-2 text-[10px] uppercase tracking-[.18em] text-zinc-500">
-					<span className="h-1 w-1 rounded-full bg-zinc-400" />44.09865° N · 43.02519° E
+					<span className="h-1 w-1 rounded-full bg-zinc-400" />{DEFAULT_STUDIO_CONFIG.location!.coordinates.lat.toFixed(5)}° N · {DEFAULT_STUDIO_CONFIG.location!.coordinates.lng.toFixed(5)}° E
 				</div>
 				{/* A real render remains visible while the WebGL scene loads or if WebGL is unavailable. */}
 				{/* eslint-disable-next-line @next/next/no-img-element */}
@@ -74,7 +74,7 @@ export function HeroTerrain() {
 			</div>
 			<figcaption className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-t border-zinc-200 bg-white px-5 py-5">
 				<div><p className="font-display text-2xl font-semibold">{t("Бештау")}</p><p className="mt-1 text-[11px] text-zinc-500">{t("Серебро · полировка · ваш рельеф")}</p></div>
-				<Link href={CONFIG} className="inline-flex min-h-11 items-center gap-3 text-xs text-zinc-600 transition hover:text-zinc-900">{t("Открыть в мастерской")}<span aria-hidden="true">↗</span></Link>
+				<Link href={FEATURED_RING_STUDIO_URL} className="inline-flex min-h-11 items-center gap-3 text-xs text-zinc-600 transition hover:text-zinc-900">{t("Открыть в мастерской")}<span aria-hidden="true">↗</span></Link>
 			</figcaption>
 		</figure>
 	)

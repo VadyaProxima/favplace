@@ -1,6 +1,7 @@
 export * from "./pricing";
 export * from "./checkoutValidation";
 export * from "./currency";
+import type { PriceCurrency } from './currency';
 
 import type { ReliefDetail, RingForm } from "./pricing";
 
@@ -97,6 +98,8 @@ export interface CheckoutCustomer {
 }
 
 export interface CheckoutRequest {
+  /** Old clients omit this field and keep RUB pricing. */
+  currency?: PriceCurrency;
   config: CheckoutConfig;
   customer: CheckoutCustomer;
 }
@@ -105,6 +108,7 @@ export interface CheckoutResponse {
   id: string;
   number: string;
   totalPrice: number;
+  currency?: PriceCurrency;
   status: OrderStatus;
 }
 

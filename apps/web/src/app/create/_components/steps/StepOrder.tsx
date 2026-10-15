@@ -1,6 +1,6 @@
 'use client'
 
-import { useT, usePriceFormatter, useNumberFormatter } from '@/lib/preferences'
+import { useT, usePriceFormatter, useNumberFormatter, usePriceCurrency } from '@/lib/preferences'
 
 import { useAppStore } from '@/store/useAppStore'
 import {
@@ -44,6 +44,7 @@ const STAGES = [
 export function StepOrder() {
 	const t = useT()
 	const formatPrice = usePriceFormatter()
+	const currency = usePriceCurrency()
 	const fmtSize = useNumberFormatter()
 	const state = useAppStore()
 
@@ -80,7 +81,7 @@ export function StepOrder() {
 		reliefDetail: state.reliefDetail,
 		// engraving: state.engraving, // Временно отключена.
 		twoTone: RING_PRODUCTION_DEFAULTS.twoTone,
-	})
+	}, currency)
 
 	const submit = async (event: FormEvent<HTMLFormElement>) => {
 		event.preventDefault()
@@ -100,6 +101,7 @@ export function StepOrder() {
 		setFailed(null)
 		try {
 			const payload: CheckoutRequest = {
+				currency,
 				config: {
 					ringForm: state.ringForm,
 					material: RING_PRODUCTION_DEFAULTS.material,
@@ -159,7 +161,7 @@ export function StepOrder() {
 						{t(MATERIALS[RING_PRODUCTION_DEFAULTS.material].label)}
 					</p>
 					<p className="mt-1 font-medium text-zinc-900">
-						{formatPrice(done.totalPrice)}
+						{formatPrice(done.totalPrice, done.currency ?? 'RUB')}
 					</p>
 				</div>
 				<div className="space-y-2">
