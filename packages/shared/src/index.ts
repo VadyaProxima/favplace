@@ -1,5 +1,6 @@
 export * from "./pricing";
 export * from "./checkoutValidation";
+export * from "./currency";
 
 import type { ReliefDetail, RingForm } from "./pricing";
 

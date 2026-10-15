@@ -14,6 +14,7 @@ const snapshot = page => page.evaluate(keys => {
 	try {
 		const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, permissions: ['clipboard-read', 'clipboard-write'] })
 		const page = await context.newPage(), responses = [], errors = []
+		await context.addInitScript(() => localStorage.setItem('favplace:preferences', JSON.stringify({ language: 'ru', theme: 'light' })))
 		page.on('pageerror', e => errors.push(e.message))
 		page.on('response', async response => {
 			if (!response.url().includes('/api/terrain/heightmap')) return
