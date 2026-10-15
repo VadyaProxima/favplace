@@ -1,5 +1,10 @@
 /** Russian is the source language; arbitrary user-entered place names stay untouched. */
 export const EN: Record<string, string> = {
+	'Создайте кольцо с рельефом любимого места': 'Design a ring with the terrain of your favourite place',
+	'Выберите место на карте, настройте масштаб, поворот, высоту рельефа и размер серебряного кольца. Посмотрите свой дизайн в 3D перед отправкой заявки.': 'Choose a place on the map, then adjust the scale, rotation, relief height and silver ring size. Preview your design in 3D before sending an order request.',
+	'Загружаем мастерскую…': 'Loading the studio…',
+	'О кольцах, размерах и ценах': 'About rings, sizes and prices',
+	'?????????? ?????? ? ???????? ???????? ?????': 'Custom silver rings with the terrain of your favourite place',
 	'Сравнение рельефа': 'Terrain comparison',
 	'Сравнить с': 'Compare with',
 	'Имя — не больше 80 символов': 'Name must be no longer than 80 characters',

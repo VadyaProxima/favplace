@@ -31,7 +31,7 @@ const base = process.env.PREFERENCES_QA_BASE || 'http://localhost:3003'
 		await page.getByRole('button', { name: 'Включить светлую тему', exact: true }).click()
 		await page.reload({ waitUntil: 'domcontentloaded' })
 		await page.waitForFunction(() => document.documentElement.lang === 'ru' && document.documentElement.dataset.theme === 'light')
-		await page.getByText(/16\s400 ₽/, { exact: false }).waitFor()
+		await page.locator('#ring').getByText(/16\s400 ₽/, { exact: false }).waitFor()
 		assert.ok(await page.locator('body').innerText().then(text => /16\s400 ₽/.test(text)))
 		await page.getByRole('button', { name: 'Switch to English', exact: true }).click()
 		await page.getByText('from $210', { exact: true }).waitFor()

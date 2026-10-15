@@ -25,7 +25,14 @@ import { buildShareUrl, useConfigUrl } from './useConfigUrl'
 
 export function CreateStudio({ terrainProvider }: { terrainProvider?: TerrainProvider }) {
 	const configRevision = useConfigUrl()
-	return configRevision ? <HydratedStudio key={`${configRevision}:${terrainProvider ?? 'default'}`} terrainProvider={terrainProvider} /> : null
+	const t = useT()
+	return configRevision ? <HydratedStudio key={`${configRevision}:${terrainProvider ?? 'default'}`} terrainProvider={terrainProvider} /> : <main className="min-h-screen bg-white px-5 py-16 text-zinc-900 md:px-8">
+		<h1 className="font-display text-4xl">{t('Создайте кольцо с рельефом любимого места')}</h1>
+		<p className="mt-5 max-w-xl leading-relaxed text-zinc-500">{t('Выберите место на карте, настройте масштаб, поворот, высоту рельефа и размер серебряного кольца. Посмотрите свой дизайн в 3D перед отправкой заявки.')}</p>
+		<p role="status" className="mt-5 text-sm text-zinc-500">{t('Загружаем мастерскую…')}</p>
+		<noscript><p className="mt-5">The interactive studio needs JavaScript. You can read the ring guide without it.</p></noscript>
+		<a href="/guide/topographic-rings" className="mt-6 inline-block underline underline-offset-4">{t('О кольцах, размерах и ценах')} ↗</a>
+	</main>
 }
 
 function HydratedStudio({ terrainProvider }: { terrainProvider?: TerrainProvider }) {

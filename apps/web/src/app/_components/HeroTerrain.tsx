@@ -61,7 +61,7 @@ export function HeroTerrain() {
 				</div>
 				{/* A real render remains visible while the WebGL scene loads or if WebGL is unavailable. */}
 				{/* eslint-disable-next-line @next/next/no-img-element */}
-				<img src="/hero/beshtau/poster.webp" alt={t("Серебряное кольцо с рельефом Бештау")} className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ${ready ? 'opacity-0' : 'opacity-100'}`} />
+				<img src="/hero/beshtau/poster.webp" fetchPriority="high" decoding="async" alt={t("Серебряное кольцо с рельефом Бештау")} className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ${ready ? 'opacity-0' : 'opacity-100'}`} />
 				<canvas key={attempt} ref={canvasRef} tabIndex={phase === 'ring' ? 0 : -1} aria-label={t("Трёхмерная модель кольца Бештау. Вращайте мышью, пальцем или клавишами со стрелками.")} aria-describedby={descriptionId} className={`absolute inset-0 h-full w-full outline-none transition-opacity duration-500 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-zinc-600 ${ready ? 'opacity-100' : 'opacity-0'} ${phase === 'ring' ? 'cursor-grab active:cursor-grabbing' : ''}`} />
 				<div className="absolute bottom-5 left-5 right-5 z-10 flex items-center justify-between gap-3">
 					<p id={descriptionId} className="text-[11px] text-zinc-600" aria-live="polite">

@@ -1,11 +1,7 @@
-import type { Metadata } from 'next'
+import { PAGE_COPY, pageMetadata } from '@/lib/seo'
 import { CreditsContent } from './CreditsContent'
 
-export const metadata: Metadata = {
-	title: 'Авторы и материалы — Место Металл',
-	description:
-		'3D-визуализация Место Металл: авторы, источники моделей, окружение и лицензии материалов.',
-}
+export const metadata = pageMetadata('/credits', ...PAGE_COPY['/credits'].en)
 
 export default function CreditsPage() {
 	return <CreditsContent />

@@ -243,3 +243,12 @@ docker compose exec -T db pg_dump -U favplace favplace | gzip > backup-$(date +%
 | `apps/api/Dockerfile` | Образ API: сборка монорепо, prune dev-зависимостей |
 | `apps/web/Dockerfile` | Образ фронта: Next standalone |
 | `.env.example` | Шаблон переменных для compose |
+
+### SEO и видимость в ИИ-поиске
+
+Публичные страницы имеют canonical, метаданные и карточки для соцсетей.
+`/sitemap.xml` перечисляет индексируемые страницы, `/robots.txt` задаёт правила
+обхода. Главная содержит описание продукта, FAQ и JSON-LD с актуальными ценами.
+Справочник доступен без JavaScript на `/guide/topographic-rings` и
+`/ru/guide/topographic-rings` с языковыми ссылками `hreflang`.
+Решения, источники, проверки и действия после релиза: [docs/seo-geo.md](docs/seo-geo.md).
