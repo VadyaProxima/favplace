@@ -15,6 +15,11 @@ const config: NextConfig = {
 	// `pnpm build` без этого флага падал бы с EPERM.
 	output: process.env.NEXT_OUTPUT_STANDALONE ? 'standalone' : undefined,
 	outputFileTracingRoot: path.join(__dirname, '../../'),
+	async headers() {
+		return [
+			{ source: '/admin/:path*', headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }] },
+		]
+	},
 	async rewrites() {
 		return [
 			{

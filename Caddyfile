@@ -8,6 +8,7 @@
 	# /api/* уходит прямо в NestJS. Через rewrites Next это тоже работает,
 	# но тогда тяжёлые heightmap-ответы гоняются лишний раз через прокси.
 	handle /api/* {
+		header X-Robots-Tag "noindex, nofollow"
 		reverse_proxy api:4000
 	}
 

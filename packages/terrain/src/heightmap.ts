@@ -116,7 +116,7 @@ async function fetchHeightMapUncached(
 	const provider = options.provider ?? getDemProvider()
 	// A shared tile may finish in the background, but this crop stops queuing work
 	// after the deadline so an outage cannot delay the backup indefinitely.
-	const signal = provider === 'mapbox' ? AbortSignal.timeout(8000) : undefined
+	const signal = AbortSignal.timeout(8000)
 	const CROP_SIZE = cropSize(options)
 	const bearing = options.bearing ?? 0
 	const preferredZoom = Math.min(
@@ -287,8 +287,8 @@ async function fetchHeightMapForProvider(
 	return promise
 }
 
-const MAPBOX_RETRY_DELAY_MS = 60_000
-let mapboxRetryAfter = 0
+const PRIMARY_RETRY_DELAY_MS = 60_000
+const primaryRetryAfter = { terrarium: 0, mapbox: 0 }
 
 /** Explicit development comparisons stay strict; normal requests fail over as a whole crop. */
 async function fetchHeightMap(
@@ -298,19 +298,19 @@ async function fetchHeightMap(
 	options: HeightMapRequestOptions = {},
 ): Promise<HeightMap> {
 	const provider = options.provider ?? getDemProvider()
-	if (options.provider || provider === 'terrarium') {
+	if (options.provider) {
 		return fetchHeightMapForProvider(centerLat, centerLng, radiusMeters, { ...options, provider })
 	}
-	if (Date.now() >= mapboxRetryAfter) {
+	if (Date.now() >= primaryRetryAfter[provider]) {
 		try {
-			return await fetchHeightMapForProvider(centerLat, centerLng, radiusMeters, { ...options, provider: 'mapbox' })
+			return await fetchHeightMapForProvider(centerLat, centerLng, radiusMeters, { ...options, provider })
 		} catch {
-			mapboxRetryAfter = Date.now() + MAPBOX_RETRY_DELAY_MS
+			primaryRetryAfter[provider] = Date.now() + PRIMARY_RETRY_DELAY_MS
 		}
 	}
-	// This goes into Terrarium's own cache, never into the Mapbox cache. Once the
-	// cooldown expires, the next request can return to the primary source.
-	return fetchHeightMapForProvider(centerLat, centerLng, radiusMeters, { ...options, provider: 'terrarium' })
+	// Keep backup crops in their own cache; retry the primary after cooldown.
+	const backup = provider === 'terrarium' ? 'mapbox' : 'terrarium'
+	return fetchHeightMapForProvider(centerLat, centerLng, radiusMeters, { ...options, provider: backup })
 }
 
 export { fetchHeightMap }
