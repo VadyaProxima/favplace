@@ -83,11 +83,11 @@ export const JEWELLERY_GL = {
 
 /**
  * Reflections = Environment HDRI mapped onto metal.
- * Nature HDRI from the contractor's delivery, prepared in linear HDR space for the web.
+ * Small Empty Room 3 (Poly Haven, CC0), shared by the studio and homepage.
  */
 export const JEWELLERY_ENV = {
-	files: '/models/priroda_68_1k.hdr',
-	environmentIntensity: 1.15,
+	files: '/models/small_empty_room_3_1k.hdr',
+	environmentIntensity: 1.20,
 	blur: 0.15,
 	toneMappingExposure: JEWELLERY_GL.toneMappingExposure,
 }
