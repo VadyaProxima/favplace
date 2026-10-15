@@ -1,4 +1,5 @@
 import type { MaterialType } from "./index";
+import { formatDisplayPrice, type PriceCurrency } from './currency';
 
 /**
  * classic = lion GLB signet, mountain = continuous plateau,
@@ -45,6 +46,15 @@ export const RING_FORM_BASE_PRICE: Record<RingForm, number> = {
   square: 14900,
   circle: 14900,
   oval: 14900,
+};
+
+/** Independent USD price list; mountain rings are $210 / $220 / $230. */
+export const RING_FORM_USD_BASE_PRICE: Record<RingForm, number> = {
+  classic: 220, mountain: 210, duo: 240, disc: 200, plug: 210,
+  bar: 190, square: 190, circle: 190, oval: 190,
+};
+export const RELIEF_DETAIL_USD_SURCHARGE: Record<ReliefDetail, number> = {
+  low: 0, medium: 10, high: 20,
 };
 
 /** Множитель металла к базовой цене формы. */
@@ -121,15 +131,15 @@ export interface PriceBreakdown {
  * Единая точка расчёта цены — используется и на фронте (превью),
  * и на бэке (проверка суммы заявки).
  */
-export function calcPrice(input: PriceInput): PriceBreakdown {
-  const base = Math.round(
-    RING_FORM_BASE_PRICE[input.ringForm] *
-      MATERIAL_PRICE_FACTOR[input.material],
-  );
+export function calcPrice(input: PriceInput, currency: PriceCurrency = 'RUB'): PriceBreakdown {
+  const usd = currency === 'USD';
+  const baseAmount = (usd ? RING_FORM_USD_BASE_PRICE : RING_FORM_BASE_PRICE)[input.ringForm]
+    * MATERIAL_PRICE_FACTOR[input.material];
+  const base = usd ? Math.round(baseAmount / 10) * 10 : Math.round(baseAmount);
 
   const lines: PriceLine[] = [{ label: "Изделие", amount: base }];
 
-  const detail = RELIEF_DETAIL_SURCHARGE[input.reliefDetail];
+  const detail = (usd ? RELIEF_DETAIL_USD_SURCHARGE : RELIEF_DETAIL_SURCHARGE)[input.reliefDetail];
   if (detail > 0) {
     lines.push({
       label: `Детализация: ${RELIEF_DETAIL_LABELS[input.reliefDetail].toLowerCase()}`,
@@ -138,7 +148,7 @@ export function calcPrice(input: PriceInput): PriceBreakdown {
   }
 
   if (input.twoTone) {
-    lines.push({ label: "Двухцветная отделка", amount: TWO_TONE_PRICE });
+    lines.push({ label: "Двухцветная отделка", amount: usd ? 30 : TWO_TONE_PRICE });
   }
 
   // Гравировка временно отключена, доплату не включаем ни на клиенте, ни на сервере.
@@ -153,15 +163,15 @@ export function calcPrice(input: PriceInput): PriceBreakdown {
 }
 
 /** «17 200 ₽» */
-export function formatPrice(amount: number): string {
-  return `${Math.round(amount).toLocaleString("ru-RU")} ₽`;
+export function formatPrice(amount: number, currency: PriceCurrency = 'RUB'): string {
+  return formatDisplayPrice(amount, currency);
 }
 
 /** «от 14 900 ₽» — минимум по форме, серебро, низкая детализация. */
-export function formFromPrice(form: RingForm): number {
+export function formFromPrice(form: RingForm, currency: PriceCurrency = 'RUB'): number {
   return calcPrice({
     ringForm: form,
     material: "silver",
     reliefDetail: "low",
-  }).total;
+  }, currency).total;
 }

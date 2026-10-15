@@ -3,7 +3,7 @@
 import { useCallback } from 'react'
 import { create } from 'zustand'
 import { EN, EN_VARIABLE_MESSAGES } from './translations'
-import { DEFAULT_USD_EXCHANGE_RATE, formatDisplayPrice } from '@favplace/shared'
+import { formatDisplayPrice, type PriceCurrency } from '@favplace/shared'
 
 export type Language = 'ru' | 'en'
 export type Theme = 'light' | 'dark'
@@ -14,7 +14,6 @@ interface Preferences {
 	ready: boolean
 	language: Language
 	theme: Theme
-	rubPerUsd: number
 	setLanguage: (language: Language) => void
 	setTheme: (theme: Theme) => void
 }
@@ -29,7 +28,6 @@ export const usePreferences = create<Preferences>((set, get) => ({
 	ready: false,
 	language: 'en',
 	theme: 'dark',
-	rubPerUsd: DEFAULT_USD_EXCHANGE_RATE.rubPerUsd,
 	setLanguage(language) { set({ language }); apply(language, get().theme) },
 	setTheme(theme) { set({ theme }); apply(get().language, theme) },
 }))
@@ -50,10 +48,14 @@ export function useT() {
 	return useCallback((text: string) => translate(text, language), [language])
 }
 
-export function usePriceFormatter() {
+export function usePriceCurrency(): PriceCurrency {
 	const language = usePreferences(s => s.language)
-	const rubPerUsd = usePreferences(s => s.rubPerUsd)
-	return useCallback((amount: number) => formatDisplayPrice(amount, language, rubPerUsd), [language, rubPerUsd])
+	return language === 'en' ? 'USD' : 'RUB'
+}
+
+export function usePriceFormatter() {
+	const currency = usePriceCurrency()
+	return useCallback((amount: number, actualCurrency: PriceCurrency = currency) => formatDisplayPrice(amount, actualCurrency), [currency])
 }
 
 export function useNumberFormatter() {

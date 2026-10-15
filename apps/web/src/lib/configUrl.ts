@@ -1,8 +1,8 @@
 import { RING_FORMS, RING_SIZES_MM } from '@favplace/shared'
-import type { useAppStore } from '../store/useAppStore.ts'
+import type { AppState } from '../store/useAppStore.ts'
 import { MAX_RELIEF_MM, MIN_RELIEF_MM, reliefMillimeters } from './referenceSignetTerrain.ts'
 
-export type SharedConfig = Pick<ReturnType<typeof useAppStore.getState>,
+export type SharedConfig = Pick<AppState,
 	'location' | 'radius' | 'terrainBearing' | 'reliefHeight' | 'reliefScale' |
 	'reliefDetail' | 'ringForm' | 'ringSize' | 'ringWeight' | 'bandProfile' | 'shoulderStyle' | 'step'>
 
@@ -62,7 +62,7 @@ export function decodeConfigParams(search: string, defaults: SharedConfig): Shar
 		terrainBearing: number('b', -180, 180) ?? defaults.terrainBearing,
 		location: lat !== undefined && lng !== undefined ? {
 			id: crypto.randomUUID(), name: p.get('p') || 'Выбранное место', country: p.get('c') || '', coordinates: { lat, lng },
-		} : null,
+		} : defaults.location,
 		step: p.get('s') === 'material' ? 'form' : choice('s', ['place', 'relief', 'form', 'size', 'order'], defaults.step),
 	}
 }

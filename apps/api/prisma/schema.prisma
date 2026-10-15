@@ -19,6 +19,7 @@ model Order {
 
   /// Пересчитанная на сервере сумма. Присланной с клиента цене не верим.
   totalPrice Float @default(0)
+  currency   String @default("RUB")
 
   /// Снапшот конфигуратора на момент заявки (CheckoutConfig)
   configJson String?

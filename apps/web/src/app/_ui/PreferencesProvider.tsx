@@ -3,21 +3,10 @@
 import { useEffect, type ReactNode } from 'react'
 import { usePathname } from 'next/navigation'
 import { PREFERENCES_KEY, usePreferences, type Language, type Theme } from '@/lib/preferences'
-import { isUsdExchangeRate } from '@favplace/shared'
 
 export function PreferencesProvider({ children }: { children: ReactNode }) {
 	const language = usePreferences(s => s.language)
 	const pathname = usePathname()
-	useEffect(() => {
-		const abort = new AbortController()
-		fetch('/api/currency/usd', { signal: abort.signal })
-			.then(response => { if (!response.ok) throw new Error('Currency unavailable'); return response.json() })
-			.then(quote => {
-				if (!abort.signal.aborted && isUsdExchangeRate(quote)) usePreferences.setState({ rubPerUsd: quote.rubPerUsd })
-			})
-			.catch(() => { /* Prices retain the verified fallback quote. */ })
-		return () => abort.abort()
-	}, [])
 	useEffect(() => {
 		const english = language === 'en'
 		const title = pathname === '/credits' ? (english ? 'Authors and assets — Mesto Metal' : 'Авторы и материалы — Место Металл')
