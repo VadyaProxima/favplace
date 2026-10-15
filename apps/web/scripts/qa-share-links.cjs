@@ -17,6 +17,7 @@ const ready = page => page.waitForFunction(() => window.__favplaceStore?.getStat
 		const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, permissions: ['clipboard-read', 'clipboard-write'],
 			...(process.env.SHARE_QA_PROXY ? { proxy: { server: process.env.SHARE_QA_PROXY } } : {}) })
 		const requests = [], errors = []
+		await context.addInitScript(() => localStorage.setItem('favplace:preferences', JSON.stringify({ language: 'ru', theme: 'light' })))
 		await context.route('**/api/terrain/heightmap?*', async route => {
 			const p = new URL(route.request().url()).searchParams
 			requests.push(Object.fromEntries(p))
