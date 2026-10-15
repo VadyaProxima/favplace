@@ -73,16 +73,17 @@ export function getTilesForBounds(
 }
 
 /**
- * Default source selection. TERRAIN_DEM_PROVIDER=terrarium can override Mapbox;
+ * Terrarium is primary: small Mapbox crops previously showed grid artifacts.
+ * TERRAIN_DEM_PROVIDER=mapbox explicitly overrides the primary source;
  * development comparisons can override the source on an individual request.
  *
  * Mapbox encodes heights in 0.1 m increments, Terrarium in 1/256 m increments.
  * These encoding steps do not establish the spatial resolution or survey accuracy.
  */
 export function getDemProvider(): DemProvider {
-	return process.env.TERRAIN_DEM_PROVIDER?.trim().toLowerCase() === 'terrarium'
-		? 'terrarium'
-		: 'mapbox'
+	return process.env.TERRAIN_DEM_PROVIDER?.trim().toLowerCase() === 'mapbox'
+		? 'mapbox'
+		: 'terrarium'
 }
 
 export function getMapboxAccessToken(): string {
@@ -232,13 +233,13 @@ async function fetchTileUncached(
       ? mapboxTileUrl(tile, getMapboxAccessToken())
       : terrariumTileUrl(tile);
 
-  // Mapbox failures switch to the backup source instead of prolonged retries.
-  const maxAttempts = provider === 'mapbox' ? 1 : 6;
+  // Fail over promptly instead of retrying a failing source for minutes.
+  const maxAttempts = 1;
   let lastErr: unknown;
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
       const res = await fetch(url, {
-        signal: AbortSignal.timeout(provider === 'mapbox' ? 6000 : 25000),
+        signal: AbortSignal.timeout(6000),
         headers: { "User-Agent": "favplace-terrain/1.0" },
       });
       if (res.ok) {

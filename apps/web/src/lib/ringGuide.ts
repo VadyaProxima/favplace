@@ -46,7 +46,7 @@ export const GUIDE_COPY = {
 			{ title: '2. Balance relief height and detail', text: 'Height controls how strongly the landscape rises above the ring. Detail controls the density of the terrain model. They are separate settings: increasing detail does not automatically make a peak taller. Inspect the design from the side as well as from above.' },
 			{ title: '3. Check the size in millimetres', text: 'Ring size is the inner diameter of the band. The studio supports 15–23 mm in half-millimetre steps. Do not enter a US size directly. A jeweller can measure the required diameter; an existing well-fitting ring can also help you compare sizes.' },
 			{ title: '4. Share the configuration or send a request', text: 'Use the studio’s Share action to keep the selected location and all design settings in a link. When you are ready, submit the order form. This creates a request for confirmation; it does not charge your card.' },
-			{ title: 'Where the landscape comes from', text: 'The studio uses Mapbox Terrain-RGB elevation data, with Terrarium as a fallback if Mapbox is unavailable. The selected area is sampled and shaped into a ring. Terrain coverage and the area you choose affect the result; the preview is a design representation rather than a precision survey.' },
+			{ title: 'Where the landscape comes from', text: 'The studio uses Terrarium elevation data, with Mapbox Terrain-RGB as a fallback if Terrarium is unavailable. The selected area is sampled and shaped into a ring. Terrain coverage and the area you choose affect the result; the preview is a design representation rather than a precision survey.' },
 		],
 	},
 	ru: {

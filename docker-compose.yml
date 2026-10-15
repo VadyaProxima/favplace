@@ -33,7 +33,7 @@ services:
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
       TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
       MAPBOX_ACCESS_TOKEN: ${MAPBOX_ACCESS_TOKEN:-}
-      TERRAIN_DEM_PROVIDER: ${TERRAIN_DEM_PROVIDER:-mapbox}
+      TERRAIN_DEM_PROVIDER: ${TERRAIN_DEM_PROVIDER:-terrarium}
     depends_on:
       db:
         condition: service_healthy
