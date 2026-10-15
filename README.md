@@ -14,7 +14,7 @@
 | Frontend | Next.js 15, React 19, TypeScript, Tailwind v4 |
 | Карта | MapLibre GL JS + Esri (basemaps + geocoding) |
 | 3D | Three.js + React Three Fiber + Drei |
-| DEM | Mapbox Terrain-RGB; AWS Terrain Tiles (Terrarium) как резерв |
+| DEM | AWS Terrain Tiles (Terrarium); Mapbox Terrain-RGB как резерв |
 | Backend | NestJS 11 + Prisma 5 + PostgreSQL 16 |
 | Анимации | Motion (framer-motion) |
 | Монорепо | pnpm + turborepo |
@@ -26,11 +26,11 @@
 подписи появляются при приближении; полнота зависит от данных OpenStreetMap.
 Тайлы доступны до z17, при дальнейшем приближении увеличиваются без изменения
 выбранной площади. Геокодинг: **Nominatim (OSM)** как основной поиск,
-**Esri World Geocoder** как фолбэк. DEM-тайлы загружает сервер из Mapbox Terrain-RGB.
-При отказе Mapbox весь участок загружается из AWS S3 (Terrarium), с сохранением
+**Esri World Geocoder** как фолбэк. DEM-тайлы загружает сервер из AWS S3 (Terrarium).
+При отказе Terrarium весь участок загружается из Mapbox Terrain-RGB, с сохранением
 координат, поворота и размера сетки. Источники имеют отдельные кэши; повторная
-попытка Mapbox разрешена через 60 секунд. Токен хранится только на сервере.
-`TERRAIN_DEM_PROVIDER=terrarium` позволяет принудительно выбрать резервный источник.
+попытка Terrarium разрешена через 60 секунд. Токен хранится только на сервере.
+`TERRAIN_DEM_PROVIDER=mapbox` явно меняет основной источник. По умолчанию используется Terrarium, чтобы избежать квадратных артефактов на маленьких участках.
 
 ## Структура
 
